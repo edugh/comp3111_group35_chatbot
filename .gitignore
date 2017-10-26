@@ -1,11 +1,9 @@
-# Compiled class file
-*.class
+# Build output
+target/
+build/
 
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
+# gradle
+/.gradle/
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -14,9 +12,43 @@
 *.jar
 *.war
 *.ear
-*.zip
-*.tar.gz
-*.rar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# IntelliJ
+.idea
+*.iml
+*.iws
+*.ipr
+*.ids
+*.orig
+
+# Eclipse
+*.pydevproject
+.project
+.metadata
+/bin/**
+/tmp/**
+/tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/**
+.loadpath
+/src/main/resources/rebel.xml
+
+# External tool builders
+.externalToolBuilders/**
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# CDT-specific
+.cproject
+
+# PDT-specific
+.buildpath
