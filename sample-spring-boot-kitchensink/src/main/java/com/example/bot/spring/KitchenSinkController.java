@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
+import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Tour;
 import com.linecorp.bot.model.profile.UserProfileResponse;
 
@@ -209,49 +210,47 @@ public class KitchenSinkController {
 	}
 
 	/*
-	For now, fall through handle methods until we match then handle directly.
-	This is temporary so we can start working without too many conflicts
-	TODO(Jason/all): When we decide how to handle forking logic replace this, probably with a match object
-	 */
-	private boolean tryHandleGreeting(String text, String replyToken) {
-		// TODO: handle and return true when query is greeting
-		return false;
+ 	For now, fall through handle methods until we match then handle directly.
+ 	This is temporary so we can start working without too many conflicts
+ 	TODO(Jason/all): When we decide how to handle forking logic replace this, probably with a match object
+ 	 */
+	private List<Message> tryHandleFAQ(String text, Source source) {
+		// TODO(Jason): fuzzier match
+		ArrayList<FAQ> faqs = database.getFAQs();
+		for (FAQ faq: faqs) {
+			if (text.equals(faq.question)) {
+				return Collections.singletonList(new TextMessage(faq.answer));
+			}
+		}
+		return null;
 	}
 
-	private boolean tryHandleFAQ(String text, String replyToken) {
-		return false;
+	private List<Message> tryHandleAmountOwed(String text, Source source) {
+		return null;
 	}
 
-	private boolean tryHandleAmountOwed(String text, String replyToken) {
-		return false;
-	}
-
-	private boolean tryHandleBookingRequest(String text, String replyToken) {
-		return false;
-	}
-
-	private boolean tryHandleTourSearch(String text, String replyToken) {
-		// TODO(Jason): match less idiotically, parse parameters
+	private List<Message> tryHandleTourSearch(String text, Source source) {
 		if (text.equals("Which tours are available")) {
-			// TODO(Jason): real search
 			ArrayList<Tour> tours = database.getTours();
 			if (tours.size() == 0) {
-				this.replyText(replyToken, "No tours found");
+				return Collections.singletonList(new TextMessage("No tours found"));
 			} else {
-				String toursString = "";
-				for (Tour tour: tours) {
-					toursString += String.format("%s:\n%s\n\n", tour.name, tour.shortDescription);
+				ArrayList<Message> messages = new ArrayList<>();
+				for (Tour tour : tours) {
+					messages.add(new TextMessage(String.format("%s:\n%s\n\n", tour.name, tour.shortDescription)));
 				}
-				this.replyText(replyToken, toursString);
+				return messages;
 			}
-			return true;
 		}
-		return false;
+		return null;
 	}
 
-	private void handleUnknownQuery(String text, String replyToken) {
-		this.replyText(replyToken, "I don't understand your question, try rephrasing");
-		// TODO: Store question for report
+	private List<Message> tryHandleBookingRequest(String text, Source source) {
+		return null;
+	}
+
+	private List<Message> handleUnknownQuery(String text, Source source) {
+		return Collections.singletonList(new TextMessage("I don't understand your question, try rephrasing"));
 	}
 
 	private void handleTextContent(String replyToken, Event event, TextMessageContent content)
@@ -260,20 +259,20 @@ public class KitchenSinkController {
         log.info("Got text message from {}: {}", replyToken, text);
 
 		@SuppressWarnings("unchecked")
-		BiFunction<String, String, Boolean>[] handleFunctions = new BiFunction[] {
-				(BiFunction<String, String, Boolean>) this::tryHandleGreeting,
-				(BiFunction<String, String, Boolean>) this::tryHandleFAQ,
-				(BiFunction<String, String, Boolean>) this::tryHandleAmountOwed,
-				(BiFunction<String, String, Boolean>) this::tryHandleBookingRequest,
-				(BiFunction<String, String, Boolean>) this::tryHandleTourSearch
+		BiFunction<String, Source, List<Message>>[] handleFunctions = new BiFunction[] {
+				(BiFunction<String, Source, List<Message>>) this::tryHandleFAQ,
+				(BiFunction<String, Source, List<Message>>) this::tryHandleAmountOwed,
+				(BiFunction<String, Source, List<Message>>) this::tryHandleBookingRequest,
+				(BiFunction<String, Source, List<Message>>) this::tryHandleTourSearch,
+				(BiFunction<String, Source, List<Message>>) this::handleUnknownQuery
 		};
-		for (BiFunction<String, String, Boolean> handleFunction: handleFunctions) {
-			if (handleFunction.apply(text, replyToken)) {
-				// handle function matched, exit early
+		for (BiFunction<String, Source, List<Message>> handleFunction: handleFunctions) {
+			List<Message> response = handleFunction.apply(text, event.getSource());
+			if (response != null) {
+				this.reply(replyToken, response);
 				return;
 			}
 		}
-		handleUnknownQuery(text, replyToken);
     }
 
 	static String createUri(String path) {
@@ -335,33 +334,4 @@ public class KitchenSinkController {
 		Path path;
 		String uri;
 	}
-
-
-	//an inner class that gets the user profile and status message
-	class ProfileGetter implements BiConsumer<UserProfileResponse, Throwable> {
-		private KitchenSinkController ksc;
-		private String replyToken;
-		
-		public ProfileGetter(KitchenSinkController ksc, String replyToken) {
-			this.ksc = ksc;
-			this.replyToken = replyToken;
-		}
-		@Override
-    	public void accept(UserProfileResponse profile, Throwable throwable) {
-    		if (throwable != null) {
-            	ksc.replyText(replyToken, throwable.getMessage());
-            	return;
-        	}
-        	ksc.reply(
-                	replyToken,
-                	Arrays.asList(new TextMessage(
-                		"Display name: " + profile.getDisplayName()),
-                              	new TextMessage("Status message: "
-                            		  + profile.getStatusMessage()))
-        	);
-    	}
-    }
-
-
-
 }
