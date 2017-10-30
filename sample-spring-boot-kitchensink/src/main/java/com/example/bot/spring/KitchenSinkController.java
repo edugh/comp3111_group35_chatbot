@@ -238,10 +238,11 @@ public class KitchenSinkController {
 			if (tours.size() == 0) {
 				this.replyText(replyToken, "No tours found");
 			} else {
+				String toursString = "";
 				for (Tour tour: tours) {
-					String tourString = String.format("%s:\n%s\n\n", tour.name, tour.shortDescription);
-					this.replyText(replyToken, tourString);
+					toursString += String.format("%s:\n%s\n\n", tour.name, tour.shortDescription);
 				}
+				this.replyText(replyToken, toursString);
 			}
 			return true;
 		}
