@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+
+import com.example.bot.spring.model.Tour;
 import lombok.extern.slf4j.Slf4j;
 
 ////
@@ -61,7 +63,7 @@ public class DatabaseEngine {
 	private final String FILENAME = "/static/database.txt";
 
 	// TODO(Jason): decide better way to mock requests and use here
-	ArrayList<String> getTours() {
+	ArrayList<Tour> getTours() {
 		return null;
 	}
 }

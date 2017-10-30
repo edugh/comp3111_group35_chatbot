@@ -28,6 +28,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+
+import com.example.bot.spring.model.Tour;
 import com.linecorp.bot.model.profile.UserProfileResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -231,12 +233,14 @@ public class KitchenSinkController {
 	private boolean tryHandleTourSearch(String text, String replyToken) {
 		// TODO(Jason): match less idiotically, parse parameters
 		if (text.equals("Which tours are available")) {
-			ArrayList<String> tours = database.getTours();
+			// TODO(Jason): real search
+			ArrayList<Tour> tours = database.getTours();
 			if (tours.size() == 0) {
 				this.replyText(replyToken, "No tours found");
 			} else {
-				for (String tour: tours) {
-					this.replyText(replyToken, tour);
+				for (Tour tour: tours) {
+					String tourString = String.format("%s:\n%s\n\n", tour.name, tour.shortDescription);
+					this.replyText(replyToken, tourString);
 				}
 			}
 			return true;
@@ -356,7 +360,7 @@ public class KitchenSinkController {
         	);
     	}
     }
-	
-	
+
+
 
 }
