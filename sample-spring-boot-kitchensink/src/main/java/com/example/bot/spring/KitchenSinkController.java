@@ -22,11 +22,9 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -211,53 +209,66 @@ public class KitchenSinkController {
 	/*
 	For now, fall through handle methods until we match then handle directly.
 	This is temporary so we can start working without too many conflicts
-	TODO(Jason/all): When we decide how to handle forking logic replace this, probably a match object
+	TODO(Jason/all): When we decide how to handle forking logic replace this, probably with a match object
 	 */
-	private boolean tryHandleGreeting(String text) {
+	private boolean tryHandleGreeting(String text, String replyToken) {
 		// TODO: handle and return true when query is greeting
 		return false;
 	}
 
-	private boolean tryHandleFAQ(String text) {
+	private boolean tryHandleFAQ(String text, String replyToken) {
 		return false;
 	}
 
-	private boolean tryHandleAmountOwed(String text) {
+	private boolean tryHandleAmountOwed(String text, String replyToken) {
 		return false;
 	}
 
-	private boolean tryHandleBookingRequest(String text) {
+	private boolean tryHandleBookingRequest(String text, String replyToken) {
 		return false;
 	}
 
-	private boolean tryHandleTourSearch(String text) {
+	private boolean tryHandleTourSearch(String text, String replyToken) {
+		// TODO(Jason): match less idiotically, parse parameters
+		if (text.equals("Which tours are available")) {
+			ArrayList<String> tours = database.getTours();
+			if (tours.size() == 0) {
+				this.replyText(replyToken, "No tours found");
+			} else {
+				for (String tour: tours) {
+					this.replyText(replyToken, tour);
+				}
+			}
+			return true;
+		}
 		return false;
 	}
 
-	private void handleUnknownQuery(String text) {
-
+	private void handleUnknownQuery(String text, String replyToken) {
+		this.replyText(replyToken, "I don't understand your question, try rephrasing");
+		// TODO: Store question for report
 	}
 
 	private void handleTextContent(String replyToken, Event event, TextMessageContent content)
             throws Exception {
         String text = content.getText();
-
         log.info("Got text message from {}: {}", replyToken, text);
-		Function<String, Boolean>[] handleFunctions = new Function[] {
-				(Function<String, Boolean>) this::tryHandleGreeting,
-				(Function<String, Boolean>) this::tryHandleFAQ,
-				(Function<String, Boolean>) this::tryHandleAmountOwed,
-				(Function<String, Boolean>) this::tryHandleBookingRequest,
-				(Function<String, Boolean>) this::tryHandleTourSearch
-		};
 
-		for (Function<String, Boolean> handleFunction: handleFunctions) {
-			if (handleFunction.apply(text)) {
+		@SuppressWarnings("unchecked")
+		BiFunction<String, String, Boolean>[] handleFunctions = new BiFunction[] {
+				(BiFunction<String, String, Boolean>) this::tryHandleGreeting,
+				(BiFunction<String, String, Boolean>) this::tryHandleFAQ,
+				(BiFunction<String, String, Boolean>) this::tryHandleAmountOwed,
+				(BiFunction<String, String, Boolean>) this::tryHandleBookingRequest,
+				(BiFunction<String, String, Boolean>) this::tryHandleTourSearch
+		};
+		for (BiFunction<String, String, Boolean> handleFunction: handleFunctions) {
+			if (handleFunction.apply(text, replyToken)) {
 				// handle function matched, exit early
 				return;
 			}
 		}
-		handleUnknownQuery(text);
+		handleUnknownQuery(text, replyToken);
     }
 
 	static String createUri(String path) {
@@ -303,8 +314,6 @@ public class KitchenSinkController {
 
 
 	public KitchenSinkController() {
-		// change for lab3
-		// database = new DatabaseEngine();
 		database = new SQLDatabaseEngine();
 		itscLOGIN = System.getenv("ITSC_LOGIN");
 	}
