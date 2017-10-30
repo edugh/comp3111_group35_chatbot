@@ -1,5 +1,6 @@
 package com.example.bot.spring;
 
+import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Tour;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
@@ -39,7 +40,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		ArrayList<Tour> tours = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
-			PreparedStatement stmt = connection.prepareStatement("SELECT * FROM tourlist;");
+			PreparedStatement stmt = connection.prepareStatement("SELECT tourid, tourname, tourshortdescription, tourlength, tourdeparture, tourprice FROM tourlist;");
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
 				Tour tour = Tour.fromResultSet(resultSet);
@@ -52,6 +53,26 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 			e.printStackTrace();
 		}
 		return tours;
+	}
+
+	@Override
+	ArrayList<FAQ> getFAQs() {
+		ArrayList<FAQ> faqs = new ArrayList<>();
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement("SELECT question, answer FROM faq;");
+			ResultSet resultSet = stmt.executeQuery();
+			while (resultSet.next()) {
+				FAQ faq = FAQ.fromResultSet(resultSet);
+				faqs.add(faq);
+			}
+			resultSet.close();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return faqs;
 	}
 
 	private Connection getConnection() throws URISyntaxException, SQLException {
