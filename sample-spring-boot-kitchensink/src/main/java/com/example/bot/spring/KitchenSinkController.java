@@ -83,6 +83,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.util.function.Function;
 
 @Slf4j
 @LineMessageHandler
@@ -207,70 +208,56 @@ public class KitchenSinkController {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
 	}
 
+	/*
+	For now, fall through handle methods until we match then handle directly.
+	This is temporary so we can start working without too many conflicts
+	TODO(Jason/all): When we decide how to handle forking logic replace this, probably a match object
+	 */
+	private boolean tryHandleGreeting(String text) {
+		// TODO: handle and return true when query is greeting
+		return false;
+	}
+
+	private boolean tryHandleFAQ(String text) {
+		return false;
+	}
+
+	private boolean tryHandleAmountOwed(String text) {
+		return false;
+	}
+
+	private boolean tryHandleBookingRequest(String text) {
+		return false;
+	}
+
+	private boolean tryHandleTourSearch(String text) {
+		return false;
+	}
+
+	private void handleUnknownQuery(String text) {
+
+	}
+
 	private void handleTextContent(String replyToken, Event event, TextMessageContent content)
             throws Exception {
         String text = content.getText();
 
         log.info("Got text message from {}: {}", replyToken, text);
-        switch (text) {
-            case "profile": {
-                String userId = event.getSource().getUserId();
-                if (userId != null) {
-                    lineMessagingClient
-                            .getProfile(userId)
-                            .whenComplete(new ProfileGetter (this, replyToken));
-                } else {
-                    this.replyText(replyToken, "Bot can't use profile API without user ID");
-                }
-                break;
-            }
-            case "confirm": {
-                ConfirmTemplate confirmTemplate = new ConfirmTemplate(
-                        "Do it?",
-                        new MessageAction("Yes", "Yes!"),
-                        new MessageAction("No", "No!")
-                );
-                TemplateMessage templateMessage = new TemplateMessage("Confirm alt text", confirmTemplate);
-                this.reply(replyToken, templateMessage);
-                break;
-            }
-            case "carousel": {
-                String imageUrl = createUri("/static/buttons/1040.jpg");
-                CarouselTemplate carouselTemplate = new CarouselTemplate(
-                        Arrays.asList(
-                                new CarouselColumn(imageUrl, "hoge", "fuga", Arrays.asList(
-                                        new URIAction("Go to line.me",
-                                                      "https://line.me"),
-                                        new PostbackAction("Say hello1",
-                                                           "hello ã�“ã‚“ã�«ã�¡ã�¯")
-                                )),
-                                new CarouselColumn(imageUrl, "hoge", "fuga", Arrays.asList(
-                                        new PostbackAction("è¨€ hello2",
-                                                           "hello ã�“ã‚“ã�«ã�¡ã�¯",
-                                                           "hello ã�“ã‚“ã�«ã�¡ã�¯"),
-                                        new MessageAction("Say message",
-                                                          "Rice=ç±³")
-                                ))
-                        ));
-                TemplateMessage templateMessage = new TemplateMessage("Carousel alt text", carouselTemplate);
-                this.reply(replyToken, templateMessage);
-                break;
-            }
+		Function<String, Boolean>[] handleFunctions = new Function[] {
+				(Function<String, Boolean>) this::tryHandleGreeting,
+				(Function<String, Boolean>) this::tryHandleFAQ,
+				(Function<String, Boolean>) this::tryHandleAmountOwed,
+				(Function<String, Boolean>) this::tryHandleBookingRequest,
+				(Function<String, Boolean>) this::tryHandleTourSearch
+		};
 
-            default:
-            	String reply = null;
-            	try {
-            		reply = database.search(text);
-            	} catch (Exception e) {
-            		reply = text;
-            	}
-                log.info("Returns echo message {}: {}", replyToken, reply);
-                this.replyText(
-                        replyToken,
-                        itscLOGIN + " says " + reply
-                );
-                break;
-        }
+		for (Function<String, Boolean> handleFunction: handleFunctions) {
+			if (handleFunction.apply(text)) {
+				// handle function matched, exit early
+				return;
+			}
+		}
+		handleUnknownQuery(text);
     }
 
 	static String createUri(String path) {
