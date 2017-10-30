@@ -286,7 +286,8 @@ public class KitchenSinkController {
 				(BiFunction<String, Source, List<Message>>) this::tryHandleFAQ,
 				(BiFunction<String, Source, List<Message>>) this::tryHandleAmountOwed,
 				(BiFunction<String, Source, List<Message>>) this::tryHandleBookingRequest,
-				(BiFunction<String, Source, List<Message>>) this::tryHandleTourSearch
+				(BiFunction<String, Source, List<Message>>) this::tryHandleTourSearch,
+				(BiFunction<String, Source, List<Message>>) this::handleUnknownQuery
 		};
 		for (BiFunction<String, Source, List<Message>> handleFunction: handleFunctions) {
 			List<Message> response = handleFunction.apply(text, event.getSource());
