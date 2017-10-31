@@ -1,45 +1,45 @@
 package com.example.bot.spring.model;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.omg.CORBA.PUBLIC_MEMBER;
 
+import com.sun.corba.se.pept.transport.Connection;
 import com.sun.jmx.remote.util.OrderClassLoaders;
 
 public class Order {
 	public final String custID;
-	public final String tourid;
-	public int nAdult;
-	public int nChild;
-	public int nToodler;
-	public double fee;
-	public double paid;
-	public double spclRqst;
+	public final String tourID;
+	public final int nAdult;
+	public final int nChild;
+	public final int nToddler;
+	public final double fee;
+	public final double paid;
+	public final String spclRqst;
 	
-	public Tour tour;
-	
-	public Order(String cid, String tid, int nA=0, int nC=0, int nT=0, double fee=0, double paid=0, String sR=null) {
+	public Order(String cid, String tid, int nA, int nC, int nT, double fee, double paid, String sR=null) {
 		this.custID = cid;
-		this.custID = tid;
+		this.TID = tid;
 		this.nAdult = nA;
 		this.nChild = nC;
-		this.nToodler = nT;
+		this.nToddler = nT;
 		this.fee = fee;
 		this.paid = paid;
 		this.spclRqst = sR;	
-		//TODO: grab tour with slice of tourid(id+date)
-		this.tour = new Tour()
 		
 	}
 	
 	public double calFee() {
 		//Not sure the child price
+		double res = 0;
 		double feeAdult = tour.price;
 		double feeChild = tour.price/2;
 		double feeToodler =0;
-		this.fee = this.nAdult*feeAdult + this.nChild*feeChild + this.nToodler*feeToodler;
-		return fee;
+		//will not change this.fee, invoked when update ordering
+		res = this.nAdult*feeAdult + this.nChild*feeChild + this.nToodler*feeToodler;
+		return res;
 	}
 	
 	 public boolean isFullPaid() {

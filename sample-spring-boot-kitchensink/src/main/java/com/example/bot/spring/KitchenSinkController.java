@@ -162,7 +162,7 @@ public class KitchenSinkController {
 	public void handleFollowEvent(FollowEvent event) {
 		String replyToken = event.getReplyToken();
 		this.replyText(replyToken, "Welcome to COMP3111 Travel. This is Chatbot No.35. What can I do for you?");
-		
+		//this.replyImage(replyToken,url1,url2);
 	}
 
 	@EventMapping

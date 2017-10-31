@@ -8,6 +8,8 @@ import java.io.IOException;
 
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Tour;
+import com.sun.jmx.remote.util.OrderClassLoaders;
+
 import lombok.extern.slf4j.Slf4j;
 
 ////
@@ -70,5 +72,18 @@ public class DatabaseEngine {
 
 	ArrayList<FAQ> getFAQs() {
 		return null;
+	}
+	
+	//TODO(Shuo): update order, customer, tour here
+	Order readOrdering(string cid) {
+		return null;
+	}
+	
+	void updateOrdering(Ordering ordering, String field, String value) {
+		return;
+	}
+	
+	void confirmOrder(Order order) {
+		return;
 	}
 }

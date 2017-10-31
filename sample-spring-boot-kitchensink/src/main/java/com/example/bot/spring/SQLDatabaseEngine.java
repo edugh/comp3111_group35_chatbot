@@ -75,6 +75,72 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		return faqs;
 	}
 
+	
+	
+	//TODO(Shuo): read/write order, customer, tour here
+	@Override
+	Ordering readOrdering(string cid) {
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(
+					"SELECT * FROM orderinglist WHERE custID = " + cid + ";");
+			ResultSet resultSet = stmt.executeQuery();
+			//TODO: construct an ordering
+			
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	@Override
+	void updateOrdering(Ordering ordering, String field, String value) {
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(
+					"UPDATE orderingList SET " + field + " = " + value
+						+ "WHERE custid = " + ordering.cid + ";");
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	void confirmOrder(Order order) {
+		try {
+			Connection connection = this.getConnection();
+			if(order.spclRqst != null) {
+				qString = "INSERT INTO orderlist (custid, tourid, nadult, nchildren, ntoodler, fee, paid, spclrqst) "
+						+ "VALUES(\'" + order.custID + "\',\'" + order.tourID + "\'," + Integer.toString(order.nAdult)
+						+ "," + Integer.toString(order.nChild) + "," + Integer.toString(order.nToddler)
+						+ "," + Double.toString(order.fee) + "," + Double.toString(0) + ",\'" + order.spclRqst + "\');";
+			}
+			else {
+				qString = "INSERT INTO orderlist (custid, tourid, nadult, nchildren, ntoodler, fee, paid) "
+						+ "VALUES(\'" + order.custID + "\',\'" + order.tourID + "\'," + Integer.toString(order.nAdult)
+						+ "," + Integer.toString(order.nChild) + "," + Integer.toString(order.nToddler)
+						+ "," + Double.toString(order.fee) + "," + Double.toString(0) + ");";
+			}
+			PreparedStatement stmt = connection.prepareStatement(qString);
+			stmt.executeQuery();
+			stmt.close();
+			//update tour(whose id with date), have not create table
+			
+			stmt = connection.prepareStatement(qString);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;
 		URI dbUri = new URI(System.getenv("DATABASE_URL"));
