@@ -80,13 +80,35 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
-		return new tag(resultSet.getString(1),
+		return new Tag(resultSet.getString(1),
 				resultSet.getString(2));
 	}
 	
+	void insertTag(String cid, String newTag) {
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(
+					"INSERT INTO Tags(name, customerID) VALUES(\'?\',\'?\')");
+			stmt.setString(2, cid);
+			stmt.setString(1, newTag);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	public static Message messageFromResultSet(ResultSet resultSet)  throws SQLException{
+		Timestamp ts = resultSet.getTimestamp(2);
+				//(Timestamp) resultSet.getObject("created");
+		ZonedDateTime zonedDateTime = 
+		    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC))
+		
+		
 		return new Message(resultSet.getString(1),
-				resultSet.getTimestamp(2),
+				zonedDateTime,
 				resultSet.getString(3));
 	}
 	
