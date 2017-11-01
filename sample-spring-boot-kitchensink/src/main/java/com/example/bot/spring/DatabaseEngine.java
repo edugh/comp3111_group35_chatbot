@@ -1,31 +1,14 @@
 package com.example.bot.spring;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
+import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
-
-////
-// The following code contains a bug in it. You need to fix it in Lab 2 in 
-// order to make it work.
-// After you fix the code, the bot should be able to response based on 
-// database.txt located in 
-// sample-spring-boot-kitchensink/resources/static/database.txt.
-//
-// This file contains a few lines with the format <input>:<output>.
-// The program below wish to perform an exact word match the input text
-// against the <input> against each line. The bot should replys 
-// "XXX says <output>"
-// For instance, if the client sends "abc", the bot should reply 
-// "kevinw says def" 
-// If you registered your ITSC login as kevinw.
-////
 
 @Slf4j
 public class DatabaseEngine {
@@ -67,5 +50,13 @@ public class DatabaseEngine {
 	// TODO(Jason): decide better way to mock requests and use here
 	ArrayList<Plan> getPlans() {
 		return null;
+	}
+
+	ArrayList<Booking> getEnrolledTours(String customerId) {
+		return null;
+	}
+
+	BigDecimal getAmmountOwed(String customerId) {
+		return BigDecimal.ZERO;
 	}
 }
