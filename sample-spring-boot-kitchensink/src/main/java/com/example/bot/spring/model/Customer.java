@@ -9,12 +9,12 @@ public class Customer {
 	public final String state;
 	
 	public Customer(
-			String id;
-			String name;
-			String gender;
-			int age;
-			String phoneNumber;
-			String state;
+			String id,
+			String name,
+			String gender,
+			int age,
+			String phoneNumber,
+			String state
 			) {
 		this.id = id;
 		this.name = name;
