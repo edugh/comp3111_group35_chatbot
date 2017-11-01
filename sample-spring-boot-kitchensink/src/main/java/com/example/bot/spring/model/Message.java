@@ -10,13 +10,12 @@ public class Message {
     
     public Message(
     		String customerId,
-    		Timestamp sendTime,
+    		ZonedDateTime sendTime,
     		String content
     		) {
     	this.customerId = customerId;
     	this.sendTime = sendTime;
     	this.content = content;
-    	
     }
     
 }
