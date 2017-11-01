@@ -25,13 +25,4 @@ public class Plan {
         this.departure = departure;
         this.price = price;
     }
-
-    public static Plan fromResultSet(ResultSet resultSet) throws SQLException {
-        return new Plan(resultSet.getString(1),
-                resultSet.getString(2),
-                resultSet.getString(3),
-                resultSet.getInt(4),
-                resultSet.getString(5),
-                resultSet.getBigDecimal(6));
-    }
 }
