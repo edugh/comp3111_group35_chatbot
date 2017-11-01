@@ -32,6 +32,6 @@ public class Plan {
                 resultSet.getString(3),
                 resultSet.getInt(4),
                 resultSet.getString(5),
-                new BigDecimal(resultSet.getString(6)));
+                resultSet.getBigDecimal(6));
     }
 }

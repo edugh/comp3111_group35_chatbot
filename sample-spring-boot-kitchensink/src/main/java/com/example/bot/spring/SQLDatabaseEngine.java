@@ -1,8 +1,8 @@
 package com.example.bot.spring;
 
-import com.example.bot.spring.model.Tour;
+import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
-import javax.annotation.PostConstruct;
+
 import javax.sql.DataSource;
 import java.sql.*;
 import java.net.URISyntaxException;
@@ -35,15 +35,15 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	@Override
-	ArrayList<Tour> getTours() {
-		ArrayList<Tour> tours = new ArrayList<>();
+	ArrayList<Plan> getTours() {
+		ArrayList<Plan> tours = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement("SELECT * FROM tourlist;");
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
-				Tour tour = Tour.fromResultSet(resultSet);
-				tours.add(tour);
+				Plan plan = Plan.fromResultSet(resultSet);
+				tours.add(plan);
 			}
 			resultSet.close();
 			stmt.close();
