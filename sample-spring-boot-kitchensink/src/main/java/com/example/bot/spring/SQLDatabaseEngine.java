@@ -4,6 +4,11 @@ import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
+import com.example.bot.spring.model.Booking;
+import com.example.bot.spring.model.FAQ;
+import com.example.bot.spring.model.Tour;
+import lombok.extern.slf4j.Slf4j;
+
 import java.sql.*;
 import java.net.URISyntaxException;
 import java.net.URI;
@@ -51,6 +56,24 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 			e.printStackTrace();
 		}
 		return plans;
+	}
+
+	public static FAQ faqFromResultSet(ResultSet resultSet) throws SQLException {
+		return new FAQ(resultSet.getString(1),
+				resultSet.getString(2));
+	}
+
+	public static Booking bookingFromResultSet(ResultSet resultSet) throws SQLException {
+		return new Booking(resultSet.getString(1),
+				resultSet.getString(2),
+				resultSet.getString(2),
+				resultSet.getInt(2),
+				resultSet.getInt(2),
+				resultSet.getInt(2),
+				resultSet.getBigDecimal(2),
+				resultSet.getBigDecimal(2),
+				resultSet.getString(2),
+				resultSet.getString(2));
 	}
 
 	private Connection getConnection() throws URISyntaxException, SQLException {
