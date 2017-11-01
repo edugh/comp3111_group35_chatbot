@@ -3,7 +3,6 @@ package com.example.bot.spring;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Tour;
-import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
 
 import lombok.extern.slf4j.Slf4j;
 
