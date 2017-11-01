@@ -54,6 +54,12 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		return getResultsForQuery(query, SQLDatabaseEngine::planFromResultSet);
 	}
 
+	@Override
+	ArrayList<FAQ> getFAQs() {
+		String query = "SELECT question, answer FROM faq;";
+		return getResultsForQuery(query, SQLDatabaseEngine::faqFromResultSet);
+	}
+
 	@FunctionalInterface
 	public interface SQLModelReader<T> {
 		T apply(ResultSet t) throws SQLException;
@@ -85,14 +91,14 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public static Booking bookingFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Booking(resultSet.getString(1),
 				resultSet.getString(2),
-				resultSet.getString(2),
-				resultSet.getInt(2),
-				resultSet.getInt(2),
-				resultSet.getInt(2),
-				resultSet.getBigDecimal(2),
-				resultSet.getBigDecimal(2),
-				resultSet.getString(2),
-				resultSet.getString(2));
+				resultSet.getString(3),
+				resultSet.getInt(4),
+				resultSet.getInt(5),
+				resultSet.getInt(6),
+				resultSet.getBigDecimal(7),
+				resultSet.getBigDecimal(8),
+				resultSet.getString(9),
+				resultSet.getString(10));
 	}
 
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
