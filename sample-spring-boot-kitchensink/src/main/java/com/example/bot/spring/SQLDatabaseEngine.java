@@ -78,12 +78,29 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	
 	
 	//TODO(Shuo): read/write order, customer, tour here
+	
 	@Override
-	Ordering readOrdering(string cid) {
+	void newOrdering(String cid) {
 		try {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(
-					"SELECT * FROM orderinglist WHERE custID = " + cid + ";");
+					"INSERT INTO orderinglist(custID) VALUES(\'" + cid + "\');");
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return;
+	}
+	
+	
+	@Override
+	Ordering readOrdering(String cid) {
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(
+					"SELECT * FROM orderinglist WHERE custID = \'" + cid + "\';");
 			ResultSet resultSet = stmt.executeQuery();
 			//TODO: construct an ordering
 			
@@ -101,7 +118,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(
 					"UPDATE orderingList SET " + field + " = " + value
-						+ "WHERE custid = " + ordering.cid + ";");
+						+ "WHERE custid = \'" + ordering.cid + "\';");
 			stmt.executeQuery();
 			stmt.close();
 			connection.close();

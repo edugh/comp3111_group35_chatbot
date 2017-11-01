@@ -75,7 +75,11 @@ public class DatabaseEngine {
 	}
 	
 	//TODO(Shuo): update order, customer, tour here
-	Order readOrdering(string cid) {
+	void newOrdering(String cid) {
+		return;
+	}
+	
+	Order readOrdering(String cid) {
 		return null;
 	}
 	
