@@ -65,17 +65,7 @@ public class DatabaseEngine {
 	private final String FILENAME = "/static/database.txt";
 
 	// TODO(Jason): decide better way to mock requests and use here
-	ArrayList<Plan> getTours() {
+	ArrayList<Plan> getPlans() {
 		return null;
-	}
-
-	public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
-		return new Plan(resultSet.getString(1),
-			resultSet.getString(2),
-			resultSet.getString(3),
-			resultSet.getInt(4),
-			resultSet.getString(5),
-			resultSet.getBigDecimal(6)
-		);
 	}
 }

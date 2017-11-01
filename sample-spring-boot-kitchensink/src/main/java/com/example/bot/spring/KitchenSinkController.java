@@ -25,8 +25,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
 import com.example.bot.spring.model.Plan;
@@ -65,9 +63,6 @@ import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-
-import java.net.URI;
-import java.util.function.Function;
 
 @Slf4j
 @LineMessageHandler
@@ -218,13 +213,13 @@ public class KitchenSinkController {
 		// TODO(Jason): match less idiotically, parse parameters
 		if (text.equals("Which tours are available")) {
 			// TODO(Jason): real search
-			ArrayList<Plan> tours = database.getTours();
-			if (tours.size() == 0) {
+			ArrayList<Plan> plans = database.getPlans();
+			if (plans.size() == 0) {
 				this.replyText(replyToken, "No tours found");
 			} else {
-				for (Plan plan : tours) {
-					String tourString = String.format("%s:\n%s\n\n", plan.name, plan.shortDescription);
-					this.replyText(replyToken, tourString);
+				for (Plan plan : plans) {
+					String planString = String.format("%s:\n%s\n\n", plan.name, plan.shortDescription);
+					this.replyText(replyToken, planString);
 				}
 			}
 			return true;

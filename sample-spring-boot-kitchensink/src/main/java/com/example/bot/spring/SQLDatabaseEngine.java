@@ -35,15 +35,14 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	@Override
-	ArrayList<Plan> getTours() {
-		ArrayList<Plan> tours = new ArrayList<>();
+	ArrayList<Plan> getPlans() {
+		ArrayList<Plan> plans = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
-			PreparedStatement stmt = connection.prepareStatement("SELECT * FROM tourlist;");
+			PreparedStatement stmt = connection.prepareStatement("SELECT * FROM Plans;");
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
-				Plan plan = Plan.fromResultSet(resultSet);
-				tours.add(plan);
+				plans.add(planFromResultSet(resultSet));
 			}
 			resultSet.close();
 			stmt.close();
@@ -51,7 +50,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return tours;
+		return plans;
 	}
 
 	private Connection getConnection() throws URISyntaxException, SQLException {
@@ -69,6 +68,16 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		connection = DriverManager.getConnection(dbUrl, username, password);
 
 		return connection;
+	}
+
+	public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
+		return new Plan(resultSet.getString(1),
+				resultSet.getString(2),
+				resultSet.getString(3),
+				resultSet.getInt(4),
+				resultSet.getString(5),
+				resultSet.getBigDecimal(6)
+		);
 	}
 
 }
