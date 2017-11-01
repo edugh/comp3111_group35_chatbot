@@ -1,9 +1,12 @@
 package com.example.bot.spring;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+
+import com.example.bot.spring.model.Tour;
 import lombok.extern.slf4j.Slf4j;
 
 ////
@@ -33,7 +36,7 @@ public class DatabaseEngine {
                     this.getClass().getResourceAsStream(FILENAME));
 			br = new BufferedReader(isr);
 			String sCurrentLine;
-			
+
 			while (result == null && (sCurrentLine = br.readLine()) != null) {
 				String[] parts = sCurrentLine.split(":");
 				if (text.toLowerCase().equals(parts[0].toLowerCase())) {
@@ -59,4 +62,8 @@ public class DatabaseEngine {
 	
 	private final String FILENAME = "/static/database.txt";
 
+	// TODO(Jason): decide better way to mock requests and use here
+	ArrayList<Tour> getTours() {
+		return null;
+	}
 }

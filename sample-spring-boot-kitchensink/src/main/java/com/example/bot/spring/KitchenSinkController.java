@@ -22,14 +22,14 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+
+import com.example.bot.spring.model.Tour;
 import com.linecorp.bot.model.profile.UserProfileResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +83,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.util.function.Function;
 
 @Slf4j
 @LineMessageHandler
@@ -207,70 +208,71 @@ public class KitchenSinkController {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
 	}
 
+	/*
+	For now, fall through handle methods until we match then handle directly.
+	This is temporary so we can start working without too many conflicts
+	TODO(Jason/all): When we decide how to handle forking logic replace this, probably with a match object
+	 */
+	private boolean tryHandleGreeting(String text, String replyToken) {
+		// TODO: handle and return true when query is greeting
+		return false;
+	}
+
+	private boolean tryHandleFAQ(String text, String replyToken) {
+		return false;
+	}
+
+	private boolean tryHandleAmountOwed(String text, String replyToken) {
+		return false;
+	}
+
+	private boolean tryHandleBookingRequest(String text, String replyToken) {
+		return false;
+	}
+
+	private boolean tryHandleTourSearch(String text, String replyToken) {
+		// TODO(Jason): match less idiotically, parse parameters
+		if (text.equals("Which tours are available")) {
+			// TODO(Jason): real search
+			ArrayList<Tour> tours = database.getTours();
+			if (tours.size() == 0) {
+				this.replyText(replyToken, "No tours found");
+			} else {
+				for (Tour tour: tours) {
+					String tourString = String.format("%s:\n%s\n\n", tour.name, tour.shortDescription);
+					this.replyText(replyToken, tourString);
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private void handleUnknownQuery(String text, String replyToken) {
+		this.replyText(replyToken, "I don't understand your question, try rephrasing");
+		// TODO: Store question for report
+	}
+
 	private void handleTextContent(String replyToken, Event event, TextMessageContent content)
             throws Exception {
         String text = content.getText();
-
         log.info("Got text message from {}: {}", replyToken, text);
-        switch (text) {
-            case "profile": {
-                String userId = event.getSource().getUserId();
-                if (userId != null) {
-                    lineMessagingClient
-                            .getProfile(userId)
-                            .whenComplete(new ProfileGetter (this, replyToken));
-                } else {
-                    this.replyText(replyToken, "Bot can't use profile API without user ID");
-                }
-                break;
-            }
-            case "confirm": {
-                ConfirmTemplate confirmTemplate = new ConfirmTemplate(
-                        "Do it?",
-                        new MessageAction("Yes", "Yes!"),
-                        new MessageAction("No", "No!")
-                );
-                TemplateMessage templateMessage = new TemplateMessage("Confirm alt text", confirmTemplate);
-                this.reply(replyToken, templateMessage);
-                break;
-            }
-            case "carousel": {
-                String imageUrl = createUri("/static/buttons/1040.jpg");
-                CarouselTemplate carouselTemplate = new CarouselTemplate(
-                        Arrays.asList(
-                                new CarouselColumn(imageUrl, "hoge", "fuga", Arrays.asList(
-                                        new URIAction("Go to line.me",
-                                                      "https://line.me"),
-                                        new PostbackAction("Say hello1",
-                                                           "hello ã�“ã‚“ã�«ã�¡ã�¯")
-                                )),
-                                new CarouselColumn(imageUrl, "hoge", "fuga", Arrays.asList(
-                                        new PostbackAction("è¨€ hello2",
-                                                           "hello ã�“ã‚“ã�«ã�¡ã�¯",
-                                                           "hello ã�“ã‚“ã�«ã�¡ã�¯"),
-                                        new MessageAction("Say message",
-                                                          "Rice=ç±³")
-                                ))
-                        ));
-                TemplateMessage templateMessage = new TemplateMessage("Carousel alt text", carouselTemplate);
-                this.reply(replyToken, templateMessage);
-                break;
-            }
 
-            default:
-            	String reply = null;
-            	try {
-            		reply = database.search(text);
-            	} catch (Exception e) {
-            		reply = text;
-            	}
-                log.info("Returns echo message {}: {}", replyToken, reply);
-                this.replyText(
-                        replyToken,
-                        itscLOGIN + " says " + reply
-                );
-                break;
-        }
+		@SuppressWarnings("unchecked")
+		BiFunction<String, String, Boolean>[] handleFunctions = new BiFunction[] {
+				(BiFunction<String, String, Boolean>) this::tryHandleGreeting,
+				(BiFunction<String, String, Boolean>) this::tryHandleFAQ,
+				(BiFunction<String, String, Boolean>) this::tryHandleAmountOwed,
+				(BiFunction<String, String, Boolean>) this::tryHandleBookingRequest,
+				(BiFunction<String, String, Boolean>) this::tryHandleTourSearch
+		};
+		for (BiFunction<String, String, Boolean> handleFunction: handleFunctions) {
+			if (handleFunction.apply(text, replyToken)) {
+				// handle function matched, exit early
+				return;
+			}
+		}
+		handleUnknownQuery(text, replyToken);
     }
 
 	static String createUri(String path) {
@@ -316,8 +318,6 @@ public class KitchenSinkController {
 
 
 	public KitchenSinkController() {
-		// change for lab3
-		// database = new DatabaseEngine();
 		database = new SQLDatabaseEngine();
 		itscLOGIN = System.getenv("ITSC_LOGIN");
 	}
@@ -360,7 +360,7 @@ public class KitchenSinkController {
         	);
     	}
     }
-	
-	
+
+
 
 }
