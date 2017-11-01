@@ -120,8 +120,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		Timestamp ts = resultSet.getTimestamp(2);
 				//(Timestamp) resultSet.getObject("created");
 		ZonedDateTime zonedDateTime = 
-		    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC))
-		
+		    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
 		
 		return new Message(resultSet.getString(1),
 				zonedDateTime,
