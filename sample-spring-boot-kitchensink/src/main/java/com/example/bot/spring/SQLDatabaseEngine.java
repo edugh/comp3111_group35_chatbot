@@ -1,9 +1,13 @@
 package com.example.bot.spring;
 
+import com.example.bot.spring.model.Plan;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.sql.DataSource;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
-import com.example.bot.spring.model.Tour;
 
+import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
@@ -39,15 +43,14 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	@Override
-	ArrayList<Tour> getTours() {
-		ArrayList<Tour> tours = new ArrayList<>();
+	ArrayList<Plan> getPlans() {
+		ArrayList<Plan> plans = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
-			PreparedStatement stmt = connection.prepareStatement("SELECT * FROM tourlist;");
+			PreparedStatement stmt = connection.prepareStatement("SELECT * FROM Plans;");
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
-				Tour tour = Tour.fromResultSet(resultSet);
-				tours.add(tour);
+				plans.add(planFromResultSet(resultSet));
 			}
 			resultSet.close();
 			stmt.close();
@@ -55,7 +58,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return tours;
+		return plans;
 	}
 
 	public static FAQ faqFromResultSet(ResultSet resultSet) throws SQLException {
@@ -111,6 +114,16 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		connection = DriverManager.getConnection(dbUrl, username, password);
 
 		return connection;
+	}
+
+	public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
+		return new Plan(resultSet.getString(1),
+				resultSet.getString(2),
+				resultSet.getString(3),
+				resultSet.getInt(4),
+				resultSet.getString(5),
+				resultSet.getBigDecimal(6)
+		);
 	}
 
 }
