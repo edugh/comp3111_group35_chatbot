@@ -1,7 +1,5 @@
 package com.example.bot.spring.model;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.math.BigDecimal;
 
 public class Plan {

@@ -103,4 +103,16 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		);
 	}
 
+	public static Tour tourFromResultSet(ResultSet resultSet) throws SQLException {
+		return new Tour(
+			resultSet.getString(1),
+			resultSet.getString(2),
+			resultSet.getString(3),
+			resultSet.getString(4),
+			resultSet.getString(5),
+			resultSet.getInt(6),
+			resultSet.getInt(7)
+		);
+	}
+
 }
