@@ -79,6 +79,7 @@ import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.model.response.BotApiResponse;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+import com.sun.jmx.remote.util.OrderClassLoaders;
 import com.sun.prism.Image;
 
 import lombok.NonNull;
@@ -160,9 +161,16 @@ public class KitchenSinkController {
 
 	@EventMapping
 	public void handleFollowEvent(FollowEvent event) {
+		database.newCostomer(event.getSource().getUserId());
 		String replyToken = event.getReplyToken();
-		this.replyText(replyToken, "Welcome to COMP3111 Travel. This is Chatbot No.35. What can I do for you?");
+		this.replyText(replyToken,
+				"Welcome to COMP3111 Travel. This is Chatbot No.35. What can I do for you?"
+				+ "\n" + database.promoteTour());
 		//this.replyImage(replyToken,url1,url2);
+		//List<com.sun.xml.internal.ws.wsdl.writer.document.Message> msgList= new List<Message>();
+		//msgList.add(TextMessage("Welcome to COMP3111 Travel. This is Chatbot No.35. What can I do for you?"));
+		//msgList.add(TextMessage(database.promoteTour()));
+		//this.reply(replyToken, msgList);
 	}
 
 	@EventMapping
@@ -276,10 +284,33 @@ public class KitchenSinkController {
 		return Collections.singletonList(new TextMessage("I don't understand your question, try rephrasing"));
 	}
 
-	private void handleTextContent(String replyToken, Event event, TextMessageContent content)
+	private void handleTextContent(String replyToken, javafx.event.Event event, TextMessageContent content)
             throws Exception {
         String text = content.getText();
+        String cid = event.getSource().getUserId();
         log.info("Got text message from {}: {}", replyToken, text);
+        Ordering ordering = database.readOrdering(cid);
+        if(ordering == null) {
+        	//cust has ever ordered
+        	//judge if book another trip -> newOrdering
+        	//else -> answer questions
+
+        else {
+        	//-> check state
+        	//-> judge if the answer is to the question
+        	//-> update something
+        	switch(ordering.state()) {
+	        	case "new":{
+	        		
+	        		break;
+	        	}
+	        	default:{
+	        		
+	        		break;
+	        	}
+        	}
+        }
+        
 
 		@SuppressWarnings("unchecked")
 		BiFunction<String, Source, List<Message>>[] handleFunctions = new BiFunction[] {

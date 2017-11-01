@@ -9,17 +9,12 @@ import org.omg.CORBA.PUBLIC_MEMBER;
 import com.sun.corba.se.pept.transport.Connection;
 import com.sun.jmx.remote.util.OrderClassLoaders;
 
-public class Order {
-	public final String custID;
-	public final String tourID;
-	public final int nAdult;
-	public final int nChild;
-	public final int nToddler;
+public class Order extends Ordering{
 	public final double fee;
 	public final double paid;
-	public final String spclRqst;
 	
-	public Order(String cid, String tid, int nA, int nC, int nT, double fee, double paid, String sR=null) {
+	public Order(String cid, String tid, int nA, int nC, int nT,
+			double fee, double paid, String state="ordered", String sR=null) {
 		this.custID = cid;
 		this.TID = tid;
 		this.nAdult = nA;
@@ -27,19 +22,9 @@ public class Order {
 		this.nToddler = nT;
 		this.fee = fee;
 		this.paid = paid;
+		this.state = state;
 		this.spclRqst = sR;	
 		
-	}
-	
-	public double calFee() {
-		//Not sure the child price
-		double res = 0;
-		double feeAdult = tour.price;
-		double feeChild = tour.price/2;
-		double feeToodler =0;
-		//will not change this.fee, invoked when update ordering
-		res = this.nAdult*feeAdult + this.nChild*feeChild + this.nToodler*feeToodler;
-		return res;
 	}
 	
 	 public boolean isFullPaid() {
@@ -48,8 +33,5 @@ public class Order {
 		 else
 			 return false;
 	 }
-	
-	
-	
 	
 }

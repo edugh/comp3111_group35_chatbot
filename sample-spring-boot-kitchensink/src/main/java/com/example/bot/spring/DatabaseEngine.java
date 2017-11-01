@@ -83,11 +83,27 @@ public class DatabaseEngine {
 		return null;
 	}
 	
-	void updateOrdering(Ordering ordering, String field, String value) {
+	void updateOrdering(Ordering ordering, String field, String value, String state) {
+		return;
+	}
+	
+	void updateOrdering(Ordering ordering, String field, int value, double price, String state) {
 		return;
 	}
 	
 	void confirmOrder(Order order) {
+		return;
+	}
+	
+	void newCustomer(String cid) {
+		return;
+	}
+	
+	Customer readCustomer(String cid) {
+		return null;
+	}
+	
+	void updateCustomer(String cid) {
 		return;
 	}
 }
