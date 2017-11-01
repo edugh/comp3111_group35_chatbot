@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.sql.DataSource;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
+
 import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,6 +14,8 @@ import java.sql.*;
 import java.net.URISyntaxException;
 import java.net.URI;
 import java.util.ArrayList;
+
+import javax.swing.text.html.HTML.Tag;
 
 @Slf4j
 public class SQLDatabaseEngine extends DatabaseEngine {
@@ -76,6 +79,26 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				resultSet.getString(2));
 	}
 
+	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
+		return new tag(resultSet.getString(1),
+				resultSet.getString(2));
+	}
+	
+	public static Message messageFromResultSet(ResultSet resultSet)  throws SQLException{
+		return new Message(resultSet.getString(1),
+				resultSet.getTimestamp(2),
+				resultSet.getString(3));
+	}
+	
+	public static Customer customerFromResultSet(ResultSet resultSet)  throws SQLException{
+		return new Customer(resultSet.getString(1),
+				resultSet.getString(2),
+				resultSet.getString(3),
+				resultSet.getInt(4),
+				resultSet.getString(5),
+				resultSet.getString(6));
+	}
+	
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;
 		URI dbUri = new URI(System.getenv("DATABASE_URL"));
