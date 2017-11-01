@@ -16,6 +16,7 @@
 
 package com.example.bot.spring;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -78,13 +79,19 @@ import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.model.response.BotApiResponse;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+import com.sun.jmx.remote.util.OrderClassLoaders;
+import com.sun.prism.Image;
 
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.function.Function;
+
+import javax.imageio.ImageIO;
 
 @Slf4j
 @LineMessageHandler
@@ -140,7 +147,7 @@ public class KitchenSinkController {
 		try {
 			response = lineMessagingClient.getMessageContent(messageId).get();
 		} catch (InterruptedException | ExecutionException e) {
-			reply(replyToken, new TextMessage("Cannot get image: " + e.getMessage()));
+			reply(replyToken, new TextMessage("Cannot get audio: " + e.getMessage()));
 			throw new RuntimeException(e);
 		}
 		DownloadedContent mp4 = saveContent("mp4", response);
@@ -154,8 +161,16 @@ public class KitchenSinkController {
 
 	@EventMapping
 	public void handleFollowEvent(FollowEvent event) {
+		database.newCostomer(event.getSource().getUserId());
 		String replyToken = event.getReplyToken();
-		this.replyText(replyToken, "Got followed event");
+		this.replyText(replyToken,
+				"Welcome to COMP3111 Travel. This is Chatbot No.35. What can I do for you?"
+				+ "\n" + database.promoteTour());
+		//this.replyImage(replyToken,url1,url2);
+		//List<com.sun.xml.internal.ws.wsdl.writer.document.Message> msgList= new List<Message>();
+		//msgList.add(TextMessage("Welcome to COMP3111 Travel. This is Chatbot No.35. What can I do for you?"));
+		//msgList.add(TextMessage(database.promoteTour()));
+		//this.reply(replyToken, msgList);
 	}
 
 	@EventMapping
@@ -203,7 +218,23 @@ public class KitchenSinkController {
 		}
 		this.reply(replyToken, new TextMessage(message));
 	}
-
+	
+	private void replyImage(@NonNull String replyToken, @NonNull String urlOriginal, @NonNull String urlPrview) {
+		if (replyToken.isEmpty()) {
+			throw new IllegalArgumentException("replyToken must not be empty");
+		}
+		URL urlOri = new URL(urlOriginal);
+		URL urlPre = new URL(urlPrview)
+		URLConnection connectionOri = urlOri.openConnection();
+		URLConnection connectionPre = urlPre.openConnection();
+		BufferedImage imgOri = ImageIO.read(connectionOri.getInputStream());
+		BufferedImage imgPre = ImageIO.read(connectionPre.getInputStream());
+		if (imgOri.getWidth()>1024 || imgOri.getHeight()>1024
+				|| imgPre.getWidth()>240 || imgPre.getHeight()>240) { 
+			throw new IllegalArgumentException("image too big");
+		}
+		this.reply(replyToken, new ImageMessage(urlOriginal, urlPrview));
+	}
 
 	private void handleSticker(String replyToken, StickerMessageContent content) {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
@@ -253,10 +284,33 @@ public class KitchenSinkController {
 		return Collections.singletonList(new TextMessage("I don't understand your question, try rephrasing"));
 	}
 
-	private void handleTextContent(String replyToken, Event event, TextMessageContent content)
+	private void handleTextContent(String replyToken, javafx.event.Event event, TextMessageContent content)
             throws Exception {
         String text = content.getText();
+        String cid = event.getSource().getUserId();
         log.info("Got text message from {}: {}", replyToken, text);
+        Ordering ordering = database.readOrdering(cid);
+        if(ordering == null) {
+        	//cust has ever ordered
+        	//judge if book another trip -> newOrdering
+        	//else -> answer questions
+
+        else {
+        	//-> check state
+        	//-> judge if the answer is to the question
+        	//-> update something
+        	switch(ordering.state()) {
+	        	case "new":{
+	        		
+	        		break;
+	        	}
+	        	default:{
+	        		
+	        		break;
+	        	}
+        	}
+        }
+        
 
 		@SuppressWarnings("unchecked")
 		BiFunction<String, Source, List<Message>>[] handleFunctions = new BiFunction[] {
