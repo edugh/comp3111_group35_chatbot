@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 
 import com.example.bot.spring.model.Booking;
+import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,6 +50,10 @@ public class DatabaseEngine {
 
 	// TODO(Jason): decide better way to mock requests and use here
 	ArrayList<Plan> getPlans() {
+		return null;
+	}
+
+	ArrayList<FAQ> getFAQs() {
 		return null;
 	}
 
