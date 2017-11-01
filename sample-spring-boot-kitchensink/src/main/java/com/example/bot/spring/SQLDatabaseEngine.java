@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.sql.DataSource;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
-import com.example.bot.spring.model.Tour;
+import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
