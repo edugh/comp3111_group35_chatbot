@@ -10,6 +10,7 @@ import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.Customer;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
+import com.example.bot.spring.model.Tour;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -78,5 +79,6 @@ public class DatabaseEngine {
     public void updateBooking(String cid, String pid, String date, String field, String value){ }
     public void updateBooking(String cid, String pid, String date, String field, int value){ }
 
+    public Tour getTour(String pid, String date){ return null;}
 
 }

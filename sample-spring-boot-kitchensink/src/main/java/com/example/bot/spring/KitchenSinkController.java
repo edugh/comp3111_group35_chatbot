@@ -30,6 +30,7 @@ import java.util.function.BiConsumer;
 import com.example.bot.spring.model.Customer;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
+import com.example.bot.spring.model.Tour;
 import com.linecorp.bot.model.event.source.Source;
 import com.linecorp.bot.model.profile.UserProfileResponse;
 
@@ -226,9 +227,10 @@ public class KitchenSinkController {
         List<Message> msgList= new ArrayList<>();
         String pid = null; //TODO
         String date = null; //TODO
+        Tour tour = null; //TODO
         switch (customer.state){
             case "new":
-                //TODO: gathering customer info...
+
 
             case "reqName":
                 database.updateCustomer(cid, "name", filterString(text));
@@ -266,6 +268,11 @@ public class KitchenSinkController {
                 }
             case "reqDate":
                 pid = null; //TODO
+                tour = database.getTour(pid, getDateFromText(text));
+                if(tour.ifFullBooked()){
+                    msgList.add(new TextMessage("Sorry it is full-booked that day. What about other trips or departure date?"));
+                    // database.updateCustomerState(cid, "changeDateOrPlan");
+                }
                 database.updateBookingDate(cid, pid, getDateFromText(text));
                 msgList.add(new TextMessage("How many adults(Age>11) are planning to go?"));
                 database.updateCustomerState(cid, "reqNAdult");
@@ -322,8 +329,8 @@ public class KitchenSinkController {
     }
 
     public int getIntFromText(String answer){
-        //TODO:
-        return 1;
+        //TODO: filterString
+        return Integer.parseInt(answer);
     }
 
     public String filterString(String answer){

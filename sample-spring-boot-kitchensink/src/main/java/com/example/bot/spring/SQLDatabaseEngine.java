@@ -246,9 +246,15 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				resultSet.getString(4),
 				resultSet.getString(5),
 				resultSet.getInt(6),
-				resultSet.getInt(7)
+				resultSet.getInt(7),
+                resultSet.getInt(8)
+
 		);
 	}
+
+	//TODO:
+	@Override
+    public Tour getTour(String pid, String date){ return null;}
 
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;
