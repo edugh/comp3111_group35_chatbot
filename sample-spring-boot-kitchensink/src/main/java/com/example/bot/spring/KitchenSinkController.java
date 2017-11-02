@@ -191,16 +191,25 @@ public class KitchenSinkController {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
 	}
 
+	// TODO: Should we use some service like wit.ai for our milestone 3?
+	// or at least a better matching thing...
+	private boolean stupidFuzzyMatch(String question, String text) {
+		Set<String> targets = new HashSet<>(Arrays.asList(question.split(" ")));
+		String[] text_words = text.split(" ");
+		double num_words = (targets.size() + text_words.length) / 2.;
+		double matches = Arrays.stream(text_words).mapToInt(text_word -> targets.contains(text_word)? 1:0).sum();
+		return (matches / num_words) > 0.5;
+	}
+
 	/*
 	For now, fall through handle methods until we match then handle directly.
 	This is temporary so we can start working without too many conflicts
 	TODO(Jason/all): When we decide how to handle forking logic replace this, probably with a match object
 	 */
 	private List<Message> tryHandleFAQ(String text, Source source) {
-		// TODO(Jason): fuzzier match
 		ArrayList<FAQ> faqs = database.getFAQs();
 		for (FAQ faq: faqs) {
-			if (text.equals(faq.question)) {
+			if (stupidFuzzyMatch(faq.question, text)) {
 				return Collections.singletonList(new TextMessage(faq.answer));
 			}
 		}
@@ -217,7 +226,7 @@ public class KitchenSinkController {
 
 	private List<Message> tryHandleTourSearch(String text, Source source) {
 		// TODO(Jason): match less idiotically, parse parameters
-		if (text.equals("Which tours are available")) {
+		if (stupidFuzzyMatch("Which tours are available", text)) {
 			// TODO(Jason): real search
 			ArrayList<Plan> plans = database.getPlans();
 			if (plans.size() == 0) {
