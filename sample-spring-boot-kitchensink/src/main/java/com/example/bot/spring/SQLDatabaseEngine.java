@@ -235,7 +235,8 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				resultSet.getString(3),
 				resultSet.getInt(4),
 				resultSet.getString(5),
-				resultSet.getBigDecimal(6));
+				resultSet.getBigDecimal(6),
+                resultSet.getBigDecimal(7));
 	}
 
 	public static Tour tourFromResultSet(ResultSet resultSet) throws SQLException {
