@@ -120,7 +120,7 @@ public class KitchenSinkController {
 		try {
 			response = lineMessagingClient.getMessageContent(messageId).get();
 		} catch (InterruptedException | ExecutionException e) {
-			reply(replyToken, new TextMessage("Cannot get image: " + e.getMessage()));
+			reply(replyToken, new TextMessage("Cannot get audio: " + e.getMessage()));
 			throw new RuntimeException(e);
 		}
 		DownloadedContent mp4 = saveContent("mp4", response);
@@ -135,7 +135,9 @@ public class KitchenSinkController {
 	@EventMapping
 	public void handleFollowEvent(FollowEvent event) {
 		String replyToken = event.getReplyToken();
-		this.replyText(replyToken, "Got followed event");
+		this.replyText(replyToken, "Welcome. This is travel chatbot No.35. What can I do for you?");
+		//create customer
+		//send promotion
 	}
 
 	@EventMapping

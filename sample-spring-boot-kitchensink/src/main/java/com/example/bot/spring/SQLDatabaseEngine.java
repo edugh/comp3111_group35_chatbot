@@ -108,13 +108,13 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				resultSet.getString(2));
 	}
 	
-	void insertTag(String cid, String newTag) {
+	void insertTag(Tag tag) {
 		try {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(
 					"INSERT INTO Tags(name, customerID) VALUES(?,?)");
-			stmt.setString(2, cid);
-			stmt.setString(1, newTag);
+			stmt.setString(2, tag.customerId);
+			stmt.setString(1, tag.name);
 			stmt.executeQuery();
 			stmt.close();
 			connection.close();
@@ -124,17 +124,35 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 	
 	
-	public static Message messageFromResultSet(ResultSet resultSet)  throws SQLException{
+	public static Dialogue dialogueFromResultSet(ResultSet resultSet) throws SQLException{
 		Timestamp ts = resultSet.getTimestamp(2);
 				//(Timestamp) resultSet.getObject("created");
 		ZonedDateTime zonedDateTime =
 		    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
-		return new Message(resultSet.getString(1),
+		return new Dialogue(resultSet.getString(1),
 				zonedDateTime,
 				resultSet.getString(3));
 	}
+
+	public void insertDialogue(Dialogue dlg) throws SQLException{
+		Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
+        try {
+            Connection connection = this.getConnection();
+            PreparedStatement stmt = connection.prepareStatement(
+                    "INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
+            stmt.setString(3, dlg.content);
+            stmt.setTimestamp(2, ts);
+            stmt.setString(1, dlg.customerId);
+            stmt.executeQuery();
+            stmt.close();
+            connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+	}
+
 	
-	public static Customer customerFromResultSet(ResultSet resultSet)  throws SQLException{
+	public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException{
 		return new Customer(resultSet.getString(1),
 				resultSet.getString(2),
 				resultSet.getString(3),
