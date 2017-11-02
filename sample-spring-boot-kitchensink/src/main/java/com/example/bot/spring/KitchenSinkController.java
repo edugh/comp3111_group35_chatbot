@@ -135,9 +135,16 @@ public class KitchenSinkController {
 	@EventMapping
 	public void handleFollowEvent(FollowEvent event) {
 		String replyToken = event.getReplyToken();
-		this.replyText(replyToken, "Welcome. This is travel chatbot No.35. What can I do for you?");
-		//create customer
-		//send promotion
+		String cid = event.getSource().getUserId();
+//		this.replyText(replyToken, "Welcome. This is travel chatbot No.35. What can I do for you?");
+		if(database.getCustomer(cid)==null){
+		    database.insertCustomer((cid));
+        }
+		List<Message> msgList = new ArrayList<>();
+		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"));
+        //msgList.add(new ImageMessage(url1, url2));
+        msgList.add(new TextMessage("We don't have promotion image..."));
+        reply(replyToken, msgList);
 	}
 
 	@EventMapping

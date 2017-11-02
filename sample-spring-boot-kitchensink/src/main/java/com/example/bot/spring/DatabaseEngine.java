@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 
 import com.example.bot.spring.model.Booking;
+import com.example.bot.spring.model.Customer;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
 import lombok.extern.slf4j.Slf4j;
@@ -64,4 +65,11 @@ public class DatabaseEngine {
 	BigDecimal getAmmountOwed(String customerId) {
 		return BigDecimal.ZERO;
 	}
+
+	//TODO(Shuo): workflow functions
+	public Customer getCustomer(String cid){ return null; }
+	public void insertCustomer(String cid){ }
+
+
+
 }

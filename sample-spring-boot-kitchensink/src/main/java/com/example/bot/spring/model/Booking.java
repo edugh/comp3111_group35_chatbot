@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public class Booking {
     public final String customerId;
     public final String planId;
-    public final String tourDays;
+    public final String tourDate;
     public final Integer adults;
     public final Integer children;
     public final Integer toddlers;
@@ -16,7 +16,7 @@ public class Booking {
 
     public Booking(String customerId,
                    String planId,
-                   String tourDays,
+                   String tourDate,
                    Integer adults,
                    Integer children,
                    Integer toddlers,
@@ -26,7 +26,7 @@ public class Booking {
                    String specialRequest) {
         this.customerId = customerId;
         this.planId = planId;
-        this.tourDays = tourDays;
+        this.tourDate = tourDate;
         this.adults = adults;
         this.children = children;
         this.toddlers = toddlers;
