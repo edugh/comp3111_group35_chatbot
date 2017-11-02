@@ -115,6 +115,16 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				resultSet.getString(10));
 	}
 
+	//TODO(Shuo)
+    @Override
+    public void insertBooking(String cid, String pid){}
+    @Override
+    public void updateBookingDate(String cid, String pid, String date){}
+	@Override
+    public void updateBooking(String cid, String pid, String date, String field, String value){ }
+    @Override
+    public void updateBooking(String cid, String pid, String date, String field, int value){ }
+
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
 		return new Tag(resultSet.getString(1),
 				resultSet.getString(2));
@@ -199,6 +209,25 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         String query = String.format("INSERT INTO Customers(id,state) VALUES('%s', 'new');", cid);
 	    insertForQuery(query);
     }
+
+    @Override
+    public void updateCustomerState(String cid, String state){
+        String query = String.format("UPDATE Customers SET state = '%s' WHERE id = '%s'", state, cid);
+        insertForQuery(query);
+    }
+
+    @Override
+    public void updateCustomer(String cid, String field, String value){
+        String query = String.format("UPDATE Customers SET %s = '%s' WHERE id = '%s'",field, value, cid);
+        insertForQuery(query);
+    }
+
+    @Override
+    public void updateCustomer(String cid, String field, int value){
+        String query = String.format("UPDATE Customers SET %s = %d WHERE id = '%s'",field, value, cid);
+        insertForQuery(query);
+    }
+
 
 	public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Plan(resultSet.getString(1),

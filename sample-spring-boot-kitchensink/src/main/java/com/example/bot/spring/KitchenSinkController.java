@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+import com.example.bot.spring.model.Customer;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
 import com.linecorp.bot.model.event.source.Source;
@@ -219,8 +220,89 @@ public class KitchenSinkController {
 	}
 
 	private List<Message> tryHandleBookingRequest(String text, Source source) {
-		return null;
+	    //TODO(Shuo): workflow
+		String cid = source.getUserId();
+        Customer customer = database.getCustomer(cid);
+        List<Message> msgList= new ArrayList<>();
+        String pid = null;
+        String date = null;
+        switch (customer.state){
+            case "new":
+                //TODO: gathering customer info...
+            case "reqBookOrNot":
+                if(isYes(text)) {
+                    database.updateCustomerState(cid, "reqDate");
+                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+                    return msgList;
+                }
+                else {
+                    //TODO: promote again
+                    msgList.add(new TextMessage("Why? Fuck you. Say YES."));
+                    return msgList;
+                }
+            case "reqDate":
+                pid = null; //TODO
+                database.updateBookingDate(cid, pid, getDateFromText(text));
+                msgList.add(new TextMessage("How many adults(Age>11) are planning to go?"));
+                database.updateCustomerState(cid, "reqNAdult");
+                return msgList;
+            case "reqNAdult":
+                pid = null; //TODO
+                date = null; //TODO
+                database.updateBooking(cid, pid, date, "adults", getIntFromText(text));
+                msgList.add(new TextMessage("How many children (Age 4 to 11) are planning to go?"));
+                database.updateCustomerState(cid, "reqNChild");
+                return msgList;
+            case "reqNChild":
+                pid = null; //TODO
+                date = null; //TODO
+                database.updateBooking(cid, pid, date, "children", getIntFromText(text));
+                msgList.add(new TextMessage("How many children (Age 0 to 3) are planning to go?"));
+                database.updateCustomerState(cid, "reqNToddler");
+                return msgList;
+            case "reqNToddler":
+                pid = null; //TODO
+                date = null; //TODO
+                database.updateBooking(cid, pid, date, "toddlers", getIntFromText(text));
+                msgList.add(new TextMessage("Confirmed?")); //TODO Optionally: show fee
+                database.updateCustomerState(cid, "reqConfirm");
+                return msgList;
+            case "reqConfirm":
+                if(isYes(text)) {
+                    database.updateCustomerState(cid, "booked");
+                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+                    return msgList;
+                }
+                else {
+                    msgList.add(new TextMessage("Why? Fuck you. Say YES."));
+                    return msgList;
+                }
+
+            default:
+                return null;
+        }
+
 	}
+
+	public boolean isYes(String answer){
+	    if(answer.toLowerCase().indexOf(new String("yes").toLowerCase())>=0){
+	        return true;
+        }
+        //TODO: yes, yep, yeah, ok, of course, sure, why not
+        return false;
+    }
+
+    public String getDateFromText(String answer){
+	    //TODO: standardize YYYYMMDD
+        return answer;
+    }
+
+    public int getIntFromText(String answer){
+        //TODO:
+        return 1;
+    }
+
+
 
 	private List<Message> tryHandleTourSearch(String text, Source source) {
 		// TODO(Jason): match less idiotically, parse parameters

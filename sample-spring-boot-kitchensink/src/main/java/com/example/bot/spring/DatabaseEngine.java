@@ -69,7 +69,14 @@ public class DatabaseEngine {
 	//TODO(Shuo): workflow functions
 	public Customer getCustomer(String cid){ return null; }
 	public void insertCustomer(String cid){ }
+    public void updateCustomerState(String cid, String state){ }
+    public void updateCustomer(String cid, String field, String value){ }
+    public void updateCustomer(String cid, String field, int value){ }
 
+    public void insertBooking(String cid, String pid){}
+    public void updateBookingDate(String cid, String pid, String date){}
+    public void updateBooking(String cid, String pid, String date, String field, String value){ }
+    public void updateBooking(String cid, String pid, String date, String field, int value){ }
 
 
 }
