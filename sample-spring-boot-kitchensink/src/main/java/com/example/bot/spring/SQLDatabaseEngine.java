@@ -16,32 +16,10 @@ import java.util.ArrayList;
 @Slf4j
 public class SQLDatabaseEngine extends DatabaseEngine {
 	@Override
-	String search(String text) throws Exception {
-		String result = null;
-		try {
-			Connection connection = this.getConnection();
-			PreparedStatement stmt = connection.prepareStatement("SELECT response FROM ChatLookup WHERE keyword=?;");
-			stmt.setString(1, text);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				result = rs.getString(1);
-			}
-			rs.close();
-			stmt.close();
-			connection.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		if (result!=null) {
-			return result;
-		}
-		throw new Exception("NOT FOUND");
-	}
-
-	@Override
 	ArrayList<Booking> getEnrolledTours(String customerId) {
-		String query = String.format("SELECT * FROM Bookings WHERE customerId=%s;", customerId);
-		return getResultsForQuery(query, SQLDatabaseEngine::bookingFromResultSet);
+		String query = "SELECT * FROM Bookings WHERE customerId=?;";
+		String[] params = { customerId };
+		return getResultsForQuery(query, SQLDatabaseEngine::bookingFromResultSet, params);
 	}
 
 	@Override
@@ -68,10 +46,17 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
+		return getResultsForQuery(query, modelReader, null);
+	}
+
+	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, String[] params) {
 		ArrayList<T> results = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(query);
+			for (int i = 0; i < (params == null? 0 : params.length); i++) {
+				stmt.setString(i+1, params[i]);
+			}
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
 				results.add(modelReader.apply(resultSet));
