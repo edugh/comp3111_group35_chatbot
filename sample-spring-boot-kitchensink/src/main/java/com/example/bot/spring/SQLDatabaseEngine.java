@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 public class SQLDatabaseEngine extends DatabaseEngine {
 	@Override
-	ArrayList<Booking> getEnrolledTours(String customerId) {
+	ArrayList<Booking> getBookings(String customerId) {
 		String query = "SELECT * FROM Bookings WHERE customerId=?;";
 		String[] params = { customerId };
 		return getResultsForQuery(query, SQLDatabaseEngine::bookingFromResultSet, params);
@@ -25,7 +25,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
 	@Override
     public Booking getCurrentBooking(String cid){
-        List<Booking> bkList= this.getEnrolledTours(cid);
+        List<Booking> bkList= getBookings(cid);
         for(Booking booking : bkList){
             if(booking.fee == null){
                 return booking;
@@ -36,7 +36,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
 	@Override
 	BigDecimal getAmmountOwed(String customerId) {
-		ArrayList<Booking> bookings = getEnrolledTours(customerId);
+		ArrayList<Booking> bookings = getBookings(customerId);
 		return bookings.stream().map(booking -> (booking.fee.subtract(booking.paid))).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
@@ -81,7 +81,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		log.info("New getResultsForQuery '{}'", query);
 		ArrayList<T> results = new ArrayList<>();
 		try {
-			Connection connection = this.getConnection();
+			Connection connection = getConnection();
 			PreparedStatement stmt = connection.prepareStatement(query);
 			for (int i = 0; i < (params == null? 0 : params.length); i++) {
 				if (params[i] instanceof String) {
@@ -110,7 +110,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public void insertForQuery(String query){
 		log.info("New insertForQuery '{}'", query);
         try {
-            Connection connection = this.getConnection();
+            Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.execute();
             stmt.close();
@@ -146,7 +146,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     @Override
     public void updateBookingDate(String cid, String pid, Date date){
 		try {
-			Connection connection = this.getConnection();
+			Connection connection = getConnection();
 			PreparedStatement stmt = connection.prepareStatement(
 					"UPDATE Bookings SET tourDate = ? WHERE customerId = ?, planId = ?, tourDate = null");
 			stmt.setString(3, pid);
@@ -164,7 +164,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         String query = String.format("UPDATE Bookings SET %s = ? " +
                 "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
 		try {
-			Connection connection = this.getConnection();
+			Connection connection = getConnection();
 			PreparedStatement stmt = connection.prepareStatement(query);
 			stmt.setDate(4, date);
 			stmt.setString(3, pid);
@@ -182,7 +182,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         String query = String.format("UPDATE Bookings SET %s = ? " +
 				"WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
 		try {
-			Connection connection = this.getConnection();
+			Connection connection = getConnection();
 			PreparedStatement stmt = connection.prepareStatement(query);
 			stmt.setDate(4, date);
 			stmt.setString(3, pid);
@@ -200,7 +200,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		return new Tag(resultSet.getString(1),
 				resultSet.getString(2));
 	}
-	
+
 	void insertTag(Tag tag) {
 		String query = String.format("INSERT INTO Tags(name, customerID) VALUES('%s','%s')",tag.customerId,tag.name);
         insertForQuery(query);
@@ -224,7 +224,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public void insertDialogue(Dialogue dlg) throws SQLException{
 		Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
         try {
-            Connection connection = this.getConnection();
+            Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
             stmt.setString(3, dlg.content);
@@ -257,7 +257,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         Customer customer = null;
 	    try {
             String query = String.format("SELECT * FROM Customers where id = '%s';", cid);
-            Connection connection = this.getConnection();
+            Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
             ResultSet resultSet = stmt.executeQuery();
 			if (resultSet.next()) {
