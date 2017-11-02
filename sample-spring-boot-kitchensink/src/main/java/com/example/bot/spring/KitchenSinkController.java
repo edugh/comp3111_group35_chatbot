@@ -224,11 +224,35 @@ public class KitchenSinkController {
 		String cid = source.getUserId();
         Customer customer = database.getCustomer(cid);
         List<Message> msgList= new ArrayList<>();
-        String pid = null;
-        String date = null;
+        String pid = null; //TODO
+        String date = null; //TODO
         switch (customer.state){
             case "new":
                 //TODO: gathering customer info...
+
+            case "reqName":
+                database.updateCustomer(cid, "name", filterString(text));
+                database.updateCustomerState(cid, "reqGender");
+                msgList.add(new TextMessage("Male or Female please?"));
+                return msgList;
+            case "reqGender":
+                database.updateCustomer(cid, "gender", filterString(text));
+                database.updateCustomerState(cid, "reqAge");
+                msgList.add(new TextMessage("How old are you please?"));
+                return msgList;
+            case "reqAge":
+                database.updateCustomer(cid, "age", getIntFromText(text));
+                database.updateCustomerState(cid, "reqPhoneNumber");
+                msgList.add(new TextMessage("Phone number please?"));
+                return msgList;
+            case "reqPhoneNumber":
+                database.updateCustomer(cid, "gender", filterString(text));
+                database.updateCustomerState(cid, "reqAge");
+                msgList.add(new TextMessage("Promotion...")); //TODO
+                return msgList;
+
+             //TODO: case recommend trips, confirm
+
             case "reqBookOrNot":
                 if(isYes(text)) {
                     database.updateCustomerState(cid, "reqDate");
@@ -300,6 +324,11 @@ public class KitchenSinkController {
     public int getIntFromText(String answer){
         //TODO:
         return 1;
+    }
+
+    public String filterString(String answer){
+        //TODO: I'm XX -> XX, Male -> M
+        return answer;
     }
 
 
