@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.net.URISyntaxException;
 import java.net.URI;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
 @Slf4j
@@ -110,7 +112,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		try {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(
-					"INSERT INTO Tags(name, customerID) VALUES(\'?\',\'?\')");
+					"INSERT INTO Tags(name, customerID) VALUES(?,?)");
 			stmt.setString(2, cid);
 			stmt.setString(1, newTag);
 			stmt.executeQuery();
@@ -125,9 +127,8 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public static Message messageFromResultSet(ResultSet resultSet)  throws SQLException{
 		Timestamp ts = resultSet.getTimestamp(2);
 				//(Timestamp) resultSet.getObject("created");
-		ZonedDateTime zonedDateTime = 
+		ZonedDateTime zonedDateTime =
 		    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
-		
 		return new Message(resultSet.getString(1),
 				zonedDateTime,
 				resultSet.getString(3));
