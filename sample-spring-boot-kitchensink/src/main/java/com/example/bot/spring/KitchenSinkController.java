@@ -254,14 +254,15 @@ public class KitchenSinkController {
         log.info("Got text message from {}: {}", replyToken, text);
 
 		@SuppressWarnings("unchecked")
-		BiFunction<String, Source, List<Message>>[] handleFunctions =
-					(BiFunction<String, Source, List<Message>>[]) new BiFunction[] {
-				(BiFunction<String, Source, List<Message>>) this::tryHandleFAQ,
-				(BiFunction<String, Source, List<Message>>) this::tryHandleAmountOwed,
-				(BiFunction<String, Source, List<Message>>) this::tryHandleBookingRequest,
-				(BiFunction<String, Source, List<Message>>) this::tryHandleTourSearch,
-				(BiFunction<String, Source, List<Message>>) this::handleUnknownQuery,
-		};
+		ArrayList<BiFunction<String, Source, List<Message>>> handleFunctions = new ArrayList<>(
+			Arrays.asList(
+				this::tryHandleFAQ,
+				this::tryHandleAmountOwed,
+				this::tryHandleBookingRequest,
+				this::tryHandleTourSearch,
+				this::handleUnknownQuery
+			)
+		);
 		for (BiFunction<String, Source, List<Message>> handleFunction: handleFunctions) {
 			List<Message> response = handleFunction.apply(text, source);
 			if (response != null) {
