@@ -279,7 +279,7 @@ public class KitchenSinkController {
                 msgList.add(new TextMessage("Phone number please?"));
                 break;
             case "reqPhoneNumber":
-                database.updateCustomer(cid, "gender", filterString(text));
+                database.updateCustomer(cid, "phoneNumber", filterString(text));
                 database.updateCustomerState(cid, "reqDate");
                 msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
 				break;
