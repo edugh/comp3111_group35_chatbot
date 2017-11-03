@@ -138,7 +138,6 @@ public class KitchenSinkController {
 	public void handleFollowEvent(FollowEvent event) {
 		String replyToken = event.getReplyToken();
 		String cid = event.getSource().getUserId();
-//		this.replyText(replyToken, "Welcome. This is travel chatbot No.35. What can I do for you?");
 		if(database.getCustomer(cid)==null){
 		    database.insertCustomer((cid));
         }
@@ -230,8 +229,12 @@ public class KitchenSinkController {
         Tour tour = null; //TODO
         switch (customer.state){
             case "new":
-
-
+            	//the customer should be asking the tour. go to tour search.
+				return null;
+            case "reqPlanId":
+                database.updateCustomerState(cid, "reqBookOrNot");
+                msgList.add(new TextMessage(text + ", right?"));
+                return msgList;
             case "reqName":
                 database.updateCustomer(cid, "name", filterString(text));
                 database.updateCustomerState(cid, "reqGender");
@@ -249,14 +252,16 @@ public class KitchenSinkController {
                 return msgList;
             case "reqPhoneNumber":
                 database.updateCustomer(cid, "gender", filterString(text));
-                database.updateCustomerState(cid, "reqAge");
-                msgList.add(new TextMessage("Promotion...")); //TODO
+                database.updateCustomerState(cid, "reqDate");
+                msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
                 return msgList;
-
-             //TODO: case recommend trips, confirm
-
             case "reqBookOrNot":
                 if(isYes(text)) {
+                    if(database.isNewCustomer(cid)){
+                        database.updateCustomerState(cid, "reqName");
+                        msgList.add(new TextMessage("What's your name, please?"));
+                        return msgList;
+                    }
                     database.updateCustomerState(cid, "reqDate");
                     msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
                     return msgList;
@@ -301,7 +306,7 @@ public class KitchenSinkController {
             case "reqConfirm":
                 if(isYes(text)) {
                     database.updateCustomerState(cid, "booked");
-                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+                    msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
                     return msgList;
                 }
                 else {
@@ -352,6 +357,7 @@ public class KitchenSinkController {
 				for (Plan plan : plans) {
 					messages.add(new TextMessage(String.format("%s:\n%s\n\n", plan.name, plan.shortDescription)));
 				}
+				database.updateCustomerState(source.getUserId(),"reqPlanId");
 				return messages;
 			}
 		}
