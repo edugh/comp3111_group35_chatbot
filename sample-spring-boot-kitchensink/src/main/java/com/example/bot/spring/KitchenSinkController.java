@@ -259,16 +259,16 @@ public class KitchenSinkController {
 						.findFirst().orElse(null);
 				if (plan == null) {
 					msgList.add(new TextMessage("Couldn't find that tour, try again."));
-					break;
+				} else {
+					database.insertBooking(cid, plan.id);
+					if (customer.name == null) {
+						database.updateCustomerState(cid, "reqName");
+						msgList.add(new TextMessage("What's your name, please?"));
+					} else {
+						database.updateCustomerState(cid, "reqDate");
+						msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+					}
 				}
-                database.insertBooking(cid, plan.id);
-                if (customer.name == null) {
-                    database.updateCustomerState(cid, "reqName");
-                    msgList.add(new TextMessage("What's your name, please?"));
-                } else {
-                    database.updateCustomerState(cid, "reqDate");
-                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
-                }
                 break;
             case "reqName":
                 database.updateCustomer(cid, "name", filterString(text));
