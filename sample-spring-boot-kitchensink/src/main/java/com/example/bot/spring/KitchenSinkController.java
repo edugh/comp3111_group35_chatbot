@@ -253,7 +253,7 @@ public class KitchenSinkController {
 				return null;
             //enter from tourSearch
             case "reqPlanId":
-                database.insertBooking(cid, pid);
+                database.insertBooking(cid, filterString(text));
                 if(customer.name == null){
                     database.updateCustomerState(cid, "reqName");
                     msgList.add(new TextMessage("What's your name, please?"));
