@@ -27,10 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
-import com.example.bot.spring.model.Customer;
-import com.example.bot.spring.model.FAQ;
-import com.example.bot.spring.model.Plan;
-import com.example.bot.spring.model.Tour;
+import com.example.bot.spring.model.*;
 import com.linecorp.bot.model.event.source.Source;
 import com.linecorp.bot.model.profile.UserProfileResponse;
 
@@ -223,18 +220,24 @@ public class KitchenSinkController {
 	    //TODO(Shuo): workflow
 		String cid = source.getUserId();
         Customer customer = database.getCustomer(cid);
+        Booking booking = database.getCurrentBooking((cid));
         List<Message> msgList= new ArrayList<>();
-        String pid = null; //TODO
-        String date = null; //TODO
+        String state = customer.state;
+        String pid = null;
+        String date = null;
+        if(booking != null){
+            pid = booking.planId;
+            date = booking.tourDate;
+        }
+        if(state.contains("reqPlanId")){
+            pid = text.substring(9);
+            state = "reqPlanId";
+        }
         Tour tour = null; //TODO
-        switch (customer.state){
+        switch (state){
             case "new":
             	//the customer should be asking the tour. go to tour search.
 				return null;
-            case "reqPlanId":
-                database.updateCustomerState(cid, "reqBookOrNot");
-                msgList.add(new TextMessage(text + ", right?"));
-                return msgList;
             case "reqName":
                 database.updateCustomer(cid, "name", filterString(text));
                 database.updateCustomerState(cid, "reqGender");
@@ -255,22 +258,16 @@ public class KitchenSinkController {
                 database.updateCustomerState(cid, "reqDate");
                 msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
                 return msgList;
-            case "reqBookOrNot":
-                if(isYes(text)) {
-                    if(database.isNewCustomer(cid)){
-                        database.updateCustomerState(cid, "reqName");
-                        msgList.add(new TextMessage("What's your name, please?"));
-                        return msgList;
-                    }
-                    database.updateCustomerState(cid, "reqDate");
-                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+            case "reqPlanId":
+                if(database.isNewCustomer(cid)){
+                    database.updateCustomerState(cid, "reqName");
+                    database.insertBooking(cid, pid);
+                    msgList.add(new TextMessage("What's your name, please?"));
                     return msgList;
                 }
-                else {
-                    //TODO: promote again
-                    msgList.add(new TextMessage("Why? Fuck you. Say YES."));
-                    return msgList;
-                }
+                database.updateCustomerState(cid, "reqDate");
+                msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+                return msgList;
             case "reqDate":
                 pid = null; //TODO
                 tour = database.getTour(pid, getDateFromText(text));
@@ -306,6 +303,7 @@ public class KitchenSinkController {
             case "reqConfirm":
                 if(isYes(text)) {
                     database.updateCustomerState(cid, "booked");
+                    database.
                     msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
                     return msgList;
                 }
@@ -321,7 +319,7 @@ public class KitchenSinkController {
 	}
 
 	public boolean isYes(String answer){
-	    if(answer.toLowerCase().indexOf(new String("yes").toLowerCase())>=0){
+	    if(answer.toLowerCase().contains(new String("yes").toLowerCase())){
 	        return true;
         }
         //TODO: yes, yep, yeah, ok, of course, sure, why not

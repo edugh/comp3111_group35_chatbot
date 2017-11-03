@@ -12,6 +12,7 @@ import java.net.URI;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class SQLDatabaseEngine extends DatabaseEngine {
@@ -43,6 +44,17 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		String query = String.format("SELECT * FROM Bookings WHERE customerId=%s;", customerId);
 		return getResultsForQuery(query, SQLDatabaseEngine::bookingFromResultSet);
 	}
+
+	@Override
+    public Booking getCurrentBooking(String cid){
+        List<Booking> bkList= this.getEnrolledTours(cid);
+        for(Booking booking : bkList){
+            if(booking.state.contains("req")){
+                return booking;
+            }
+        }
+        return null;
+    }
 
 	@Override
 	BigDecimal getAmmountOwed(String customerId) {
@@ -115,15 +127,29 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				resultSet.getString(10));
 	}
 
-	//TODO(Shuo)
     @Override
-    public void insertBooking(String cid, String pid){}
+    public void insertBooking(String cid, String pid){
+	    String query = String.format("INSERT INTO bookings(customerId, planId) VALUES('%s','%s')", cid, pid);
+        insertForQuery(query);
+	}
     @Override
-    public void updateBookingDate(String cid, String pid, String date){}
+    public void updateBookingDate(String cid, String pid, String date){
+        String query = String.format("UPDATE Bookings SET tourDate = '%s' " +
+                "WHERE customerId = '%s', planId = '%s', tourDate = null" ,date, cid, pid);
+        insertForQuery(query);
+    }
 	@Override
-    public void updateBooking(String cid, String pid, String date, String field, String value){ }
+    public void updateBooking(String cid, String pid, String date, String field, String value){
+        String query = String.format("UPDATE Bookings SET %s = '%s' " +
+                "WHERE customerId = '%s', planId = '%s', tourDate = '%s'" ,field, value, date, cid, pid, date);
+        insertForQuery(query);
+    }
     @Override
-    public void updateBooking(String cid, String pid, String date, String field, int value){ }
+    public void updateBooking(String cid, String pid, String date, String field, int value){
+        String query = String.format("UPDATE Bookings SET %s = %d " +
+                "WHERE customerId = '%s', planId = '%s', tourDate = '%s'" ,field, value, date, cid, pid, date);
+        insertForQuery(query);
+    }
 
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
 		return new Tag(resultSet.getString(1),

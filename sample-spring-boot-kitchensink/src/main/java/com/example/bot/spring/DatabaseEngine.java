@@ -75,6 +75,8 @@ public class DatabaseEngine {
     public void updateCustomer(String cid, String field, String value){ }
     public void updateCustomer(String cid, String field, int value){ }
 
+    public Booking getCurrentBooking(String cid){ return null; }
+
     public void insertBooking(String cid, String pid){}
     public void updateBookingDate(String cid, String pid, String date){}
     public void updateBooking(String cid, String pid, String date, String field, String value){ }
