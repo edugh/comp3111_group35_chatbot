@@ -297,7 +297,8 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	//TODO:
-    public Tour getTour(String pid, String date){ return null;}
+	@Override
+    public Tour getTour(String pid, Date date){ return null;}
 
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;
