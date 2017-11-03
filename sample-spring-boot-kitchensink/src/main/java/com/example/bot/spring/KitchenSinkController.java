@@ -370,7 +370,7 @@ public class KitchenSinkController {
 			} else {
 				ArrayList<Message> messages = new ArrayList<>();
 				for (Plan plan : plans) {
-					messages.add(new TextMessage(String.format("%s:\n%s\n\n", plan.name, plan.shortDescription)));
+					messages.add(new TextMessage(String.format("%s: %s - %s\n\n", plan.id, plan.name, plan.shortDescription)));
 				}
 				database.updateCustomerState(source.getUserId(),"reqPlanId");
 				return messages;
