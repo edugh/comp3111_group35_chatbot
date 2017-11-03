@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -224,92 +226,80 @@ public class KitchenSinkController {
         List<Message> msgList= new ArrayList<>();
         String state = customer.state;
         String pid = null;
-        String date = null;
+        java.sql.Date date = null;
+        Tour tour = null;
         if(booking != null){
+            //At least booking are with cid, pid
             pid = booking.planId;
+            if(booking.tourDate != null){
+                date = booking.tourDate;
+                tour = database.getTour(pid, date);
+            }
             date = booking.tourDate;
         }
-        if(state.contains("reqPlanId")){
-            pid = text.substring(9);
-            state = "reqPlanId";
-        }
-        Tour tour = null; //TODO
+
         switch (state){
             case "new":
-            	//the customer should be asking the tour. go to tour search.
+            	//go into tourSearch
 				return null;
+            //enter from tourSearch
+            case "reqPlanId":
+                database.insertBooking(cid, pid);
+                if(customer.name == null){
+                    database.updateCustomerState(cid, "reqName");
+                    msgList.add(new TextMessage("What's your name, please?"));
+                }
+                else{
+                    database.updateCustomerState(cid, "reqDate");
+                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+                }
             case "reqName":
                 database.updateCustomer(cid, "name", filterString(text));
                 database.updateCustomerState(cid, "reqGender");
                 msgList.add(new TextMessage("Male or Female please?"));
-                return msgList;
             case "reqGender":
                 database.updateCustomer(cid, "gender", filterString(text));
                 database.updateCustomerState(cid, "reqAge");
                 msgList.add(new TextMessage("How old are you please?"));
-                return msgList;
             case "reqAge":
                 database.updateCustomer(cid, "age", getIntFromText(text));
                 database.updateCustomerState(cid, "reqPhoneNumber");
                 msgList.add(new TextMessage("Phone number please?"));
-                return msgList;
             case "reqPhoneNumber":
                 database.updateCustomer(cid, "gender", filterString(text));
                 database.updateCustomerState(cid, "reqDate");
                 msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
-                return msgList;
-            case "reqPlanId":
-                if(database.isNewCustomer(cid)){
-                    database.updateCustomerState(cid, "reqName");
-                    database.insertBooking(cid, pid);
-                    msgList.add(new TextMessage("What's your name, please?"));
-                    return msgList;
-                }
-                database.updateCustomerState(cid, "reqDate");
-                msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
-                return msgList;
             case "reqDate":
-                pid = null; //TODO
                 tour = database.getTour(pid, getDateFromText(text));
-                if(tour.ifFullBooked()){
+                if(database.isTourFull()){
                     msgList.add(new TextMessage("Sorry it is full-booked that day. What about other trips or departure date?"));
                     // database.updateCustomerState(cid, "changeDateOrPlan");
                 }
-                database.updateBookingDate(cid, pid, getDateFromText(text));
-                msgList.add(new TextMessage("How many adults(Age>11) are planning to go?"));
-                database.updateCustomerState(cid, "reqNAdult");
-                return msgList;
+                else{
+                    database.updateBookingDate(cid, pid, getDateFromText(text));
+                    msgList.add(new TextMessage("How many adults(Age>11) are planning to go?"));
+                    database.updateCustomerState(cid, "reqNAdult");
+                }
             case "reqNAdult":
-                pid = null; //TODO
-                date = null; //TODO
                 database.updateBooking(cid, pid, date, "adults", getIntFromText(text));
                 msgList.add(new TextMessage("How many children (Age 4 to 11) are planning to go?"));
                 database.updateCustomerState(cid, "reqNChild");
-                return msgList;
             case "reqNChild":
-                pid = null; //TODO
-                date = null; //TODO
                 database.updateBooking(cid, pid, date, "children", getIntFromText(text));
                 msgList.add(new TextMessage("How many children (Age 0 to 3) are planning to go?"));
                 database.updateCustomerState(cid, "reqNToddler");
-                return msgList;
             case "reqNToddler":
-                pid = null; //TODO
-                date = null; //TODO
                 database.updateBooking(cid, pid, date, "toddlers", getIntFromText(text));
                 msgList.add(new TextMessage("Confirmed?")); //TODO Optionally: show fee
                 database.updateCustomerState(cid, "reqConfirm");
-                return msgList;
             case "reqConfirm":
                 if(isYes(text)) {
                     database.updateCustomerState(cid, "booked");
-                    database.
+                    //TODO: calculate and add msg fee
                     msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
-                    return msgList;
                 }
                 else {
                     msgList.add(new TextMessage("Why? Fuck you. Say YES."));
-                    return msgList;
                 }
 
             default:
@@ -326,9 +316,11 @@ public class KitchenSinkController {
         return false;
     }
 
-    public String getDateFromText(String answer){
+    public java.sql.Date getDateFromText(String answer)throws ParseException {
 	    //TODO: standardize YYYYMMDD
-        return answer;
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+        java.util.Date parsed = format.parse(answer);
+        return(new java.sql.Date(parsed.getTime()));
     }
 
     public int getIntFromText(String answer){

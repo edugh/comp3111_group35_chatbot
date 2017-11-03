@@ -49,7 +49,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     public Booking getCurrentBooking(String cid){
         List<Booking> bkList= this.getEnrolledTours(cid);
         for(Booking booking : bkList){
-            if(booking.state.contains("req")){
+            if(booking.fee == null){
                 return booking;
             }
         }
@@ -117,14 +117,13 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public static Booking bookingFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Booking(resultSet.getString(1),
 				resultSet.getString(2),
-				resultSet.getString(3),
+				resultSet.getDate(3),
 				resultSet.getInt(4),
 				resultSet.getInt(5),
 				resultSet.getInt(6),
 				resultSet.getBigDecimal(7),
 				resultSet.getBigDecimal(8),
-				resultSet.getString(9),
-				resultSet.getString(10));
+				resultSet.getString(9));
 	}
 
     @Override
@@ -133,22 +132,56 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         insertForQuery(query);
 	}
     @Override
-    public void updateBookingDate(String cid, String pid, String date){
-        String query = String.format("UPDATE Bookings SET tourDate = '%s' " +
-                "WHERE customerId = '%s', planId = '%s', tourDate = null" ,date, cid, pid);
-        insertForQuery(query);
+    public void updateBookingDate(String cid, String pid, Date date){
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(
+					"UPDATE Bookings SET tourDate = ? WHERE customerId = ?, planId = ?, tourDate = null");
+			stmt.setString(3, pid);
+			stmt.setString(2, cid);
+			stmt.setDate(1, date);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 	@Override
-    public void updateBooking(String cid, String pid, String date, String field, String value){
-        String query = String.format("UPDATE Bookings SET %s = '%s' " +
-                "WHERE customerId = '%s', planId = '%s', tourDate = '%s'" ,field, value, date, cid, pid, date);
-        insertForQuery(query);
+    public void updateBooking(String cid, String pid, Date date, String field, String value){
+        String query = String.format("UPDATE Bookings SET %s = ? " +
+                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(query);
+			stmt.setDate(4, date);
+			stmt.setString(3, pid);
+			stmt.setString(2, cid);
+			stmt.setString(1, value);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
     @Override
-    public void updateBooking(String cid, String pid, String date, String field, int value){
-        String query = String.format("UPDATE Bookings SET %s = %d " +
-                "WHERE customerId = '%s', planId = '%s', tourDate = '%s'" ,field, value, date, cid, pid, date);
-        insertForQuery(query);
+    public void updateBooking(String cid, String pid, Date date, String field, int value){
+        String query = String.format("UPDATE Bookings SET %s = ? " +
+				"WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(query);
+			stmt.setDate(4, date);
+			stmt.setString(3, pid);
+			stmt.setString(2, cid);
+			stmt.setInt(1, value);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
@@ -268,13 +301,12 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public static Tour tourFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Tour(
 				resultSet.getString(1),
-				resultSet.getString(2),
+				resultSet.getDate(2),
 				resultSet.getString(3),
 				resultSet.getString(4),
 				resultSet.getString(5),
 				resultSet.getInt(6),
-				resultSet.getInt(7),
-                resultSet.getInt(8)
+				resultSet.getInt(7)
 
 		);
 	}

@@ -1,6 +1,7 @@
 package com.example.bot.spring;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -69,7 +70,6 @@ public class DatabaseEngine {
 
 	//TODO(Shuo): workflow functions
 	public Customer getCustomer(String cid){ return null; }
-    public boolean isNewCustomer(String cid){ return true; }
 	public void insertCustomer(String cid){ }
     public void updateCustomerState(String cid, String state){ }
     public void updateCustomer(String cid, String field, String value){ }
@@ -78,10 +78,11 @@ public class DatabaseEngine {
     public Booking getCurrentBooking(String cid){ return null; }
 
     public void insertBooking(String cid, String pid){}
-    public void updateBookingDate(String cid, String pid, String date){}
-    public void updateBooking(String cid, String pid, String date, String field, String value){ }
-    public void updateBooking(String cid, String pid, String date, String field, int value){ }
+    public void updateBookingDate(String cid, String pid, Date date){}
+    public void updateBooking(String cid, String pid, Date date, String field, String value){ }
+    public void updateBooking(String cid, String pid, Date date, String field, int value){ }
 
-    public Tour getTour(String pid, String date){ return null;}
+    public Tour getTour(String pid, Date date){ return null;}
+    public boolean isTourFull(String pid, Date date){ return false; }
 
 }
