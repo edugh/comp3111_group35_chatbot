@@ -25,6 +25,7 @@ public class Tag {
 		int result = name != null ? name.hashCode() : 0;
 		result = 31 * result + (customerId != null ? customerId.hashCode() : 0);
 		return result;
+	}
 
 	public String toString() {
 		return "Tag{" +

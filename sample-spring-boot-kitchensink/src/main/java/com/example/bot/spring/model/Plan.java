@@ -53,7 +53,8 @@ public class Plan {
         if (shortDescription != null ? !shortDescription.equals(plan.shortDescription) : plan.shortDescription != null)
             return false;
         if (departure != null ? !departure.equals(plan.departure) : plan.departure != null) return false;
-        return price != null ? price.equals(plan.price) : plan.price == null;
+        if (weekdayPrice != null ? !weekdayPrice.equals(plan.weekdayPrice) : plan.weekdayPrice != null) return false;
+        return weekendPrice != null ? weekendPrice.equals(plan.weekendPrice) : plan.weekendPrice == null;
     }
 
     @Override
@@ -63,7 +64,8 @@ public class Plan {
         result = 31 * result + (shortDescription != null ? shortDescription.hashCode() : 0);
         result = 31 * result + length;
         result = 31 * result + (departure != null ? departure.hashCode() : 0);
-        result = 31 * result + (price != null ? price.hashCode() : 0);
+        result = 31 * result + (weekdayPrice != null ? weekdayPrice.hashCode() : 0);
+        result = 31 * result + (weekendPrice != null ? weekendPrice.hashCode() : 0);
         return result;
     }
 }
