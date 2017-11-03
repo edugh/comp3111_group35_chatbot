@@ -78,6 +78,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, Object[] params) {
+		log.info("New getResultsForQuery '{}'", query);
 		ArrayList<T> results = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
@@ -89,28 +90,33 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 					stmt.setDate(i + 1, (Date) params[i]);
 				}
 			}
+			log.info("Prepared query '{}'", stmt.toString());
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
-				results.add(modelReader.apply(resultSet));
+				T result = modelReader.apply(resultSet);
+				log.info("Got result for query: '{}'", result.toString());
+				results.add(result);
 			}
 			resultSet.close();
 			stmt.close();
 			connection.close();
 		} catch (Exception e) {
+			log.info("Query '{}' failed", query);
 			e.printStackTrace();
 		}
 		return results;
 	}
 
 	public void insertForQuery(String query){
+		log.info("New insertForQuery '{}'", query);
         try {
             Connection connection = this.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.executeQuery();
+            stmt.execute();
             stmt.close();
             connection.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -133,7 +139,8 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
     @Override
     public void insertBooking(String cid, String pid){
-	    String query = String.format("INSERT INTO bookings(customerId, planId) VALUES('%s','%s')", cid, pid);
+		Date defaultDate = new Date(0);
+	    String query = String.format("INSERT INTO bookings(customerId, planId, tourDate) VALUES('%s','%s','%s')", cid, pid, defaultDate);
         insertForQuery(query);
 	}
     @Override
@@ -236,17 +243,13 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         return getResultsForQuery(query, SQLDatabaseEngine::dialogueFromResultSet);
     }
 	
-	public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException{
-		if(resultSet != null) {
-            return new Customer(resultSet.getString(1),
-                    resultSet.getString(2),
-                    resultSet.getString(3),
-                    resultSet.getInt(4),
-                    resultSet.getString(5),
-                    resultSet.getString(6));
-        }
-        else
-            return null;
+	public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException {
+		return new Customer(resultSet.getString(1),
+				resultSet.getString(2),
+				resultSet.getString(3),
+				resultSet.getInt(4),
+				resultSet.getString(5),
+				resultSet.getString(6));
 	}
 
 	@Override
@@ -257,7 +260,9 @@ public class SQLDatabaseEngine extends DatabaseEngine {
             Connection connection = this.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
             ResultSet resultSet = stmt.executeQuery();
-            customer = customerFromResultSet(resultSet);
+			if (resultSet.next()) {
+				customer = customerFromResultSet(resultSet);
+			}
             resultSet.close();
             stmt.close();
             connection.close();

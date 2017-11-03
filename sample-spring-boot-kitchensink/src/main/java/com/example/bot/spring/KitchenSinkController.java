@@ -254,7 +254,7 @@ public class KitchenSinkController {
 				return null;
             //enter from tourSearch
             case "reqPlanId":
-                database.insertBooking(cid, pid);
+                database.insertBooking(cid, filterString(text));
                 if(customer.name == null){
                     database.updateCustomerState(cid, "reqName");
                     msgList.add(new TextMessage("What's your name, please?"));
@@ -367,8 +367,6 @@ public class KitchenSinkController {
         return answer;
     }
 
-
-
 	private List<Message> tryHandleTourSearch(String text, Source source) {
 		// TODO(Jason): match less idiotically, parse parameters
 		if (stupidFuzzyMatch("Which tours are available", text)) {
@@ -379,7 +377,7 @@ public class KitchenSinkController {
 			} else {
 				ArrayList<Message> messages = new ArrayList<>();
 				for (Plan plan : plans) {
-					messages.add(new TextMessage(String.format("%s:\n%s\n\n", plan.name, plan.shortDescription)));
+					messages.add(new TextMessage(String.format("%s: %s - %s\n\n", plan.id, plan.name, plan.shortDescription)));
 				}
 				database.updateCustomerState(source.getUserId(),"reqPlanId");
 				return messages;
@@ -403,9 +401,9 @@ public class KitchenSinkController {
 		ArrayList<BiFunction<String, Source, List<Message>>> handleFunctions = new ArrayList<>(
 			Arrays.asList(
 				this::tryHandleFAQ,
-				this::tryHandleAmountOwed,
-				this::tryHandleBookingRequest,
 				this::tryHandleTourSearch,
+				this::tryHandleBookingRequest,
+				this::tryHandleAmountOwed,
 				this::handleUnknownQuery
 			)
 		);
