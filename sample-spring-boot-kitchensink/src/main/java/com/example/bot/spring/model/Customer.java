@@ -49,6 +49,7 @@ public class Customer {
 		result = 31 * result + (phoneNumber != null ? phoneNumber.hashCode() : 0);
 		result = 31 * result + (state != null ? state.hashCode() : 0);
 		return result;
+	}
 
   	public String toString() {
 		return "Customer{" +
