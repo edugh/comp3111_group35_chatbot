@@ -35,6 +35,13 @@ public class Dialogue {
         result = 31 * result + (sendTime != null ? sendTime.hashCode() : 0);
         result = 31 * result + (content != null ? content.hashCode() : 0);
         return result;
+
+    public String toString() {
+        return "Dialogue{" +
+                "customerId='" + customerId + '\'' +
+                ", sendTime=" + sendTime +
+                ", content='" + content + '\'' +
+                '}';
     }
 }
 

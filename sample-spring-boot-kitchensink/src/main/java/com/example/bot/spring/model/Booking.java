@@ -1,38 +1,36 @@
 package com.example.bot.spring.model;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 
 public class Booking {
     public final String customerId;
     public final String planId;
-    public final String tourDays;
+    public final Date tourDate;
     public final Integer adults;
     public final Integer children;
     public final Integer toddlers;
     public final BigDecimal fee;
     public final BigDecimal paid;
-    public final String state;
     public final String specialRequest;
 
     public Booking(String customerId,
                    String planId,
-                   String tourDays,
+                   Date tourDate,
                    Integer adults,
                    Integer children,
                    Integer toddlers,
                    BigDecimal fee,
                    BigDecimal paid,
-                   String state,
                    String specialRequest) {
         this.customerId = customerId;
         this.planId = planId;
-        this.tourDays = tourDays;
+        this.tourDate = tourDate;
         this.adults = adults;
         this.children = children;
         this.toddlers = toddlers;
         this.fee = fee;
         this.paid = paid;
-        this.state = state;
         this.specialRequest = specialRequest;
     }
 
@@ -68,5 +66,18 @@ public class Booking {
         result = 31 * result + (state != null ? state.hashCode() : 0);
         result = 31 * result + (specialRequest != null ? specialRequest.hashCode() : 0);
         return result;
+      
+    public String toString() {
+        return "Booking{" +
+                "customerId='" + customerId + '\'' +
+                ", planId='" + planId + '\'' +
+                ", tourDate=" + tourDate +
+                ", adults=" + adults +
+                ", children=" + children +
+                ", toddlers=" + toddlers +
+                ", fee=" + fee +
+                ", paid=" + paid +
+                ", specialRequest='" + specialRequest + '\'' +
+                '}';
     }
 }

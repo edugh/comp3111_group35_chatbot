@@ -12,37 +12,27 @@ import java.net.URI;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class SQLDatabaseEngine extends DatabaseEngine {
 	@Override
-	String search(String text) throws Exception {
-		String result = null;
-		try {
-			Connection connection = this.getConnection();
-			PreparedStatement stmt = connection.prepareStatement("SELECT response FROM ChatLookup WHERE keyword=?;");
-			stmt.setString(1, text);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				result = rs.getString(1);
-			}
-			rs.close();
-			stmt.close();
-			connection.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		if (result!=null) {
-			return result;
-		}
-		throw new Exception("NOT FOUND");
+	ArrayList<Booking> getEnrolledTours(String customerId) {
+		String query = "SELECT * FROM Bookings WHERE customerId=?;";
+		String[] params = { customerId };
+		return getResultsForQuery(query, SQLDatabaseEngine::bookingFromResultSet, params);
 	}
 
 	@Override
-	ArrayList<Booking> getEnrolledTours(String customerId) {
-		String query = String.format("SELECT * FROM Bookings WHERE customerId=%s;", customerId);
-		return getResultsForQuery(query, SQLDatabaseEngine::bookingFromResultSet);
-	}
+    public Booking getCurrentBooking(String cid){
+        List<Booking> bkList= this.getEnrolledTours(cid);
+        for(Booking booking : bkList){
+            if(booking.fee == null){
+                return booking;
+            }
+        }
+        return null;
+    }
 
 	@Override
 	BigDecimal getAmmountOwed(String customerId) {
@@ -68,22 +58,47 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
+		return getResultsForQuery(query, modelReader, null);
+	}
+
+	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, String[] params) {
+		log.info("New getResultsForQuery '{}'", query);
 		ArrayList<T> results = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(query);
+			for (int i = 0; i < (params == null? 0 : params.length); i++) {
+				stmt.setString(i+1, params[i]);
+			}
+			log.info("Prepared query '{}'", stmt.toString());
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
-				results.add(modelReader.apply(resultSet));
+				T result = modelReader.apply(resultSet);
+				log.info("Got result for query: '{}'", result.toString());
+				results.add(result);
 			}
 			resultSet.close();
 			stmt.close();
 			connection.close();
 		} catch (Exception e) {
+			log.info("Query '{}' failed", query);
 			e.printStackTrace();
 		}
 		return results;
 	}
+
+	public void insertForQuery(String query){
+		log.info("New insertForQuery '{}'", query);
+        try {
+            Connection connection = this.getConnection();
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.execute();
+            stmt.close();
+            connection.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	public static FAQ faqFromResultSet(ResultSet resultSet) throws SQLException {
 		return new FAQ(resultSet.getString(1),
@@ -93,15 +108,73 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public static Booking bookingFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Booking(resultSet.getString(1),
 				resultSet.getString(2),
-				resultSet.getString(3),
+				resultSet.getDate(3),
 				resultSet.getInt(4),
 				resultSet.getInt(5),
 				resultSet.getInt(6),
 				resultSet.getBigDecimal(7),
 				resultSet.getBigDecimal(8),
-				resultSet.getString(9),
-				resultSet.getString(10));
+				resultSet.getString(9));
 	}
+
+    @Override
+    public void insertBooking(String cid, String pid){
+		Date defaultDate = new Date(0);
+	    String query = String.format("INSERT INTO bookings(customerId, planId, tourDate) VALUES('%s','%s','%s')", cid, pid, defaultDate);
+        insertForQuery(query);
+	}
+    @Override
+    public void updateBookingDate(String cid, String pid, Date date){
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(
+					"UPDATE Bookings SET tourDate = ? WHERE customerId = ?, planId = ?, tourDate = null");
+			stmt.setString(3, pid);
+			stmt.setString(2, cid);
+			stmt.setDate(1, date);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+	@Override
+    public void updateBooking(String cid, String pid, Date date, String field, String value){
+        String query = String.format("UPDATE Bookings SET %s = ? " +
+                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(query);
+			stmt.setDate(4, date);
+			stmt.setString(3, pid);
+			stmt.setString(2, cid);
+			stmt.setString(1, value);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+    @Override
+    public void updateBooking(String cid, String pid, Date date, String field, int value){
+        String query = String.format("UPDATE Bookings SET %s = ? " +
+				"WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+		try {
+			Connection connection = this.getConnection();
+			PreparedStatement stmt = connection.prepareStatement(query);
+			stmt.setDate(4, date);
+			stmt.setString(3, pid);
+			stmt.setString(2, cid);
+			stmt.setInt(1, value);
+			stmt.executeQuery();
+			stmt.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
 
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
 		return new Tag(resultSet.getString(1),
@@ -109,20 +182,14 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 	
 	void insertTag(Tag tag) {
-		try {
-			Connection connection = this.getConnection();
-			PreparedStatement stmt = connection.prepareStatement(
-					"INSERT INTO Tags(name, customerID) VALUES(?,?)");
-			stmt.setString(2, tag.customerId);
-			stmt.setString(1, tag.name);
-			stmt.executeQuery();
-			stmt.close();
-			connection.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		String query = String.format("INSERT INTO Tags(name, customerID) VALUES('%s','%s')",tag.customerId,tag.name);
+        insertForQuery(query);
 	}
-	
+
+    ArrayList<Tag> getTags(String cid) {
+        String query = String.format("SELECT name FROM Tags where customerId = %s;", cid);
+        return getResultsForQuery(query, SQLDatabaseEngine::tagFromResultSet);
+    }
 	
 	public static Dialogue dialogueFromResultSet(ResultSet resultSet) throws SQLException{
 		Timestamp ts = resultSet.getTimestamp(2);
@@ -151,8 +218,12 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         }
 	}
 
+    ArrayList<Dialogue> getDialogues(String cid) {
+        String query = String.format("SELECT sendTime, content FROM Tags where customerId = %s;", cid);
+        return getResultsForQuery(query, SQLDatabaseEngine::dialogueFromResultSet);
+    }
 	
-	public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException{
+	public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Customer(resultSet.getString(1),
 				resultSet.getString(2),
 				resultSet.getString(3),
@@ -161,26 +232,78 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				resultSet.getString(6));
 	}
 
+	@Override
+	public Customer getCustomer(String cid){
+        Customer customer = null;
+	    try {
+            String query = String.format("SELECT * FROM Customers where id = '%s';", cid);
+            Connection connection = this.getConnection();
+            PreparedStatement stmt = connection.prepareStatement(query);
+            ResultSet resultSet = stmt.executeQuery();
+			if (resultSet.next()) {
+				customer = customerFromResultSet(resultSet);
+			}
+            resultSet.close();
+            stmt.close();
+            connection.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return customer;
+    }
+
+    @Override
+    public void insertCustomer(String cid){
+        String query = String.format("INSERT INTO Customers(id,state) VALUES('%s', 'new');", cid);
+	    insertForQuery(query);
+    }
+
+    @Override
+    public void updateCustomerState(String cid, String state){
+        String query = String.format("UPDATE Customers SET state = '%s' WHERE id = '%s'", state, cid);
+        insertForQuery(query);
+    }
+
+    @Override
+    public void updateCustomer(String cid, String field, String value){
+        String query = String.format("UPDATE Customers SET %s = '%s' WHERE id = '%s'",field, value, cid);
+        insertForQuery(query);
+    }
+
+    @Override
+    public void updateCustomer(String cid, String field, int value){
+        String query = String.format("UPDATE Customers SET %s = %d WHERE id = '%s'",field, value, cid);
+        insertForQuery(query);
+    }
+
+
 	public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Plan(resultSet.getString(1),
 				resultSet.getString(2),
 				resultSet.getString(3),
 				resultSet.getInt(4),
 				resultSet.getString(5),
-				resultSet.getBigDecimal(6));
+				resultSet.getBigDecimal(6),
+                resultSet.getBigDecimal(7));
 	}
 
 	public static Tour tourFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Tour(
 				resultSet.getString(1),
-				resultSet.getString(2),
+				resultSet.getDate(2),
 				resultSet.getString(3),
 				resultSet.getString(4),
 				resultSet.getString(5),
 				resultSet.getInt(6),
 				resultSet.getInt(7)
+
 		);
 	}
+
+	//TODO:
+	@Override
+    public Tour getTour(String pid, Date date){ return null;}
 
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;

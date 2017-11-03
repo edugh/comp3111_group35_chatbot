@@ -1,17 +1,19 @@
 package com.example.bot.spring.model;
 
+import java.sql.Date;
+
 public class Tour {
     public String planId;
-    public String tourDays;
+    public Date tourDate;
     public String guideName;
     public String guideAccount;
     public String hotel;
     public int capacity;
     public int minimum;
 
-    public Tour(String planId, String tourDays, String guideName, String guideAccount, String hotel, int capacity, int minimum) {
+    public Tour(String planId, Date tourDate, String guideName, String guideAccount, String hotel, int capacity, int minimum) {
         this.planId = planId;
-        this.tourDays = tourDays;
+        this.tourDate = tourDate;
         this.guideName = guideName;
         this.guideAccount = guideAccount;
         this.hotel = hotel;
@@ -45,5 +47,16 @@ public class Tour {
         result = 31 * result + capacity;
         result = 31 * result + minimum;
         return result;
+
+    public String toString() {
+        return "Tour{" +
+                "planId='" + planId + '\'' +
+                ", tourDate=" + tourDate +
+                ", guideName='" + guideName + '\'' +
+                ", guideAccount='" + guideAccount + '\'' +
+                ", hotel='" + hotel + '\'' +
+                ", capacity=" + capacity +
+                ", minimum=" + minimum +
+                '}';
     }
 }

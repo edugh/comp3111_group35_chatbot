@@ -21,14 +21,15 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
-import com.example.bot.spring.model.FAQ;
-import com.example.bot.spring.model.Plan;
+import com.example.bot.spring.model.*;
 import com.linecorp.bot.model.event.source.Source;
 import com.linecorp.bot.model.profile.UserProfileResponse;
 
@@ -135,9 +136,15 @@ public class KitchenSinkController {
 	@EventMapping
 	public void handleFollowEvent(FollowEvent event) {
 		String replyToken = event.getReplyToken();
-		this.replyText(replyToken, "Welcome. This is travel chatbot No.35. What can I do for you?");
-		//create customer
-		//send promotion
+		String cid = event.getSource().getUserId();
+		if(database.getCustomer(cid)==null){
+		    database.insertCustomer((cid));
+        }
+		List<Message> msgList = new ArrayList<>();
+		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"));
+        //msgList.add(new ImageMessage(url1, url2));
+        msgList.add(new TextMessage("We don't have promotion image..."));
+        reply(replyToken, msgList);
 	}
 
 	@EventMapping
@@ -221,8 +228,135 @@ public class KitchenSinkController {
 	}
 
 	private List<Message> tryHandleBookingRequest(String text, Source source) {
-		return null;
+	    //TODO(Shuo): workflow
+		String cid = source.getUserId();
+        Customer customer = database.getCustomer(cid);
+        Booking booking = database.getCurrentBooking((cid));
+        List<Message> msgList= new ArrayList<>();
+        String state = customer.state;
+        String pid = null;
+        java.sql.Date date = null;
+        Tour tour = null;
+        if(booking != null){
+            //At least booking are with cid, pid
+            pid = booking.planId;
+            if(booking.tourDate != null){
+                date = booking.tourDate;
+                tour = database.getTour(pid, date);
+            }
+            date = booking.tourDate;
+        }
+
+        switch (state) {
+            case "new":
+            	//go into tourSearch
+				return null;
+            //enter from tourSearch
+            case "reqPlanId":
+                database.insertBooking(cid, filterString(text));
+                if(customer.name == null){
+                    database.updateCustomerState(cid, "reqName");
+                    msgList.add(new TextMessage("What's your name, please?"));
+                }
+                else{
+                    database.updateCustomerState(cid, "reqDate");
+                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+                }
+                break;
+            case "reqName":
+                database.updateCustomer(cid, "name", filterString(text));
+                database.updateCustomerState(cid, "reqGender");
+                msgList.add(new TextMessage("Male or Female please?"));
+                break;
+            case "reqGender":
+                database.updateCustomer(cid, "gender", filterString(text));
+                database.updateCustomerState(cid, "reqAge");
+                msgList.add(new TextMessage("How old are you please?"));
+                break;
+            case "reqAge":
+                database.updateCustomer(cid, "age", getIntFromText(text));
+                database.updateCustomerState(cid, "reqPhoneNumber");
+                msgList.add(new TextMessage("Phone number please?"));
+                break;
+            case "reqPhoneNumber":
+                database.updateCustomer(cid, "gender", filterString(text));
+                database.updateCustomerState(cid, "reqDate");
+                msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
+				break;
+            case "reqDate":
+            	java.sql.Date dateInText;
+            	try {
+            		dateInText = getDateFromText(text);
+				} catch (ParseException p) {
+					msgList.add(new TextMessage("Sorry, I didn't understand that date - please tell me again"));
+					return msgList;
+				}
+                tour = database.getTour(pid, dateInText);
+                if(database.isTourFull(pid, date)){
+                    msgList.add(new TextMessage("Sorry it is full-booked that day. What about other trips or departure date?"));
+                    // database.updateCustomerState(cid, "changeDateOrPlan");
+                }
+                else{
+                    database.updateBookingDate(cid, pid, dateInText);
+                    msgList.add(new TextMessage("How many adults(Age>11) are planning to go?"));
+                    database.updateCustomerState(cid, "reqNAdult");
+                }
+                break;
+            case "reqNAdult":
+                database.updateBooking(cid, pid, date, "adults", getIntFromText(text));
+                msgList.add(new TextMessage("How many children (Age 4 to 11) are planning to go?"));
+                database.updateCustomerState(cid, "reqNChild");
+                break;
+            case "reqNChild":
+                database.updateBooking(cid, pid, date, "children", getIntFromText(text));
+                msgList.add(new TextMessage("How many children (Age 0 to 3) are planning to go?"));
+                database.updateCustomerState(cid, "reqNToddler");
+                break;
+            case "reqNToddler":
+                database.updateBooking(cid, pid, date, "toddlers", getIntFromText(text));
+                msgList.add(new TextMessage("Confirmed?")); //TODO Optionally: show fee
+                database.updateCustomerState(cid, "reqConfirm");
+                break;
+            case "reqConfirm":
+                if(isYes(text)) {
+                    database.updateCustomerState(cid, "booked");
+                    //TODO: calculate and add msg fee
+                    msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
+                }
+                else {
+                    msgList.add(new TextMessage("Why? Fuck you. Say YES."));
+                }
+                break;
+            default:
+                return null;
+        }
+        return msgList;
 	}
+
+	public boolean isYes(String answer){
+	    if(answer.toLowerCase().contains(new String("yes").toLowerCase())){
+	        return true;
+        }
+        //TODO: yes, yep, yeah, ok, of course, sure, why not
+        return false;
+    }
+
+    public java.sql.Date getDateFromText(String answer)throws ParseException {
+	    //TODO: standardize YYYYMMDD
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+        java.util.Date parsed = format.parse(answer);
+        return(new java.sql.Date(parsed.getTime()));
+    }
+
+    public int getIntFromText(String answer){
+        //TODO: filterString
+        return Integer.parseInt(answer);
+    }
+
+    public String filterString(String answer){
+        //TODO: I'm XX -> XX, Male -> M
+        return answer;
+    }
 
 	private List<Message> tryHandleTourSearch(String text, Source source) {
 		// TODO(Jason): match less idiotically, parse parameters
@@ -234,8 +368,9 @@ public class KitchenSinkController {
 			} else {
 				ArrayList<Message> messages = new ArrayList<>();
 				for (Plan plan : plans) {
-					messages.add(new TextMessage(String.format("%s:\n%s\n\n", plan.name, plan.shortDescription)));
+					messages.add(new TextMessage(String.format("%s: %s - %s\n\n", plan.id, plan.name, plan.shortDescription)));
 				}
+				database.updateCustomerState(source.getUserId(),"reqPlanId");
 				return messages;
 			}
 		}
@@ -257,9 +392,9 @@ public class KitchenSinkController {
 		ArrayList<BiFunction<String, Source, List<Message>>> handleFunctions = new ArrayList<>(
 			Arrays.asList(
 				this::tryHandleFAQ,
-				this::tryHandleAmountOwed,
-				this::tryHandleBookingRequest,
 				this::tryHandleTourSearch,
+				this::tryHandleBookingRequest,
+				this::tryHandleAmountOwed,
 				this::handleUnknownQuery
 			)
 		);

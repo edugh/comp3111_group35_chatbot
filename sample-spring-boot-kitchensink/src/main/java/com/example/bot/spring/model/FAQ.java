@@ -25,5 +25,11 @@ public class FAQ {
         int result = question != null ? question.hashCode() : 0;
         result = 31 * result + (answer != null ? answer.hashCode() : 0);
         return result;
+
+    public String toString() {
+        return "FAQ{" +
+                "question='" + question + '\'' +
+                ", answer='" + answer + '\'' +
+                '}';
     }
 }

@@ -7,7 +7,7 @@ public class Customer {
 	public final int age;
 	public final String phoneNumber;
 	public final String state;
-	
+
 	public Customer(
 			String id,
 			String name,
@@ -49,5 +49,15 @@ public class Customer {
 		result = 31 * result + (phoneNumber != null ? phoneNumber.hashCode() : 0);
 		result = 31 * result + (state != null ? state.hashCode() : 0);
 		return result;
+
+  	public String toString() {
+		return "Customer{" +
+				"id='" + id + '\'' +
+				", name='" + name + '\'' +
+				", gender='" + gender + '\'' +
+				", age=" + age +
+				", phoneNumber='" + phoneNumber + '\'' +
+				", state='" + state + '\'' +
+				'}';
 	}
 }
