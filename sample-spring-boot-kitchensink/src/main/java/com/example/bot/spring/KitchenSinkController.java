@@ -255,13 +255,13 @@ public class KitchenSinkController {
             //enter from tourSearch
             case "reqPlanId":
 				ArrayList<Plan> plans = database.getPlans();
-				Plan plan = plans.stream()
+				Plan requestedPlan = plans.stream()
 						.filter(possiblePlan -> possiblePlan.id.equals(text) || stupidFuzzyMatch(text, possiblePlan.name))
 						.findFirst().orElse(null);
-				if (plan == null) {
+				if (requestedPlan == null) {
 					msgList.add(new TextMessage("Couldn't find that tour, try again."));
 				} else {
-					database.insertBooking(cid, plan.id);
+					database.insertBooking(cid, requestedPlan.id);
 					if (customer.name == null) {
 						database.updateCustomerState(cid, "reqName");
 						msgList.add(new TextMessage("What's your name, please?"));
@@ -328,12 +328,12 @@ public class KitchenSinkController {
             case "reqConfirm":
                 if(isYes(text)) {
                     database.updateCustomerState(cid, "booked");
-					Plan plan = database.getPlan(booking.planId);
+					Plan confirmedPlan = database.getPlan(booking.planId);
 					Calendar calendar = Calendar.getInstance();
 					calendar.setTime(booking.tourDate);
 					int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
 					boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
-					BigDecimal pricePerPerson = isWeekend? plan.weekendPrice : plan.weekdayPrice;
+					BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
 					BigDecimal numPeople = new BigDecimal(booking.adults + (booking.children / 2));
 					BigDecimal fee = pricePerPerson.multiply(numPeople);
 					database.updateCustomer(cid, "fee", fee);
