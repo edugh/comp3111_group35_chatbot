@@ -244,7 +244,7 @@ public class KitchenSinkController {
 			} else {
 				ArrayList<Message> messages = new ArrayList<>();
 				for (Booking booking : bookings) {
-					messages.add(new TextMessage(String.format("%s:\n%s\n\n", booking.planId)));
+					messages.add(new TextMessage(String.format("%s:\n%s\n\n", booking.planId, booking.tourDate.toString())));
 				}
 				return messages;
 			}
