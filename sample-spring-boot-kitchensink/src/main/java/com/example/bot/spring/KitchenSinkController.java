@@ -19,6 +19,7 @@ package com.example.bot.spring;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
@@ -320,7 +321,15 @@ public class KitchenSinkController {
             case "reqConfirm":
                 if(isYes(text)) {
                     database.updateCustomerState(cid, "booked");
-                    //TODO: calculate and add msg fee
+					Plan plan = database.getPlan(booking.planId);
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTime(booking.tourDate);
+					int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+					boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
+					BigDecimal pricePerPerson = isWeekend? plan.weekendPrice : plan.weekdayPrice;
+					BigDecimal numPeople = new BigDecimal(booking.adults + (booking.children / 2));
+					BigDecimal fee = pricePerPerson.multiply(numPeople);
+					database.updateCustomer(cid, "fee", fee);
                     msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
                 }
                 else {
