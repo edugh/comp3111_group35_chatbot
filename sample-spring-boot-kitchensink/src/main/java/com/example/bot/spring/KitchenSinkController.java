@@ -394,9 +394,9 @@ public class KitchenSinkController {
 		ArrayList<BiFunction<String, Source, List<Message>>> handleFunctions = new ArrayList<>(
 			Arrays.asList(
 				this::tryHandleFAQ,
-				this::tryHandleAmountOwed,
-				this::tryHandleBookingRequest,
 				this::tryHandleTourSearch,
+				this::tryHandleBookingRequest,
+				this::tryHandleAmountOwed,
 				this::handleUnknownQuery
 			)
 		);
