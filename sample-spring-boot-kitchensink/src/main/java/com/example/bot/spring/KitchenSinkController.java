@@ -395,8 +395,8 @@ public class KitchenSinkController {
 			Arrays.asList(
 				this::tryHandleFAQ,
 				this::tryHandleTourSearch,
-				this::tryHandleAmountOwed,
 				this::tryHandleBookingRequest,
+				this::tryHandleAmountOwed,
 				this::handleUnknownQuery
 			)
 		);
