@@ -86,11 +86,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         try {
             Connection connection = this.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.executeQuery();
+            stmt.execute();
             stmt.close();
             connection.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
