@@ -254,15 +254,22 @@ public class KitchenSinkController {
 				return null;
             //enter from tourSearch
             case "reqPlanId":
-                database.insertBooking(cid, filterString(text));
-                if(customer.name == null){
-                    database.updateCustomerState(cid, "reqName");
-                    msgList.add(new TextMessage("What's your name, please?"));
-                }
-                else{
-                    database.updateCustomerState(cid, "reqDate");
-                    msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
-                }
+				ArrayList<Plan> plans = database.getPlans();
+				Plan plan = plans.stream()
+						.filter(possiblePlan -> possiblePlan.id.equals(text) || stupidFuzzyMatch(text, possiblePlan.name))
+						.findFirst().orElse(null);
+				if (plan == null) {
+					msgList.add(new TextMessage("Couldn't find that tour, try again."));
+				} else {
+					database.insertBooking(cid, plan.id);
+					if (customer.name == null) {
+						database.updateCustomerState(cid, "reqName");
+						msgList.add(new TextMessage("What's your name, please?"));
+					} else {
+						database.updateCustomerState(cid, "reqDate");
+						msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
+					}
+				}
                 break;
             case "reqName":
                 database.updateCustomer(cid, "name", filterString(text));
