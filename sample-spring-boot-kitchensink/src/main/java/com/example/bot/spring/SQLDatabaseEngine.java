@@ -62,7 +62,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
 	@Override
 	public Plan getPlan(String pid) {
-		String query = "SELECT * FROM Plans WHERE planId=?;";
+		String query = "SELECT * FROM Plans WHERE id=?;";
 		String[] params = { pid };
 		ArrayList<Plan> plans = getResultsForQuery(query, SQLDatabaseEngine::planFromResultSet, params);
 		return plans.size() == 0? null : plans.get(0);
