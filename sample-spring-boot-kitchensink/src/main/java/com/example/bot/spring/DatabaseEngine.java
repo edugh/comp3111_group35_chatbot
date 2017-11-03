@@ -44,6 +44,7 @@ public class DatabaseEngine {
     public void updateBookingDate(String cid, String pid, Date date){}
     public void updateBooking(String cid, String pid, Date date, String field, String value){ }
     public void updateBooking(String cid, String pid, Date date, String field, int value){ }
+    public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){ }
 
     public Tour getTour(String pid, Date date){ return null; }
     public Plan getPlan(String pid){ return null; }

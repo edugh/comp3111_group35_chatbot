@@ -356,8 +356,8 @@ public class KitchenSinkController {
 					BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
 					BigDecimal numPeople = new BigDecimal(booking.adults + (booking.children / 2));
 					BigDecimal fee = pricePerPerson.multiply(numPeople);
-					database.updateCustomer(cid, "fee", fee);
-					database.updateCustomer(cid, "paid", 0);
+					database.updateBooking(cid, pid, date,"fee", fee);
+                    database.updateBooking(cid, pid, date,"paid", BigDecimal.ZERO);
 					msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
                 }
                 else {
