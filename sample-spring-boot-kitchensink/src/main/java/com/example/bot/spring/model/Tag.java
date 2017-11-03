@@ -8,5 +8,12 @@ public class Tag {
 		this.name = name;
 		this.customerId = cid;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "Tag{" +
+				"name='" + name + '\'' +
+				", customerId='" + customerId + '\'' +
+				'}';
+	}
 }

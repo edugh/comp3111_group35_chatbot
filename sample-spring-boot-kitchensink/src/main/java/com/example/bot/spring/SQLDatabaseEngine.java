@@ -62,6 +62,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, String[] params) {
+		log.info("New getResultsForQuery '{}'", query);
 		ArrayList<T> results = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
@@ -69,20 +70,25 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 			for (int i = 0; i < (params == null? 0 : params.length); i++) {
 				stmt.setString(i+1, params[i]);
 			}
+			log.info("Prepared query '{}'", stmt.toString());
 			ResultSet resultSet = stmt.executeQuery();
 			while (resultSet.next()) {
-				results.add(modelReader.apply(resultSet));
+				T result = modelReader.apply(resultSet);
+				log.info("Got result for query: '{}'", result.toString());
+				results.add(result);
 			}
 			resultSet.close();
 			stmt.close();
 			connection.close();
 		} catch (Exception e) {
+			log.info("Query '{}' failed", query);
 			e.printStackTrace();
 		}
 		return results;
 	}
 
 	public void insertForQuery(String query){
+		log.info("New insertForQuery '{}'", query);
         try {
             Connection connection = this.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
