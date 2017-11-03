@@ -247,7 +247,7 @@ public class KitchenSinkController {
             date = booking.tourDate;
         }
 
-        switch (state){
+        switch (state) {
             case "new":
             	//go into tourSearch
 				return null;
@@ -262,45 +262,61 @@ public class KitchenSinkController {
                     database.updateCustomerState(cid, "reqDate");
                     msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
                 }
+                break;
             case "reqName":
                 database.updateCustomer(cid, "name", filterString(text));
                 database.updateCustomerState(cid, "reqGender");
                 msgList.add(new TextMessage("Male or Female please?"));
+                break;
             case "reqGender":
                 database.updateCustomer(cid, "gender", filterString(text));
                 database.updateCustomerState(cid, "reqAge");
                 msgList.add(new TextMessage("How old are you please?"));
+                break;
             case "reqAge":
                 database.updateCustomer(cid, "age", getIntFromText(text));
                 database.updateCustomerState(cid, "reqPhoneNumber");
                 msgList.add(new TextMessage("Phone number please?"));
+                break;
             case "reqPhoneNumber":
                 database.updateCustomer(cid, "gender", filterString(text));
                 database.updateCustomerState(cid, "reqDate");
                 msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
+				break;
             case "reqDate":
-                tour = database.getTour(pid, getDateFromText(text));
-                if(database.isTourFull()){
+            	java.sql.Date dateInText;
+            	try {
+            		dateInText = getDateFromText(text);
+				} catch (ParseException p) {
+					msgList.add(new TextMessage("Sorry, I didn't understand that date - please tell me again"));
+					return msgList;
+				}
+                tour = database.getTour(pid, dateInText);
+                if(database.isTourFull(pid, date)){
                     msgList.add(new TextMessage("Sorry it is full-booked that day. What about other trips or departure date?"));
                     // database.updateCustomerState(cid, "changeDateOrPlan");
                 }
                 else{
-                    database.updateBookingDate(cid, pid, getDateFromText(text));
+                    database.updateBookingDate(cid, pid, dateInText);
                     msgList.add(new TextMessage("How many adults(Age>11) are planning to go?"));
                     database.updateCustomerState(cid, "reqNAdult");
                 }
+                break;
             case "reqNAdult":
                 database.updateBooking(cid, pid, date, "adults", getIntFromText(text));
                 msgList.add(new TextMessage("How many children (Age 4 to 11) are planning to go?"));
                 database.updateCustomerState(cid, "reqNChild");
+                break;
             case "reqNChild":
                 database.updateBooking(cid, pid, date, "children", getIntFromText(text));
                 msgList.add(new TextMessage("How many children (Age 0 to 3) are planning to go?"));
                 database.updateCustomerState(cid, "reqNToddler");
+                break;
             case "reqNToddler":
                 database.updateBooking(cid, pid, date, "toddlers", getIntFromText(text));
                 msgList.add(new TextMessage("Confirmed?")); //TODO Optionally: show fee
                 database.updateCustomerState(cid, "reqConfirm");
+                break;
             case "reqConfirm":
                 if(isYes(text)) {
                     database.updateCustomerState(cid, "booked");
@@ -310,11 +326,11 @@ public class KitchenSinkController {
                 else {
                     msgList.add(new TextMessage("Why? Fuck you. Say YES."));
                 }
-
+                break;
             default:
                 return null;
         }
-
+        return msgList;
 	}
 
 	public boolean isYes(String answer){
