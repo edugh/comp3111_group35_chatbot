@@ -357,7 +357,8 @@ public class KitchenSinkController {
 					BigDecimal numPeople = new BigDecimal(booking.adults + (booking.children / 2));
 					BigDecimal fee = pricePerPerson.multiply(numPeople);
 					database.updateCustomer(cid, "fee", fee);
-                    msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
+					database.updateCustomer(cid, "paid", 0);
+					msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
                 }
                 else {
                     msgList.add(new TextMessage("Why? Fuck you. Say YES."));
