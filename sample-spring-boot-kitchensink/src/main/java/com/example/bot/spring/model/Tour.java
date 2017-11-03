@@ -20,4 +20,17 @@ public class Tour {
         this.capacity = capacity;
         this.minimum = minimum;
     }
+
+    @Override
+    public String toString() {
+        return "Tour{" +
+                "planId='" + planId + '\'' +
+                ", tourDate=" + tourDate +
+                ", guideName='" + guideName + '\'' +
+                ", guideAccount='" + guideAccount + '\'' +
+                ", hotel='" + hotel + '\'' +
+                ", capacity=" + capacity +
+                ", minimum=" + minimum +
+                '}';
+    }
 }

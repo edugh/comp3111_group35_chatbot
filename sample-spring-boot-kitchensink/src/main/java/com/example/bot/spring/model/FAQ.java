@@ -8,4 +8,12 @@ public class FAQ {
         this.question = question;
         this.answer = answer;
     }
+
+    @Override
+    public String toString() {
+        return "FAQ{" +
+                "question='" + question + '\'' +
+                ", answer='" + answer + '\'' +
+                '}';
+    }
 }

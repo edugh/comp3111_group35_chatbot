@@ -26,4 +26,17 @@ public class Plan {
         this.weekdayPrice = price1;
         this.weekendPrice = price2;
     }
+
+    @Override
+    public String toString() {
+        return "Plan{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", shortDescription='" + shortDescription + '\'' +
+                ", length=" + length +
+                ", departure='" + departure + '\'' +
+                ", weekdayPrice=" + weekdayPrice +
+                ", weekendPrice=" + weekendPrice +
+                '}';
+    }
 }

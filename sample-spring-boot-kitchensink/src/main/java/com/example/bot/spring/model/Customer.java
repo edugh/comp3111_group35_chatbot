@@ -7,7 +7,7 @@ public class Customer {
 	public final int age;
 	public final String phoneNumber;
 	public final String state;
-	
+
 	public Customer(
 			String id,
 			String name,
@@ -23,8 +23,16 @@ public class Customer {
 		this.phoneNumber = phoneNumber;
 		this.state = state;
 	}
-	
-	
-	
-	
+
+	@Override
+	public String toString() {
+		return "Customer{" +
+				"id='" + id + '\'' +
+				", name='" + name + '\'' +
+				", gender='" + gender + '\'' +
+				", age=" + age +
+				", phoneNumber='" + phoneNumber + '\'' +
+				", state='" + state + '\'' +
+				'}';
+	}
 }

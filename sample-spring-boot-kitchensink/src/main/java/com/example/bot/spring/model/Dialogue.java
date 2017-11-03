@@ -17,5 +17,13 @@ public class Dialogue {
         this.content = content;
     }
 
+    @Override
+    public String toString() {
+        return "Dialogue{" +
+                "customerId='" + customerId + '\'' +
+                ", sendTime=" + sendTime +
+                ", content='" + content + '\'' +
+                '}';
+    }
 }
 

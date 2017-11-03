@@ -33,4 +33,19 @@ public class Booking {
         this.paid = paid;
         this.specialRequest = specialRequest;
     }
+
+    @Override
+    public String toString() {
+        return "Booking{" +
+                "customerId='" + customerId + '\'' +
+                ", planId='" + planId + '\'' +
+                ", tourDate=" + tourDate +
+                ", adults=" + adults +
+                ", children=" + children +
+                ", toddlers=" + toddlers +
+                ", fee=" + fee +
+                ", paid=" + paid +
+                ", specialRequest='" + specialRequest + '\'' +
+                '}';
+    }
 }
