@@ -119,7 +119,8 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
     @Override
     public void insertBooking(String cid, String pid){
-	    String query = String.format("INSERT INTO bookings(customerId, planId) VALUES('%s','%s')", cid, pid);
+		Date defaultDate = new Date(0);
+	    String query = String.format("INSERT INTO bookings(customerId, planId, tourDate) VALUES('%s','%s','%s')", cid, pid, defaultDate);
         insertForQuery(query);
 	}
     @Override

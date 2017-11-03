@@ -358,8 +358,6 @@ public class KitchenSinkController {
         return answer;
     }
 
-
-
 	private List<Message> tryHandleTourSearch(String text, Source source) {
 		// TODO(Jason): match less idiotically, parse parameters
 		if (stupidFuzzyMatch("Which tours are available", text)) {
