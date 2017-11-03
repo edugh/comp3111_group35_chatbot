@@ -70,7 +70,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 				stmt.setString(i+1, params[i]);
 			}
 			ResultSet resultSet = stmt.executeQuery();
-			while (!resultSet.isAfterLast()) {
+			while (resultSet.next()) {
 				results.add(modelReader.apply(resultSet));
 			}
 			resultSet.close();
@@ -95,13 +95,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     }
 
 	public static FAQ faqFromResultSet(ResultSet resultSet) throws SQLException {
-		resultSet.next();
 		return new FAQ(resultSet.getString(1),
 				resultSet.getString(2));
 	}
 
 	public static Booking bookingFromResultSet(ResultSet resultSet) throws SQLException {
-		resultSet.next();
 		return new Booking(resultSet.getString(1),
 				resultSet.getString(2),
 				resultSet.getDate(3),
@@ -172,7 +170,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     }
 
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
-		resultSet.next();
 		return new Tag(resultSet.getString(1),
 				resultSet.getString(2));
 	}
@@ -188,7 +185,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     }
 	
 	public static Dialogue dialogueFromResultSet(ResultSet resultSet) throws SQLException{
-		resultSet.next();
 		Timestamp ts = resultSet.getTimestamp(2);
 				//(Timestamp) resultSet.getObject("created");
 		ZonedDateTime zonedDateTime =
@@ -221,17 +217,12 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     }
 	
 	public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException {
-		resultSet.next();
-		if(resultSet != null) {
-            return new Customer(resultSet.getString(1),
-                    resultSet.getString(2),
-                    resultSet.getString(3),
-                    resultSet.getInt(4),
-                    resultSet.getString(5),
-                    resultSet.getString(6));
-        }
-        else
-            return null;
+		return new Customer(resultSet.getString(1),
+				resultSet.getString(2),
+				resultSet.getString(3),
+				resultSet.getInt(4),
+				resultSet.getString(5),
+				resultSet.getString(6));
 	}
 
 	@Override
@@ -242,7 +233,9 @@ public class SQLDatabaseEngine extends DatabaseEngine {
             Connection connection = this.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
             ResultSet resultSet = stmt.executeQuery();
-            customer = customerFromResultSet(resultSet);
+			if (resultSet.next()) {
+				customer = customerFromResultSet(resultSet);
+			}
             resultSet.close();
             stmt.close();
             connection.close();
@@ -279,7 +272,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
 
 	public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
-		resultSet.next();
 		return new Plan(resultSet.getString(1),
 				resultSet.getString(2),
 				resultSet.getString(3),
@@ -290,7 +282,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	}
 
 	public static Tour tourFromResultSet(ResultSet resultSet) throws SQLException {
-		resultSet.next();
 		return new Tour(
 				resultSet.getString(1),
 				resultSet.getDate(2),
