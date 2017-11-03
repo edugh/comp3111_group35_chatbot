@@ -52,6 +52,22 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		return getResultsForQuery(query, SQLDatabaseEngine::faqFromResultSet);
 	}
 
+	@Override
+	public Tour getTour(String pid, Date date) {
+		String query = "SELECT * FROM Tours WHERE planId=? AND tourDate=?;";
+		Object[] params = { pid, date };
+		ArrayList<Tour> tours = getResultsForQuery(query, SQLDatabaseEngine::tourFromResultSet, params);
+		return tours.size() == 0? null : tours.get(0);
+	}
+
+	@Override
+	public Plan getPlan(String pid) {
+		String query = "SELECT * FROM Plans WHERE planId=?;";
+		String[] params = { pid };
+		ArrayList<Plan> plans = getResultsForQuery(query, SQLDatabaseEngine::planFromResultSet, params);
+		return plans.size() == 0? null : plans.get(0);
+	}
+
 	@FunctionalInterface
 	public interface SQLModelReader<T> {
 		T apply(ResultSet t) throws SQLException;
@@ -61,14 +77,18 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		return getResultsForQuery(query, modelReader, null);
 	}
 
-	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, String[] params) {
+	public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, Object[] params) {
 		log.info("New getResultsForQuery '{}'", query);
 		ArrayList<T> results = new ArrayList<>();
 		try {
 			Connection connection = this.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(query);
 			for (int i = 0; i < (params == null? 0 : params.length); i++) {
-				stmt.setString(i+1, params[i]);
+				if (params[i] instanceof String) {
+					stmt.setString(i + 1, (String) params[i]);
+				} else if (params[i] instanceof Date) {
+					stmt.setDate(i + 1, (Date) params[i]);
+				}
 			}
 			log.info("Prepared query '{}'", stmt.toString());
 			ResultSet resultSet = stmt.executeQuery();
@@ -277,6 +297,12 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         insertForQuery(query);
     }
 
+	@Override
+	public void updateCustomer(String cid, String field, BigDecimal value){
+		String query = String.format("UPDATE Customers SET %s = %d WHERE id = '%s'",field, value, cid);
+		insertForQuery(query);
+	}
+
 
 	public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
 		return new Plan(resultSet.getString(1),
@@ -300,10 +326,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
 		);
 	}
-
-	//TODO:
-	@Override
-    public Tour getTour(String pid, Date date){ return null;}
 
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;

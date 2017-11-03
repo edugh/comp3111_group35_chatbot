@@ -36,6 +36,7 @@ public class DatabaseEngine {
     public void updateCustomerState(String cid, String state){ }
     public void updateCustomer(String cid, String field, String value){ }
     public void updateCustomer(String cid, String field, int value){ }
+    public void updateCustomer(String cid, String field, BigDecimal value) { }
 
     public Booking getCurrentBooking(String cid){ return null; }
 
@@ -44,7 +45,8 @@ public class DatabaseEngine {
     public void updateBooking(String cid, String pid, Date date, String field, String value){ }
     public void updateBooking(String cid, String pid, Date date, String field, int value){ }
 
-    public Tour getTour(String pid, Date date){ return null;}
+    public Tour getTour(String pid, Date date){ return null; }
+    public Plan getPlan(String pid){ return null; }
     public boolean isTourFull(String pid, Date date){ return false; }
 
 }
