@@ -270,7 +270,7 @@ public class KitchenSinkController {
                 msgList.add(new TextMessage("Male or Female please?"));
                 break;
             case "reqGender":
-                database.updateCustomer(cid, "gender", filterString(text));
+                database.updateCustomer(cid, "gender", getGender(text));
                 database.updateCustomerState(cid, "reqAge");
                 msgList.add(new TextMessage("How old are you please?"));
                 break;
@@ -363,9 +363,19 @@ public class KitchenSinkController {
     }
 
     public String filterString(String answer){
-        //TODO: I'm XX -> XX, Male -> M
+        //TODO: I'm XX -> XX
         return answer;
     }
+
+    public String getGender(String answer){
+        String charGender = answer.substring(0,1).toUpperCase();
+        if(charGender.matches("[A-Z]")){
+            return charGender;
+        }
+        else
+            return "N";
+    }
+
 
 	private List<Message> tryHandleTourSearch(String text, Source source) {
 		// TODO(Jason): match less idiotically, parse parameters
