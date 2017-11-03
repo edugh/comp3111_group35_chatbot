@@ -24,15 +24,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
-import java.util.function.BiConsumer;
 
 import com.example.bot.spring.model.*;
+import com.example.bot.spring.model.Booking;
+import com.example.bot.spring.model.FAQ;
+import com.example.bot.spring.model.Plan;
 import com.linecorp.bot.model.event.source.Source;
-import com.linecorp.bot.model.profile.UserProfileResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -225,6 +227,24 @@ public class KitchenSinkController {
 	}
 
 	private List<Message> tryHandleAmountOwed(String text, Source source) {
+		BigDecimal amountOwed = database.getAmmountOwed(source.getUserId());
+		String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
+		return Collections.singletonList(new TextMessage(String.format("You owe %s", prettyAmount)));
+	}
+
+	private List<Message> tryHandleEnrolledTours(String text, Source source) {
+		if (stupidFuzzyMatch("Which tours am I enrolled in", text)) {
+			ArrayList<Booking> bookings = database.getBookings(source.getUserId());
+			if (bookings.size() == 0) {
+				return Collections.singletonList(new TextMessage("You currently have no bookings"));
+			} else {
+				ArrayList<Message> messages = new ArrayList<>();
+				for (Booking booking : bookings) {
+					messages.add(new TextMessage(String.format("%s:\n%s\n\n", booking.planId)));
+				}
+				return messages;
+			}
+		}
 		return null;
 	}
 
@@ -420,6 +440,7 @@ public class KitchenSinkController {
 				this::tryHandleFAQ,
 				this::tryHandleTourSearch,
 				this::tryHandleBookingRequest,
+				this::tryHandleEnrolledTours,
 				this::tryHandleAmountOwed,
 				this::handleUnknownQuery
 			)

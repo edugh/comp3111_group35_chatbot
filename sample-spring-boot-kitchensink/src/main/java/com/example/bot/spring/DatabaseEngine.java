@@ -22,9 +22,9 @@ public class DatabaseEngine {
 		return null;
 	}
 
-	ArrayList<Booking> getEnrolledTours(String customerId) {
-		return null;
-	}
+    ArrayList<Booking> getBookings(String customerId) {
+        return null;
+    }
 
 	BigDecimal getAmmountOwed(String customerId) {
 		return BigDecimal.ZERO;
