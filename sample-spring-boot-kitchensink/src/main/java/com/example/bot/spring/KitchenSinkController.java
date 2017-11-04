@@ -227,9 +227,13 @@ public class KitchenSinkController {
 	}
 
 	private List<Message> tryHandleAmountOwed(String text, Source source) {
-		BigDecimal amountOwed = database.getAmmountOwed(source.getUserId());
-		String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
-		return Collections.singletonList(new TextMessage(String.format("You owe %s", prettyAmount)));
+	    if(text.toLowerCase().contains("how much")){ //TODO: better judging
+            BigDecimal amountOwed = database.getAmmountOwed(source.getUserId());
+            String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
+            return Collections.singletonList(new TextMessage(String.format("You owe %s", prettyAmount)));
+        }
+		else
+		    return null;
 	}
 
 	private List<Message> tryHandleEnrolledTours(String text, Source source) {
@@ -439,9 +443,9 @@ public class KitchenSinkController {
 		ArrayList<BiFunction<String, Source, List<Message>>> handleFunctions = new ArrayList<>(
 			Arrays.asList(
 				this::tryHandleFAQ,
-				this::tryHandleTourSearch,
 				this::tryHandleBookingRequest,
 				this::tryHandleEnrolledTours,
+                this::tryHandleTourSearch,
 				this::tryHandleAmountOwed,
 				this::handleUnknownQuery
 			)
