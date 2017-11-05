@@ -199,14 +199,15 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
     @Override
     public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){
-        String query = String.format("UPDATE Bookings SET %s = $%s " +
-                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field, new DecimalFormat("0.00").format(value));
+        String query = String.format("UPDATE Bookings SET %s = ? " +
+                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
         try {
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setDate(3, date);
-            stmt.setString(2, pid);
-            stmt.setString(1, cid);
+            stmt.setDate(4, date);
+            stmt.setString(3, pid);
+            stmt.setString(2, cid);
+			stmt.setBigDecimal(1, value);
             stmt.executeQuery();
             stmt.close();
             connection.close();
