@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.net.URISyntaxException;
 import java.net.URI;
+import java.text.DecimalFormat;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -194,6 +195,25 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+    }
+
+    @Override
+    public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){
+        String query = String.format("UPDATE Bookings SET %s = ? " +
+                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+        try {
+            Connection connection = getConnection();
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setDate(4, date);
+            stmt.setString(3, pid);
+            stmt.setString(2, cid);
+			stmt.setBigDecimal(1, value);
+            stmt.executeQuery();
+            stmt.close();
+            connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 	public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
