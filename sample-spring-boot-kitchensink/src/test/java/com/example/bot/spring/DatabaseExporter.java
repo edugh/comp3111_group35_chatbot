@@ -24,7 +24,7 @@ public class DatabaseExporter
     }
 
     private static Connection getConnection() throws URISyntaxException, SQLException {
-        URI dbUri = new URI("postgres://bguxamugzixwea:0373a326383fc0f179a4dcdc1c3379be05161a0573064f72cc130e0db28f186a@ec2-54-243-124-240.compute-1.amazonaws.com:5432/dd0r30nupaffkk");
+        URI dbUri = new URI(System.getenv("DATABASE_URL"));
 
         String username = dbUri.getUserInfo().split(":")[0];
         String password = dbUri.getUserInfo().split(":")[1];
