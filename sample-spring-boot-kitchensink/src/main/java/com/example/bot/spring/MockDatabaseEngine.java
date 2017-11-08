@@ -22,13 +22,6 @@ public class MockDatabaseEngine extends DatabaseEngine {
     }
 
     public Connection getConnection() throws URISyntaxException, SQLException {
-        MockDataProvider provider = new MyProvider();
-        MockConnection connection = new MockConnection(provider);
-
-        // Pass the mock connection to a jOOQ DSLContext:
-        DSLContext create = DSL.using(connection, SQLDialect.ORACLE);
-
-        // Execute queries transparently, with the above DSLContext:
-        Result<BookRecord> result = create.selectFrom(BOOK).where(BOOK.ID.eq(5)).fetch();
+        return null;
     }
 }

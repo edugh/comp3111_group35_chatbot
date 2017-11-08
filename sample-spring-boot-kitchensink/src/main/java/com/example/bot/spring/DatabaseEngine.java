@@ -276,6 +276,10 @@ abstract class DatabaseEngine {
         );
     }
 
+    public boolean isTourFull(String pid, Date date) {
+        // TODO(What should this be)
+        return false;
+    }
 
     @FunctionalInterface
     public interface SQLModelReader<T> {
@@ -321,7 +325,6 @@ abstract class DatabaseEngine {
         try {
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.
             stmt.execute();
             stmt.close();
             connection.close();

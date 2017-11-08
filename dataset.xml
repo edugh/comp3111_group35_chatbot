@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <bookings customerid="A111222" planid="2D001" tourdate="2017-11-06" adults="1" children="0" toddlers="0" fee="499.0" paid="0.0" specialrequest="N/A"/>
+    <bookings customerid="A111222" planid="2D001" tourdate="2017-11-08" adults="1" children="0" toddlers="0" fee="499.0" paid="300.0" specialrequest="N/A"/>
+    <bookings customerid="A123456" planid="2D001" tourdate="2017-11-11" adults="1" children="0" toddlers="0" fee="599.0" paid="599.0" specialrequest="N/A"/>
+    <bookings customerid="U5cb5a2ebcdef953e77e000a89161e264" planid="2D001" tourdate="1970-01-01"/>
+    <bookings customerid="Ue5a3029c9e57925707ead25babfd8f21" planid="2D004" tourdate="1970-01-01"/>
+    <bookings customerid="Ue5a3029c9e57925707ead25babfd8f21" planid="3D077" tourdate="1970-01-01"/>
+    <customers id="A111222" name="Pepper PIG" gender="F" age="35" phonenumber="12345678" state="booked"/>
+    <customers id="A123456" name="Sung Kim" gender="M" age="1" phonenumber="69922527" state="confirmed"/>
+    <customers id="A189567" name="Wong Kam Kwai" gender="M" age="1000" phonenumber="34968416" state="confirmed"/>
+    <customers id="A222444" name="Emily ELEPHANT" gender="F" age="36" phonenumber="12345679" state="booked"/>
+    <customers id="A359745" name="Lili WEI" gender="M" age="99" phonenumber="28946554" state="confirmed"/>
+    <customers id="A389465" name="Tang Wensheng" gender="M" age="50" phonenumber="79688888" state="confirmed"/>
+    <customers id="A648597" name="Hu Jiajun" gender="M" age="44" phonenumber="86412654" state="confirmed"/>
+    <customers id="A789056" name="Kim Mijung" gender="M" age="11" phonenumber="46545483" state="confirmed"/>
+    <customers id="A984658" name="Kwan Victor Wing-Chuen" gender="M" age="10" phonenumber="68945865" state="confirmed"/>
+    <customers id="B101333" name="Ryan Gosling" gender="M" age="20" phonenumber="11674988" state="booked"/>
+    <customers id="B123456" name="Kelvin Wang" gender="M" age="2" phonenumber="56781654" state="confirmed"/>
+    <customers id="B124145" name="Helena Bonham Carter" gender="F" age="90" phonenumber="21791551" state="booked"/>
+    <customers id="B45432" name="Brad Pitt" gender="M" age="50" phonenumber="25780064" state="booked"/>
+    <customers id="B599598" name="Laurence Fishburne" gender="M" age="5" phonenumber="63393894" state="booked"/>
+    <customers id="B644501" name="Leonardo DiCaprio" gender="M" age="99" phonenumber="60441661" state="booked"/>
+    <customers id="C124499" name="Michael Caine" gender="M" age="8" phonenumber="79385225" state="booked"/>
+    <customers id="C260701" name="Lana Wachowski" gender="F" age="16" phonenumber="18780354" state="booked"/>
+    <customers id="C469016" name="Margot Robbie" gender="F" age="18" phonenumber="41174568" state="booked"/>
+    <customers id="C953545" name="Keanu Reeves" gender="M" age="66" phonenumber="82939948" state="booked"/>
+    <customers id="D114918" name="Tom Hardy" gender="M" age="33" phonenumber="65362418" state="booked"/>
+    <customers id="D139994" name="Ellen Page" gender="F" age="85" phonenumber="50714889" state="booked"/>
+    <customers id="D823368" name="Emma Stone" gender="F" age="98" phonenumber="62916848" state="booked"/>
+    <customers id="T176181" name="Anne Hathaway" gender="F" age="88" phonenumber="95618688" state="booked"/>
+    <customers id="U5786ca06d4dbdacf101ac4f88525578b" name="Jason" gender="8" age="20" state="booked"/>
+    <customers id="U5cb5a2ebcdef953e77e000a89161e264" name="Zhang Shuo" gender="M" age="20" phonenumber="95656294" state="booked"/>
+    <customers id="Ue5a3029c9e57925707ead25babfd8f21" name="Graham" gender="M" age="22" phonenumber="Hello" state="booked"/>
+    <customers id="Uefc3dea6344320d9c19c3f7fb796876a" state="reqPlanId"/>
+    <dialogues/>
+    <faq question="1 How to apply?" answer="Customers shall approach the company by phone or visit our store (in Clearwater bay) with the choosen tour code and departure date. If it is not full, customers will be advised by the staff to pay the tour fee. Tour fee is non refundable. Customer can pay their fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. Customer shall send their pay-in slip to us by email or LINE."/>
+    <faq question="1 Where is the gathering/assemble and dismiss spot?" answer="We gather at the gathering spot  &quot;Exit A, Futian port, Shenzhen&quot; at 8:00AM on the departure date. We dismiss at the same spot after the tour."/>
+    <faq question="1 Are there any additional charge?" answer="Each customer need to pay an additional service charge at the rate $60/day/person, on top of the tour fee. It is collected by the tour guide at the end of the tour."/>
+    <faq question="1 What is the transportation in Guangdong?" answer="A tour bus"/>
+    <faq question="1 How can I contact the tour guide?" answer="Each tour guide has a LINE account and he will add  the customers as his friends before the departure date. You can contact him/her accordingly."/>
+    <faq question="1 Is insurance covered?" answer="Yes, each customers are protected by the Excellent Blue-Diamond Scheme by AAA insurance company."/>
+    <faq question="1 Is the hotel single bed or twin bed or double bed?" answer="All rooms are twin beds. Every customer needs to share a room with another customer. If a customer prefer to own a room by himself/herself, additional charge of 30% will be applied."/>
+    <faq question="1 Visa problem" answer="lease refer the Visa issue to the immigration department of China. The tour are assembled and dismissed in mainland and no cross-border is needed. However, you will need a travelling document when you check in the hotel."/>
+    <faq question="1 Do I need swimming suit in a water them park or a hot spring resort?" answer="Yes you do need it. Otherwise you may not use the facility."/>
+    <faq question="1 Do you serve vegeterian?" answer="No"/>
+    <faq question="1 What is the tour fee for children?" answer="Age below 3 (including 3) is free. Age between 4 to  11 (including 4 and 11) has a discount of 20% off. Otherwise full fee applies. The same service charge is applied to all age customers."/>
+    <faq question="1 What if I am late in the departure date?" answer="You shall contact the tour guide if you know you will be late and see if the tour guide can wait a little bit longer. No refund or make up shall be made if a customer is late for the tour."/>
+    <faq question="1 What if the tour is cancelled?" answer="In case a tour has not enough people or bad weather condition and the tour is forced to cancel, customers will be informed 3 days in advanced. Either change to another tour or refund is avaliable for customers to select. However, due to other reasons such as customers&apos; personal problems no refund can be made."/>
+    <plans id="2D001" name="Shimen National Forest Tour" shortdescription="Shimen colorful pond * stunning red maple * Staying at &quot;Yihua Hot Spring Hotel&quot;" length="2" departure="Mon, Wed, Sat" price="499.0" weekendprice="599.0"/>
+    <plans id="2D002" name="Yangshan Hot Spring Tour" shortdescription="Unlimited use of hot spring * Famous Yangshan roaster cusine" length="2" departure="Mon, Wed, Fri" price="499.0" weekendprice="399.0"/>
+    <plans id="2D004" name="National Park Tour" shortdescription="Green Lake District (Ferry Tour Included) * Asia tallest musical fountain * Staying at 4 stars hotel" length="2" departure="Tue, Sat" price="299.0" weekendprice="399.0"/>
+    <plans id="3D077" name="Shaoguan sight-seeing tour" shortdescription="Nanhua Temple * Danxia Mountain * Nanling National Forest Park" length="3" departure="Tue, Thu" price="499.0" weekendprice="0.0"/>
+    <tags/>
+    <tours planid="2D001" tourdate="2017-11-06" guidename="Amber" guideaccount="Amber&apos;s Account" hotel="Hotel L&apos;Cheap" capacity="20" minimum="4"/>
+    <tours planid="2D001" tourdate="2017-11-08" guidename="Betty" guideaccount="Betty&apos;s Account" hotel="Hotel L&apos;Cheap" capacity="20" minimum="4"/>
+    <tours planid="2D001" tourdate="2017-11-11" guidename="Carol" guideaccount="Carol&apos;s Account" hotel="Hotel de Carol" capacity="20" minimum="4"/>
+</dataset>
