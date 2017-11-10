@@ -204,13 +204,4 @@ public class KitchenSinkTester {
 		Booking expectedBooking = new Booking("userId1", "2D001", kitchenSinkController.getDateFromText("20171108"), 1, 3, 5, new BigDecimal(1247.5), BigDecimal.ZERO, "null");
 		Assert.assertEquals(bookings.get(0), expectedBooking);
 	}
-
-/*
--Test new user, need to mock objects passed into kitchen sink controller, make sure row is inserted into database properly
-also test that response is correct, maybe override reply method to send back?
--Test multiple users adding
--Test faq
--Test complete flow then ask enrollelent and ammount owed
--Test complete most of flow, cancel and check
-*/
 }
