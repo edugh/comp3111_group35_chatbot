@@ -1,5 +1,11 @@
 package com.example.bot.spring;
 
+import com.example.bot.spring.model.Customer;
+import com.linecorp.bot.model.event.FollowEvent;
+import com.linecorp.bot.model.event.source.Source;
+import com.linecorp.bot.model.event.source.UserSource;
+import com.linecorp.bot.model.message.Message;
+import com.linecorp.bot.model.message.TextMessage;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
@@ -11,14 +17,29 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.sql.DataSource;
 import java.io.File;
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.h2.engine.Constants.UTF8;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = { KitchenSinkTester.class, SQLDatabaseEngine.class })
 public class KitchenSinkTester {
+
+	@Autowired
+	private DatabaseEngine databaseEngine;
+
+	private MockKitchenSinkController kitchenSinkController;
 
 	private static final String TESTDATA_FILE = "dataset.xml";
 
@@ -33,9 +54,20 @@ public class KitchenSinkTester {
 	}
 
 	@Before
-	public void importDataSet() throws Exception {
+	public void beforeEachTest() throws Exception {
 		IDataSet dataSet = readDataSet();
 		cleanlyInsert(dataSet);
+		Connection connection = dataSource().getConnection();
+		databaseEngine = new MockDatabaseEngine(connection);
+		kitchenSinkController = new MockKitchenSinkController(databaseEngine);
+	}
+
+	private DataSource dataSource() {
+		JdbcDataSource dataSource = new JdbcDataSource();
+		dataSource.setURL(JDBC_URL);
+		dataSource.setUser(USER);
+		dataSource.setPassword(PASSWORD);
+		return dataSource;
 	}
 
 	private IDataSet readDataSet() throws Exception {
@@ -49,18 +81,39 @@ public class KitchenSinkTester {
 		databaseTester.onSetup();
 	}
 
+	private FollowEvent createFollowEvent(String replyToken, String userId) {
+		Source source = new UserSource(userId);
+		return new FollowEvent(replyToken, source, null);
+	}
+
 	@Test
 	public void sanityCheckFAQs() throws Exception {
-		Connection connection = dataSource().getConnection();
-		DatabaseEngine databaseEngine = new MockDatabaseEngine(connection);
 		Assert.assertEquals(databaseEngine.getFAQs().size(), 13);
 	}
 
-	private DataSource dataSource() {
-		JdbcDataSource dataSource = new JdbcDataSource();
-		dataSource.setURL(JDBC_URL);
-		dataSource.setUser(USER);
-		dataSource.setPassword(PASSWORD);
-		return dataSource;
+	@Test
+	public void testFAQResponse() throws Exception {
+		FollowEvent followEvent = createFollowEvent("replyToken0", "userId0");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		List<Message> messages = kitchenSinkController.getLatestMessages();
+		Assert.assertTrue(messages.size() == 2);
+
+		Message[] expectedMessages = {
+				new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"),
+				new TextMessage("We don't have promotion image...")
+		};
+		Assert.assertArrayEquals(messages.toArray(), expectedMessages);
+
+		Customer customer = databaseEngine.getCustomer("userId0");
+		Assert.assertEquals(customer, new Customer("userId0", null, null, 0, null, null));
 	}
+
+/*
+-Test new user, need to mock objects passed into kitchen sink controller, make sure row is inserted into database properly
+also test that response is correct, maybe override reply method to send back?
+-Test multiple users adding
+-Test faq
+-Test complete flow then ask enrollelent and ammount owed
+-Test complete most of flow, cancel and check
+*/
 }

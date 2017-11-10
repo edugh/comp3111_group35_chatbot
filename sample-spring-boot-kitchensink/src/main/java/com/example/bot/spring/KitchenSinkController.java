@@ -177,7 +177,7 @@ public class KitchenSinkController {
 		reply(replyToken, Collections.singletonList(message));
 	}
 
-	private void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
+	protected void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
 		try {
 			BotApiResponse apiResponse = lineMessagingClient.replyMessage(new ReplyMessage(replyToken, messages)).get();
 			log.info("Sent messages: {}", apiResponse);
@@ -498,17 +498,19 @@ public class KitchenSinkController {
 	}
 
 
-	
-
 
 	public KitchenSinkController() {
-		database = new SQLDatabaseEngine();
+		this(new SQLDatabaseEngine());
+	}
+
+	public KitchenSinkController(DatabaseEngine databaseEngine) {
+		this.database = databaseEngine;
 		itscLOGIN = System.getenv("ITSC_LOGIN");
 	}
 
 	private DatabaseEngine database;
 	private String itscLOGIN;
-	
+
 
 	//The annontation @Value is from the package lombok.Value
 	//Basically what it does is to generate constructor and getter for the class below
