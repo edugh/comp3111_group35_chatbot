@@ -358,7 +358,7 @@ public class KitchenSinkController {
 					int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
 					boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
 					BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
-					BigDecimal numPeople = new BigDecimal(booking.adults + (booking.children / 2));
+					BigDecimal numPeople = new BigDecimal(booking.adults + (((float) booking.children) / 2));
 					BigDecimal fee = pricePerPerson.multiply(numPeople);
 					database.updateBooking(cid, pid, date,"fee", fee);
                     database.updateBooking(cid, pid, date,"paid", BigDecimal.ZERO);
@@ -419,7 +419,7 @@ public class KitchenSinkController {
 			} else {
 				ArrayList<Message> messages = new ArrayList<>();
 				for (Plan plan : plans) {
-					messages.add(new TextMessage(String.format("%s: %s - %s\n\n", plan.id, plan.name, plan.shortDescription)));
+					messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription)));
 				}
 				database.updateCustomerState(source.getUserId(),"reqPlanId");
 				return messages;

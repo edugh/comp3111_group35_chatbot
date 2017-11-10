@@ -1,4 +1,6 @@
 -- noinspection SqlNoDataSourceInspectionForFile
+set mode PostgreSQL;
+
 create table Plans ( --Excel tour list
   id varchar(5),
   name varchar(50),
@@ -18,8 +20,7 @@ create table Tours ( --Excel booking list
   hotel varchar(16),
   capacity int,
   minimum int,
-  primary key (planId, tourDate),
-  foreign key (planId) references Plans (id)
+  primary key (planId, tourDate)
 );
 
 create table Customers (
@@ -36,8 +37,7 @@ create table Dialogues (
   customerId varchar(33),
   sendTime timestamp,
   content varchar(500),
-  primary key (customerId, sendTime),
-  foreign key (customerId) references Customers (id)
+  primary key (customerId, sendTime)
 );
 
 create table FAQ (
@@ -49,8 +49,7 @@ create table FAQ (
 create table Tags (
   name varchar(128),
   customerId varchar(33),
-  primary key(name),
-  foreign key (customerId) references Customers (id)
+  primary key(name)
 );
 
 create table Bookings (
@@ -63,7 +62,5 @@ create table Bookings (
   fee float,
   paid float,
   specialRequest varchar(128),
-  primary key (customerId, planId, tourDate),
-  foreign key (customerId) references Customers (id),
-  foreign key (planId, tourDate) references Tours(planId, tourDate)
+  primary key (customerId, planId, tourDate)
 );
