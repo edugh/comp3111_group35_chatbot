@@ -1,19 +1,21 @@
 package com.example.bot.spring;
 
 import lombok.extern.slf4j.Slf4j;
+
+import javax.sql.DataSource;
 import java.net.URISyntaxException;
 import java.sql.*;
 
 @Slf4j
 public class MockDatabaseEngine extends DatabaseEngine {
 
-    private Connection connection;
+    private DataSource dataSource;
 
-    public MockDatabaseEngine(Connection connection) {
-        this.connection = connection;
+    public MockDatabaseEngine(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public Connection getConnection() throws URISyntaxException, SQLException {
-        return connection;
+        return dataSource.getConnection();
     }
 }
