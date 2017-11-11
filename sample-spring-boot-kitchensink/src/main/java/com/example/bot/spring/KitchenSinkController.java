@@ -243,8 +243,9 @@ public class KitchenSinkController {
 				return Collections.singletonList(new TextMessage("You currently have no bookings"));
 			} else {
 				ArrayList<Message> messages = new ArrayList<>();
+				SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 				for (Booking booking : bookings) {
-					messages.add(new TextMessage(String.format("%s:\n%s\n\n", booking.planId, booking.tourDate.toString())));
+					messages.add(new TextMessage(String.format("%s:\n%s", booking.planId, simpleDateFormat.format(booking.tourDate))));
 				}
 				return messages;
 			}
