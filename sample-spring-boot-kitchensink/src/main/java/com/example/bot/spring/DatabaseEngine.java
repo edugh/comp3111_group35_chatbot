@@ -83,14 +83,16 @@ abstract class DatabaseEngine {
     }
 
     public void updateBookingDate(String cid, String pid, Date date){
+        Date defaultDate = new Date(0);
         try {
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(
-                    "UPDATE Bookings SET tourDate = ? WHERE customerId = ?, planId = ?, tourDate = null");
-            stmt.setString(3, pid);
-            stmt.setString(2, cid);
+                    "UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
             stmt.setDate(1, date);
-            stmt.executeQuery();
+            stmt.setString(2, cid);
+            stmt.setString(3, pid);
+            stmt.setDate(4, defaultDate);
+            stmt.executeUpdate();
             stmt.close();
             connection.close();
         } catch (Exception e) {
@@ -100,7 +102,7 @@ abstract class DatabaseEngine {
 
     public void updateBooking(String cid, String pid, Date date, String field, String value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
-                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+                "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
         try {
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -108,7 +110,7 @@ abstract class DatabaseEngine {
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setString(1, value);
-            stmt.executeQuery();
+            stmt.executeUpdate();
             stmt.close();
             connection.close();
         } catch (Exception e) {
@@ -118,7 +120,7 @@ abstract class DatabaseEngine {
 
     public void updateBooking(String cid, String pid, Date date, String field, int value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
-                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+                "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
         try {
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -126,7 +128,7 @@ abstract class DatabaseEngine {
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setInt(1, value);
-            stmt.executeQuery();
+            stmt.executeUpdate();
             stmt.close();
             connection.close();
         } catch (Exception e) {
@@ -136,7 +138,7 @@ abstract class DatabaseEngine {
 
     public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
-                "WHERE customerId = ?, planId = ?, tourDate = ?" ,field);
+                "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
         try {
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -144,7 +146,7 @@ abstract class DatabaseEngine {
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setBigDecimal(1, value);
-            stmt.executeQuery();
+            stmt.executeUpdate();
             stmt.close();
             connection.close();
         } catch (Exception e) {
@@ -282,15 +284,15 @@ abstract class DatabaseEngine {
     }
 
     @FunctionalInterface
-    public interface SQLModelReader<T> {
+    private interface SQLModelReader<T> {
         T apply(ResultSet t) throws SQLException;
     }
 
-    public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
+    private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
         return getResultsForQuery(query, modelReader, null);
     }
 
-    public <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, Object[] params) {
+    private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, Object[] params) {
         log.info("New getResultsForQuery '{}'", query);
         ArrayList<T> results = new ArrayList<>();
         try {
@@ -320,7 +322,7 @@ abstract class DatabaseEngine {
         return results;
     }
 
-    public void insertForQuery(String query){
+    private void insertForQuery (String query) {
         log.info("New insertForQuery '{}'", query);
         try {
             Connection connection = getConnection();

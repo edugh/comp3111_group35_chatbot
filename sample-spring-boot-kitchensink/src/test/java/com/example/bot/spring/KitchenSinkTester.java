@@ -1,5 +1,14 @@
 package com.example.bot.spring;
 
+import com.example.bot.spring.model.Booking;
+import com.example.bot.spring.model.Customer;
+import com.linecorp.bot.model.event.FollowEvent;
+import com.linecorp.bot.model.event.MessageEvent;
+import com.linecorp.bot.model.event.message.TextMessageContent;
+import com.linecorp.bot.model.event.source.Source;
+import com.linecorp.bot.model.event.source.UserSource;
+import com.linecorp.bot.model.message.Message;
+import com.linecorp.bot.model.message.TextMessage;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
@@ -11,19 +20,30 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.sql.Connection;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.h2.engine.Constants.UTF8;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = { KitchenSinkTester.class, SQLDatabaseEngine.class })
 public class KitchenSinkTester {
 
-	private static final String TESTDATA_FILE = "dataset.xml";
+	private DatabaseEngine databaseEngine;
+	private MockKitchenSinkController kitchenSinkController;
 
+	private static final String TESTDATA_FILE = "dataset.xml";
 	private static final String JDBC_DRIVER = org.h2.Driver.class.getName();
-	private static final String JDBC_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1";
+	private static final String JDBC_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL";
 	private static final String USER = "sa";
 	private static final String PASSWORD = "";
 
@@ -33,9 +53,23 @@ public class KitchenSinkTester {
 	}
 
 	@Before
-	public void importDataSet() throws Exception {
+	public void beforeEachTest() throws Exception {
 		IDataSet dataSet = readDataSet();
 		cleanlyInsert(dataSet);
+		// only initialize once
+		if (databaseEngine == null) {
+			databaseEngine = new MockDatabaseEngine(dataSource());
+			kitchenSinkController = new MockKitchenSinkController(databaseEngine);
+		}
+		kitchenSinkController.clearMessages();
+	}
+
+	private DataSource dataSource() {
+		JdbcDataSource dataSource = new JdbcDataSource();
+		dataSource.setURL(JDBC_URL);
+		dataSource.setUser(USER);
+		dataSource.setPassword(PASSWORD);
+		return dataSource;
 	}
 
 	private IDataSet readDataSet() throws Exception {
@@ -49,18 +83,125 @@ public class KitchenSinkTester {
 		databaseTester.onSetup();
 	}
 
-	@Test
-	public void sanityCheckFAQs() throws Exception {
-		Connection connection = dataSource().getConnection();
-		DatabaseEngine databaseEngine = new MockDatabaseEngine(connection);
-		Assert.assertEquals(databaseEngine.getFAQs().size(), 13);
+	private FollowEvent createFollowEvent(String replyToken, String userId) {
+		Source source = new UserSource(userId);
+		return new FollowEvent(replyToken, source, null);
 	}
 
-	private DataSource dataSource() {
-		JdbcDataSource dataSource = new JdbcDataSource();
-		dataSource.setURL(JDBC_URL);
-		dataSource.setUser(USER);
-		dataSource.setPassword(PASSWORD);
-		return dataSource;
+	private MessageEvent<TextMessageContent> createMessageEvent(String replyToken, String userId, String messageId, String messageText) {
+		Source source = new UserSource(userId);
+		TextMessageContent messageContent = new TextMessageContent(messageId, messageText);
+		return new MessageEvent<>(replyToken, source, messageContent, null);
+	}
+
+	@Test
+	public void testBasicFAQResponse() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+		List<Message> responses;
+
+		messageEvent = createMessageEvent("replyToken1", "userId1", "messageId1", "FAQ question 1 1 1");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("FAQ answer 1"));
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "FAQ question 2 2 2");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("FAQ answer 2"));
+	}
+
+	@Test
+	public void testJoinResponseAndTableUpdated() throws Exception {
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 2);
+
+		Message[] expectedMessages = {
+				new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"),
+				new TextMessage("We don't have promotion image...")
+		};
+		Assert.assertArrayEquals(responses.toArray(), expectedMessages);
+
+		Customer customer = databaseEngine.getCustomer("userId1");
+		Assert.assertEquals(customer, new Customer("userId1", null, null, 0, null, "new"));
+	}
+
+	@Test
+	public void testMultipleJoinedUsers() throws Exception {
+		FollowEvent followEvent1 = createFollowEvent("replyToken1", "userId1");
+		FollowEvent followEvent2 = createFollowEvent("replyToken2", "userId2");
+		kitchenSinkController.handleFollowEvent(followEvent1);
+		kitchenSinkController.handleFollowEvent(followEvent2);
+
+		Customer customer1 = databaseEngine.getCustomer("userId1");
+		Assert.assertEquals(customer1, new Customer("userId1", null, null, 0, null, "new"));
+
+		Customer customer2 = databaseEngine.getCustomer("userId2");
+		Assert.assertEquals(customer2, new Customer("userId2", null, null, 0, null, "new"));
+	}
+
+	@Test
+	public void testQueryTours() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Which tours are available?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 4);
+		Assert.assertEquals(responses.get(2), new TextMessage("2D001: Fake Tour 1 - Description1"));
+		Assert.assertEquals(responses.get(3), new TextMessage("2D002: Fake Tour 2 - Description2"));
+	}
+
+	@Test
+	public void testBookingFlowBasic() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+
+		Map<String, String> userResponses = new HashMap<>();
+		userResponses.put("We don't have promotion image...", "Which tours are available?");
+		userResponses.put("2D002: Fake Tour 2 - Description2", "2D001");
+		userResponses.put("What's your name, please?", "userName1");
+		userResponses.put("Male or Female please?", "M");
+		userResponses.put("How old are you please?", "20");
+		userResponses.put("Phone number please?", "0123 4567");
+		userResponses.put("When are you planing to set out? Please answer in YYYYMMDD.", "20171108");
+		userResponses.put("How many adults(Age>11) are planning to go?", "1");
+		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
+		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
+		userResponses.put("Confirmed?", "yes");
+
+
+		while (true) {
+			List<Message> botResponses = kitchenSinkController.getLatestMessages();
+			String lastBotMessage = ((TextMessage) botResponses.get(botResponses.size() - 1)).getText();
+			String userResponse = userResponses.get(lastBotMessage);
+			messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
+			kitchenSinkController.handleTextMessageEvent(messageEvent);
+			System.out.println(userResponse);
+			if (userResponse.equals("yes")) {
+				//Confirmed
+				break;
+			}
+		}
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
+
+		Assert.assertEquals(databaseEngine.getCustomer("userId1"), new Customer("userId1", "userName1", "M", 20, "0123 4567", "booked"));
+		//Assert.assertEquals(databaseEngine.getAmmountOwed("userId1"), new BigDecimal(1247.5));
+		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
+		Assert.assertEquals(bookings.size(), 1);
+		// TODO(Jason): move this to utils
+		Booking expectedBooking = new Booking("userId1", "2D001", kitchenSinkController.getDateFromText("20171108"), 1, 3, 5, new BigDecimal(1247.5), BigDecimal.ZERO, "null");
+		Assert.assertEquals(bookings.get(0), expectedBooking);
 	}
 }
