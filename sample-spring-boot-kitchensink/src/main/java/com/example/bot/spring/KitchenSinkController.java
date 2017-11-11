@@ -201,16 +201,6 @@ public class KitchenSinkController {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
 	}
 
-	// TODO: Should we use some service like wit.ai for our milestone 3?
-	// or at least a better matching thing...
-	private boolean stupidFuzzyMatch(String question, String text) {
-		Set<String> targets = new HashSet<>(Arrays.asList(question.split(" ")));
-		String[] text_words = text.split(" ");
-		double num_words = (targets.size() + text_words.length) / 2.;
-		double matches = Arrays.stream(text_words).mapToInt(text_word -> targets.contains(text_word)? 1:0).sum();
-		return (matches / num_words) > 0.5;
-	}
-
 	/*
 	For now, fall through handle methods until we match then handle directly.
 	This is temporary so we can start working without too many conflicts
@@ -219,7 +209,7 @@ public class KitchenSinkController {
 	private List<Message> tryHandleFAQ(String text, Source source) {
 		ArrayList<FAQ> faqs = database.getFAQs();
 		for (FAQ faq: faqs) {
-			if (stupidFuzzyMatch(faq.question, text)) {
+			if (Utils.stupidFuzzyMatch(faq.question, text)) {
 				return Collections.singletonList(new TextMessage(faq.answer));
 			}
 		}
@@ -237,7 +227,7 @@ public class KitchenSinkController {
 	}
 
 	private List<Message> tryHandleEnrolledTours(String text, Source source) {
-		if (stupidFuzzyMatch("Which tours am I enrolled in", text)) {
+		if (Utils.stupidFuzzyMatch("Which tours am I enrolled in", text)) {
 			ArrayList<Booking> bookings = database.getBookings(source.getUserId());
 			if (bookings.size() == 0) {
 				return Collections.singletonList(new TextMessage("You currently have no bookings"));
@@ -281,7 +271,7 @@ public class KitchenSinkController {
             case "reqPlanId":
 				ArrayList<Plan> plans = database.getPlans();
 				Plan requestedPlan = plans.stream()
-						.filter(possiblePlan -> possiblePlan.id.equals(text) || stupidFuzzyMatch(text, possiblePlan.name))
+						.filter(possiblePlan -> possiblePlan.id.equals(text) || Utils.stupidFuzzyMatch(text, possiblePlan.name))
 						.findFirst().orElse(null);
 				if (requestedPlan == null) {
 					msgList.add(new TextMessage("Couldn't find that tour, try again."));
@@ -297,29 +287,29 @@ public class KitchenSinkController {
 				}
                 break;
             case "reqName":
-                database.updateCustomer(cid, "name", filterString(text));
+                database.updateCustomer(cid, "name", Utils.filterString(text));
                 database.updateCustomerState(cid, "reqGender");
                 msgList.add(new TextMessage("Male or Female please?"));
                 break;
             case "reqGender":
-                database.updateCustomer(cid, "gender", getGender(text));
+                database.updateCustomer(cid, "gender", Utils.getGender(text));
                 database.updateCustomerState(cid, "reqAge");
                 msgList.add(new TextMessage("How old are you please?"));
                 break;
             case "reqAge":
-                database.updateCustomer(cid, "age", getIntFromText(text));
+                database.updateCustomer(cid, "age", Utils.getIntFromText(text));
                 database.updateCustomerState(cid, "reqPhoneNumber");
                 msgList.add(new TextMessage("Phone number please?"));
                 break;
             case "reqPhoneNumber":
-                database.updateCustomer(cid, "phoneNumber", filterString(text));
+                database.updateCustomer(cid, "phoneNumber", Utils.filterString(text));
                 database.updateCustomerState(cid, "reqDate");
                 msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
 				break;
             case "reqDate":
             	java.sql.Date dateInText;
             	try {
-            		dateInText = getDateFromText(text);
+            		dateInText = Utils.getDateFromText(text);
 				} catch (ParseException p) {
 					msgList.add(new TextMessage("Sorry, I didn't understand that date - please tell me again"));
 					return msgList;
@@ -336,22 +326,22 @@ public class KitchenSinkController {
                 }
                 break;
             case "reqNAdult":
-                database.updateBooking(cid, pid, date, "adults", getIntFromText(text));
+                database.updateBooking(cid, pid, date, "adults", Utils.getIntFromText(text));
                 msgList.add(new TextMessage("How many children (Age 4 to 11) are planning to go?"));
                 database.updateCustomerState(cid, "reqNChild");
                 break;
             case "reqNChild":
-                database.updateBooking(cid, pid, date, "children", getIntFromText(text));
+                database.updateBooking(cid, pid, date, "children", Utils.getIntFromText(text));
                 msgList.add(new TextMessage("How many children (Age 0 to 3) are planning to go?"));
                 database.updateCustomerState(cid, "reqNToddler");
                 break;
             case "reqNToddler":
-                database.updateBooking(cid, pid, date, "toddlers", getIntFromText(text));
+                database.updateBooking(cid, pid, date, "toddlers", Utils.getIntFromText(text));
                 msgList.add(new TextMessage("Confirmed?")); //TODO Optionally: show fee
                 database.updateCustomerState(cid, "reqConfirm");
                 break;
             case "reqConfirm":
-                if(isYes(text)) {
+                if(Utils.isYes(text)) {
                     database.updateCustomerState(cid, "booked");
 					Plan confirmedPlan = database.getPlan(booking.planId);
 					Calendar calendar = Calendar.getInstance();
@@ -375,44 +365,9 @@ public class KitchenSinkController {
         return msgList;
 	}
 
-	public boolean isYes(String answer){
-	    if(answer.toLowerCase().contains(new String("yes").toLowerCase())){
-	        return true;
-        }
-        //TODO: yes, yep, yeah, ok, of course, sure, why not
-        return false;
-    }
-
-    public java.sql.Date getDateFromText(String answer)throws ParseException {
-	    //TODO: standardize YYYYMMDD
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
-        java.util.Date parsed = format.parse(answer);
-        return(new java.sql.Date(parsed.getTime()));
-    }
-
-    public int getIntFromText(String answer){
-        //TODO: filterString
-        return Integer.parseInt(answer);
-    }
-
-    public String filterString(String answer){
-        //TODO: I'm XX -> XX
-        return answer;
-    }
-
-    public String getGender(String answer){
-        String charGender = answer.substring(0,1).toUpperCase();
-        if(charGender.matches("[A-Z]")){
-            return charGender;
-        }
-        else
-            return "N";
-    }
-
-
 	private List<Message> tryHandleTourSearch(String text, Source source) {
 		// TODO(Jason): match less idiotically, parse parameters
-		if (stupidFuzzyMatch("Which tours are available", text)) {
+		if (Utils.stupidFuzzyMatch("Which tours are available", text)) {
 			// TODO(Jason): real search
 			ArrayList<Plan> plans = database.getPlans();
 			if (plans.size() == 0) {

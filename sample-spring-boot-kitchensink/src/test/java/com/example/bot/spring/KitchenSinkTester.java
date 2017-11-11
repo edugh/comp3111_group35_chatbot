@@ -200,8 +200,7 @@ public class KitchenSinkTester {
 		//Assert.assertEquals(databaseEngine.getAmmountOwed("userId1"), new BigDecimal(1247.5));
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 1);
-		// TODO(Jason): move this to utils
-		Booking expectedBooking = new Booking("userId1", "2D001", kitchenSinkController.getDateFromText("20171108"), 1, 3, 5, new BigDecimal(1247.5), BigDecimal.ZERO, "null");
+		Booking expectedBooking = new Booking("userId1", "2D001", Utils.getDateFromText("20171108"), 1, 3, 5, new BigDecimal(1247.5), BigDecimal.ZERO, "null");
 		Assert.assertEquals(bookings.get(0), expectedBooking);
 	}
 }
