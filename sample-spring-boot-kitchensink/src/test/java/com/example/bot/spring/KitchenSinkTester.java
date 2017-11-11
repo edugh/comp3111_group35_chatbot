@@ -1,96 +1,66 @@
 package com.example.bot.spring;
 
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.io.InputStream;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import org.dbunit.IDatabaseTester;
+import org.dbunit.JdbcDatabaseTester;
+import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
+import org.dbunit.operation.DatabaseOperation;
+import org.h2.jdbcx.JdbcDataSource;
+import org.h2.tools.RunScript;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.WebApplicationContext;
 
-import com.google.common.io.ByteStreams;
+import javax.sql.DataSource;
+import java.io.File;
+import java.sql.Connection;
 
-import com.linecorp.bot.client.LineMessagingClient;
-import com.linecorp.bot.model.ReplyMessage;
-import com.linecorp.bot.model.event.Event;
-import com.linecorp.bot.model.event.FollowEvent;
-import com.linecorp.bot.model.event.MessageEvent;
-import com.linecorp.bot.model.event.message.MessageContent;
-import com.linecorp.bot.model.event.message.TextMessageContent;
-import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.spring.boot.annotation.LineBotMessages;
+import static org.h2.engine.Constants.UTF8;
 
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
-import com.example.bot.spring.DatabaseEngine;
-
-
-@RunWith(SpringRunner.class)
-//@SpringBootTest(classes = { KitchenSinkTester.class, DatabaseEngine.class })
-@SpringBootTest(classes = { KitchenSinkTester.class, SQLDatabaseEngine.class })
 public class KitchenSinkTester {
-	@Autowired
-	private DatabaseEngine databaseEngine;
-	
-	@Test
-	public void testDummy() throws Exception {
-		assertThat(true);
+
+	private static final String TESTDATA_FILE = "dataset.xml";
+
+	private static final String JDBC_DRIVER = org.h2.Driver.class.getName();
+	private static final String JDBC_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1";
+	private static final String USER = "sa";
+	private static final String PASSWORD = "";
+
+	@BeforeClass
+	public static void createSchema() throws Exception {
+		RunScript.execute(JDBC_URL, USER, PASSWORD, "schema.sql", UTF8, false);
 	}
-	
-	/*@Test
-	public void testNotFound() throws Exception {
-		boolean thrown = false;
-		try {
-			this.databaseEngine.search("no");
-		} catch (Exception e) {
-			thrown = true;
-		}
-		assertThat(thrown).isEqualTo(true);
+
+	@Before
+	public void importDataSet() throws Exception {
+		IDataSet dataSet = readDataSet();
+		cleanlyInsert(dataSet);
 	}
-	
-	@Test
-	public void testFound() throws Exception {
-		boolean thrown = false;
-		String result = null;
-		try {
-			result = this.databaseEngine.search("abc");
-		} catch (Exception e) {
-			thrown = true;
-		}
-		assertThat(!thrown).isEqualTo(true);
-		assertThat(result).isEqualTo("def");
+
+	private IDataSet readDataSet() throws Exception {
+		return new FlatXmlDataSetBuilder().build(new File(TESTDATA_FILE));
 	}
-	
+
+	private void cleanlyInsert(IDataSet dataSet) throws Exception {
+		IDatabaseTester databaseTester = new JdbcDatabaseTester(JDBC_DRIVER, JDBC_URL, USER, PASSWORD);
+		databaseTester.setSetUpOperation(DatabaseOperation.CLEAN_INSERT);
+		databaseTester.setDataSet(dataSet);
+		databaseTester.onSetup();
+	}
+
 	@Test
-	public void testFound2() throws Exception {
-		boolean thrown = false;
-		String result = null;
-		try {
-			result = this.databaseEngine.search("I am fine");
-		} catch (Exception e) {
-			thrown = true;
-		}
-		assertThat(!thrown).isEqualTo(true);
-		assertThat(result).isEqualTo("Great!");
-	}*/
+	public void sanityCheckFAQs() throws Exception {
+		Connection connection = dataSource().getConnection();
+		DatabaseEngine databaseEngine = new MockDatabaseEngine(connection);
+		Assert.assertEquals(databaseEngine.getFAQs().size(), 13);
+	}
+
+	private DataSource dataSource() {
+		JdbcDataSource dataSource = new JdbcDataSource();
+		dataSource.setURL(JDBC_URL);
+		dataSource.setUser(USER);
+		dataSource.setPassword(PASSWORD);
+		return dataSource;
+	}
 }
