@@ -292,10 +292,8 @@ public class KitchenSinkController {
 		} else {
 			database.insertBooking(customerId, requestedPlan.id);
 			if (customer.name == null) {
-				aiApiWrapper.setContext("NeedName");
 				return "What's your name, please?";
 			} else {
-				aiApiWrapper.setContext("NeedDepartureDate");
 				return "When are you planing to set out? Please answer in YYYYMMDD.";
 			}
 		}
@@ -378,33 +376,6 @@ public class KitchenSinkController {
 		return "Booking calcelled";
 	}
 
-//	private List<Message> handleBookingRequest(Result aiResult, Source source) {
-//		switch (state) {
-//            case "reqConfirm":
-//                if(Utils.isYes(text)) {
-//                    database.updateCustomerState(customerId, "booked");
-//					Plan confirmedPlan = database.getPlan(booking.planId);
-//					Calendar calendar = Calendar.getInstance();
-//					calendar.setTime(booking.tourDate);
-//					int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-//					boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
-//					BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
-//					BigDecimal numPeople = new BigDecimal(booking.adults + (((float) booking.children) / 2));
-//					BigDecimal fee = pricePerPerson.multiply(numPeople);
-//					database.updateBooking(customerId, pid, date,"fee", fee);
-//                    database.updateBooking(customerId, pid, date,"paid", BigDecimal.ZERO);
-//					msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
-//                }
-//                else {
-//                    msgList.add(new TextMessage("Why? Fuck you. Say YES."));
-//                }
-//                break;
-//            default:
-//                return null;
-//        }
-//        return msgList;
-//	}
-
 	private List<Message> handleTourSearch() {
 		// TODO(Jason): real search
 		ArrayList<Plan> plans = database.getPlans();
@@ -425,7 +396,7 @@ public class KitchenSinkController {
         log.info("Got text message from {}: {}", replyToken, text);
 
 		aiApiWrapper = new AIApiWrapper();
-		Result aiResult = aiApiWrapper.getIntent(text);
+		Result aiResult = aiApiWrapper.getIntent(text, source);
 		String intentName = aiResult.getMetadata().getIntentName();
 		log.info("Received intent from api.ai: {}", intentName);
 
