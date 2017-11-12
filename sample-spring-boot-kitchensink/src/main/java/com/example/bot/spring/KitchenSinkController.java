@@ -22,14 +22,14 @@ import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.ParseException;
+import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiFunction;
 
+import ai.api.model.Result;
 import com.example.bot.spring.model.*;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
@@ -73,11 +73,29 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @LineMessageHandler
 public class KitchenSinkController {
-	
-
 
 	@Autowired
 	private LineMessagingClient lineMessagingClient;
+
+	private AIApiWrapper aiApiWrapper;
+
+	private static final String AMOUNT_OWED = "AmountOwed";
+	private static final String BOOK_TOUR = "BookTour";
+	private static final String ENROLLED_TOURS = "EnrolledTours";
+	private static final String TOUR_SEARCH = "TourSearch";
+	private static final String FAQ_PREFIX = "FAQ";
+
+	private static final String GIVE_AGE = "GiveAge";
+	private static final String GIVE_GENDER = "GiveGender";
+	private static final String GIVE_NAME = "GiveName";
+	private static final String GIVE_NUMBER = "GiveNumber";
+
+	private static final String GIVE_DEPARTURE_DATE = "GiveDepartureDate";
+	private static final String GIVE_ADULTS = "GiveAdults";
+	private static final String GIVE_CHILDREN = "GiveChildren";
+	private static final String GIVE_TODDLERS = "GiveToddlers";
+	private static final String GIVE_CONFIRMATION = "GiveConfirmation";
+	private static final String CANCEL_CONFIRMATION = "CancelConfirmation";
 
 	@EventMapping
 	public void handleTextMessageEvent(MessageEvent<TextMessageContent> event) throws Exception {
@@ -139,9 +157,9 @@ public class KitchenSinkController {
 	@EventMapping
 	public void handleFollowEvent(FollowEvent event) {
 		String replyToken = event.getReplyToken();
-		String cid = event.getSource().getUserId();
-		if(database.getCustomer(cid)==null){
-		    database.insertCustomer((cid));
+		String customerId = event.getSource().getUserId();
+		if(database.getCustomer(customerId)==null){
+		    database.insertCustomer((customerId));
         }
 		List<Message> msgList = new ArrayList<>();
 		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"));
@@ -179,6 +197,12 @@ public class KitchenSinkController {
 
 	protected void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
 		try {
+			log.info("Sending messages:");
+			for (Message message: messages) {
+				if (message instanceof TextMessage) {
+					log.info("\t{}", ((TextMessage) message).getText());
+				}
+			}
 			BotApiResponse apiResponse = lineMessagingClient.replyMessage(new ReplyMessage(replyToken, messages)).get();
 			log.info("Sent messages: {}", apiResponse);
 		} catch (InterruptedException | ExecutionException e) {
@@ -201,217 +225,260 @@ public class KitchenSinkController {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
 	}
 
-	/*
-	For now, fall through handle methods until we match then handle directly.
-	This is temporary so we can start working without too many conflicts
-	TODO(Jason/all): When we decide how to handle forking logic replace this, probably with a match object
-	 */
-	private List<Message> tryHandleFAQ(String text, Source source) {
-		ArrayList<FAQ> faqs = database.getFAQs();
-		for (FAQ faq: faqs) {
-			if (Utils.stupidFuzzyMatch(faq.question, text)) {
-				return Collections.singletonList(new TextMessage(faq.answer));
+	private String handleFAQ(Result aiResult) {
+		FAQ faq = database.getFAQ(aiResult.getMetadata().getIntentName());
+		return faq.answer;
+	}
+
+	private String handleAmountOwed(Source source) {
+		BigDecimal amountOwed = database.getAmmountOwed(source.getUserId());
+		String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
+		return String.format("You owe %s", prettyAmount);
+	}
+
+	private List<Message> handleEnrolledTours(Source source) {
+		ArrayList<Booking> bookings = database.getBookings(source.getUserId());
+		if (bookings.size() == 0) {
+			return Collections.singletonList(new TextMessage("You currently have no bookings"));
+		} else {
+			ArrayList<Message> messages = new ArrayList<>();
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+			for (Booking booking : bookings) {
+				messages.add(new TextMessage(String.format("%s:\n%s", booking.planId, simpleDateFormat.format(booking.tourDate))));
 			}
+			return messages;
 		}
-		return null;
 	}
 
-	private List<Message> tryHandleAmountOwed(String text, Source source) {
-	    if(text.toLowerCase().contains("how much")){ //TODO: better judging
-            BigDecimal amountOwed = database.getAmmountOwed(source.getUserId());
-            String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
-            return Collections.singletonList(new TextMessage(String.format("You owe %s", prettyAmount)));
-        }
-		else
-		    return null;
+	private String handleGiveName(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		String givenName = aiResult.getStringParameter("given-name");
+		String lastName = aiResult.getStringParameter("last-name", null);
+		database.updateCustomer(customerId, "name", lastName == null? givenName : givenName + " " + lastName);
+		return "Male or Female please?";
 	}
 
-	private List<Message> tryHandleEnrolledTours(String text, Source source) {
-		if (Utils.stupidFuzzyMatch("Which tours am I enrolled in", text)) {
-			ArrayList<Booking> bookings = database.getBookings(source.getUserId());
-			if (bookings.size() == 0) {
-				return Collections.singletonList(new TextMessage("You currently have no bookings"));
+	private String handleGiveGender(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		String gender = aiResult.getStringParameter("Gender");
+		database.updateCustomer(customerId, "gender", Utils.getGender(gender));
+		return "How old are you please?";
+	}
+
+	private String handleGiveAge(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		int age = aiResult.getIntParameter("number-integer");
+		database.updateCustomer(customerId, "age", age);
+		return "Phone number please?";
+	}
+
+	private String handleGiveNumber(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		String phoneNumber = aiResult.getStringParameter("phone-number");
+		database.updateCustomer(customerId, "phoneNumber", Utils.filterString(phoneNumber));
+		return "When are you planing to set out? Please answer in YYYYMMDD.";
+	}
+
+	private String handleBookingRequest(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		Customer customer = database.getCustomer(customerId);
+		String tour = aiResult.getStringParameter("Tour");
+		ArrayList<Plan> plans = database.getPlans();
+		Plan requestedPlan = plans.stream()
+				.filter(possiblePlan -> possiblePlan.id.equals(tour) || Utils.stupidFuzzyMatch(tour, possiblePlan.name))
+				.findFirst().orElse(null);
+		if (requestedPlan == null) {
+			return "Couldn't find that tour, try again.";
+		} else {
+			database.insertBooking(customerId, requestedPlan.id);
+			if (customer.name == null) {
+				aiApiWrapper.setContext("NeedName");
+				return "What's your name, please?";
 			} else {
-				ArrayList<Message> messages = new ArrayList<>();
-				SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-				for (Booking booking : bookings) {
-					messages.add(new TextMessage(String.format("%s:\n%s", booking.planId, simpleDateFormat.format(booking.tourDate))));
-				}
-				return messages;
+				aiApiWrapper.setContext("NeedDepartureDate");
+				return "When are you planing to set out? Please answer in YYYYMMDD.";
 			}
 		}
-		return null;
 	}
 
-	private List<Message> tryHandleBookingRequest(String text, Source source) {
-	    //TODO(Shuo): workflow
-		String cid = source.getUserId();
-        Customer customer = database.getCustomer(cid);
-        Booking booking = database.getCurrentBooking((cid));
-        List<Message> msgList= new ArrayList<>();
-        String state = customer.state;
-        String pid = null;
-        java.sql.Date date = null;
-        Tour tour = null;
-        if(booking != null){
-            //At least booking are with cid, pid
-            pid = booking.planId;
-            if(booking.tourDate != null){
-                date = booking.tourDate;
-                tour = database.getTour(pid, date);
-            }
-            date = booking.tourDate;
-        }
+	private String handleGiveDeparture(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		Booking booking = database.getCurrentBooking(customerId);
+		String planId = booking.planId;
 
-        switch (state) {
-            case "new":
-            	//go into tourSearch
-				return null;
-            //enter from tourSearch
-            case "reqPlanId":
-				ArrayList<Plan> plans = database.getPlans();
-				Plan requestedPlan = plans.stream()
-						.filter(possiblePlan -> possiblePlan.id.equals(text) || Utils.stupidFuzzyMatch(text, possiblePlan.name))
-						.findFirst().orElse(null);
-				if (requestedPlan == null) {
-					msgList.add(new TextMessage("Couldn't find that tour, try again."));
-				} else {
-					database.insertBooking(cid, requestedPlan.id);
-					if (customer.name == null) {
-						database.updateCustomerState(cid, "reqName");
-						msgList.add(new TextMessage("What's your name, please?"));
-					} else {
-						database.updateCustomerState(cid, "reqDate");
-						msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD."));
-					}
-				}
-                break;
-            case "reqName":
-                database.updateCustomer(cid, "name", Utils.filterString(text));
-                database.updateCustomerState(cid, "reqGender");
-                msgList.add(new TextMessage("Male or Female please?"));
-                break;
-            case "reqGender":
-                database.updateCustomer(cid, "gender", Utils.getGender(text));
-                database.updateCustomerState(cid, "reqAge");
-                msgList.add(new TextMessage("How old are you please?"));
-                break;
-            case "reqAge":
-                database.updateCustomer(cid, "age", Utils.getIntFromText(text));
-                database.updateCustomerState(cid, "reqPhoneNumber");
-                msgList.add(new TextMessage("Phone number please?"));
-                break;
-            case "reqPhoneNumber":
-                database.updateCustomer(cid, "phoneNumber", Utils.filterString(text));
-                database.updateCustomerState(cid, "reqDate");
-                msgList.add(new TextMessage("When are you planing to set out? Please answer in YYYYMMDD.")); //TODO
-				break;
-            case "reqDate":
-            	java.sql.Date dateInText;
-            	try {
-            		dateInText = Utils.getDateFromText(text);
-				} catch (ParseException p) {
-					msgList.add(new TextMessage("Sorry, I didn't understand that date - please tell me again"));
-					return msgList;
-				}
-                tour = database.getTour(pid, dateInText);
-                if(database.isTourFull(pid, date)){
-                    msgList.add(new TextMessage("Sorry it is full-booked that day. What about other trips or departure date?"));
-                    // database.updateCustomerState(cid, "changeDateOrPlan");
-                }
-                else{
-                    database.updateBookingDate(cid, pid, dateInText);
-                    msgList.add(new TextMessage("How many adults(Age>11) are planning to go?"));
-                    database.updateCustomerState(cid, "reqNAdult");
-                }
-                break;
-            case "reqNAdult":
-                database.updateBooking(cid, pid, date, "adults", Utils.getIntFromText(text));
-                msgList.add(new TextMessage("How many children (Age 4 to 11) are planning to go?"));
-                database.updateCustomerState(cid, "reqNChild");
-                break;
-            case "reqNChild":
-                database.updateBooking(cid, pid, date, "children", Utils.getIntFromText(text));
-                msgList.add(new TextMessage("How many children (Age 0 to 3) are planning to go?"));
-                database.updateCustomerState(cid, "reqNToddler");
-                break;
-            case "reqNToddler":
-                database.updateBooking(cid, pid, date, "toddlers", Utils.getIntFromText(text));
-                msgList.add(new TextMessage("Confirmed?")); //TODO Optionally: show fee
-                database.updateCustomerState(cid, "reqConfirm");
-                break;
-            case "reqConfirm":
-                if(Utils.isYes(text)) {
-                    database.updateCustomerState(cid, "booked");
-					Plan confirmedPlan = database.getPlan(booking.planId);
-					Calendar calendar = Calendar.getInstance();
-					calendar.setTime(booking.tourDate);
-					int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-					boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
-					BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
-					BigDecimal numPeople = new BigDecimal(booking.adults + (((float) booking.children) / 2));
-					BigDecimal fee = pricePerPerson.multiply(numPeople);
-					database.updateBooking(cid, pid, date,"fee", fee);
-                    database.updateBooking(cid, pid, date,"paid", BigDecimal.ZERO);
-					msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
-                }
-                else {
-                    msgList.add(new TextMessage("Why? Fuck you. Say YES."));
-                }
-                break;
-            default:
-                return null;
-        }
-        return msgList;
-	}
-
-	private List<Message> tryHandleTourSearch(String text, Source source) {
-		// TODO(Jason): match less idiotically, parse parameters
-		if (Utils.stupidFuzzyMatch("Which tours are available", text)) {
-			// TODO(Jason): real search
-			ArrayList<Plan> plans = database.getPlans();
-			if (plans.size() == 0) {
-				return Collections.singletonList(new TextMessage("No tours found"));
-			} else {
-				ArrayList<Message> messages = new ArrayList<>();
-				for (Plan plan : plans) {
-					messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription)));
-				}
-				database.updateCustomerState(source.getUserId(),"reqPlanId");
-				return messages;
-			}
+		java.util.Date date = aiResult.getDateParameter("date-time");
+		Date sqlDate = new java.sql.Date(date.getTime());
+		if(database.isTourFull(planId, sqlDate)){
+			return "Sorry it is full-booked that day. What about other trips or departure date?";
+		} else {
+			database.updateBookingDate(customerId, planId, sqlDate);
+			database.updateCustomerState(customerId, "reqNAdult");
+			return "How many adults(Age>11) are planning to go?";
 		}
-		return null;
 	}
 
-	private List<Message> handleUnknownQuery(String text, Source source) {
-		return Collections.singletonList(new TextMessage("I don't understand your question, try rephrasing"));
-		// TODO: Store question for report
+	private String handleGiveAdults(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		Booking booking = database.getCurrentBooking(customerId);
+		String planId = booking.planId;
+		Date date = booking.tourDate;
+
+		int adults = aiResult.getIntParameter("number-integer");
+		database.updateBooking(customerId, planId, date, "adults", adults);
+		database.updateCustomerState(customerId, "reqNChild");
+		return "How many children (Age 4 to 11) are planning to go?";
 	}
 
-	private void handleTextContent(String replyToken, Event event, TextMessageContent content)
-            throws Exception {
+	private String handleGiveChildren(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		Booking booking = database.getCurrentBooking(customerId);
+		String planId = booking.planId;
+		Date date = booking.tourDate;
+
+		int children = aiResult.getIntParameter("number-integer");
+		database.updateBooking(customerId, planId, date, "children", children);
+		database.updateCustomerState(customerId, "reqNToddler");
+		return "How many children (Age 0 to 3) are planning to go?";
+	}
+
+	private String handleGiveToddlers(Result aiResult, Source source) {
+		String customerId = source.getUserId();
+		Booking booking = database.getCurrentBooking(customerId);
+		String planId = booking.planId;
+		Date date = booking.tourDate;
+
+		int toddlers = aiResult.getIntParameter("number-integer");
+		database.updateBooking(customerId, planId, date, "toddlers", toddlers);
+		database.updateCustomerState(customerId, "reqNToddler");
+		return "Confirmed?"; //TODO Optionally: show fee
+	}
+
+	private String handleGiveConfirmation(Source source) {
+		String customerId = source.getUserId();
+		Booking booking = database.getCurrentBooking(customerId);
+		String planId = booking.planId;
+		Date date = booking.tourDate;
+
+		database.updateCustomerState(customerId, "booked");
+		Plan confirmedPlan = database.getPlan(booking.planId);
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(booking.tourDate);
+		int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+		boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
+		BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
+		BigDecimal numPeople = new BigDecimal(booking.adults + (((float) booking.children) / 2));
+		BigDecimal fee = pricePerPerson.multiply(numPeople);
+		database.updateBooking(customerId, planId, date,"fee", fee);
+		database.updateBooking(customerId, planId, date,"paid", BigDecimal.ZERO);
+		return "Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it.";
+	}
+
+	private String handleCancelConfirmation(Result aiResult, Source source) {
+		//TODO(Jason): do it
+		return "Booking calcelled";
+	}
+
+//	private List<Message> handleBookingRequest(Result aiResult, Source source) {
+//		switch (state) {
+//            case "reqConfirm":
+//                if(Utils.isYes(text)) {
+//                    database.updateCustomerState(customerId, "booked");
+//					Plan confirmedPlan = database.getPlan(booking.planId);
+//					Calendar calendar = Calendar.getInstance();
+//					calendar.setTime(booking.tourDate);
+//					int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+//					boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
+//					BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
+//					BigDecimal numPeople = new BigDecimal(booking.adults + (((float) booking.children) / 2));
+//					BigDecimal fee = pricePerPerson.multiply(numPeople);
+//					database.updateBooking(customerId, pid, date,"fee", fee);
+//                    database.updateBooking(customerId, pid, date,"paid", BigDecimal.ZERO);
+//					msgList.add(new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
+//                }
+//                else {
+//                    msgList.add(new TextMessage("Why? Fuck you. Say YES."));
+//                }
+//                break;
+//            default:
+//                return null;
+//        }
+//        return msgList;
+//	}
+
+	private List<Message> handleTourSearch() {
+		// TODO(Jason): real search
+		ArrayList<Plan> plans = database.getPlans();
+		if (plans.size() == 0) {
+			return Collections.singletonList(new TextMessage("No tours found"));
+		} else {
+			ArrayList<Message> messages = new ArrayList<>();
+			for (Plan plan : plans) {
+				messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription)));
+			}
+			return messages;
+		}
+	}
+
+	private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
 		Source source = event.getSource();
         log.info("Got text message from {}: {}", replyToken, text);
 
-		@SuppressWarnings("unchecked")
-		ArrayList<BiFunction<String, Source, List<Message>>> handleFunctions = new ArrayList<>(
-			Arrays.asList(
-				this::tryHandleFAQ,
-				this::tryHandleBookingRequest,
-				this::tryHandleEnrolledTours,
-                this::tryHandleTourSearch,
-				this::tryHandleAmountOwed,
-				this::handleUnknownQuery
-			)
-		);
-		for (BiFunction<String, Source, List<Message>> handleFunction: handleFunctions) {
-			List<Message> response = handleFunction.apply(text, source);
-			if (response != null) {
-				this.reply(replyToken, response);
-				return;
-			}
+		aiApiWrapper = new AIApiWrapper();
+		Result aiResult = aiApiWrapper.getIntent(text);
+		String intentName = aiResult.getMetadata().getIntentName();
+		log.info("Received intent from api.ai: {}", intentName);
+
+		switch (intentName) {
+			case AMOUNT_OWED:
+				this.replyText(replyToken, handleAmountOwed(source));
+				break;
+			case BOOK_TOUR:
+				this.replyText(replyToken, handleBookingRequest(aiResult, source));
+				break;
+			case ENROLLED_TOURS:
+				this.reply(replyToken, handleEnrolledTours(source));
+				break;
+			case TOUR_SEARCH:
+				this.reply(replyToken, handleTourSearch());
+				break;
+			case GIVE_NAME:
+				this.replyText(replyToken, handleGiveName(aiResult, source));
+				break;
+			case GIVE_GENDER:
+				this.replyText(replyToken, handleGiveGender(aiResult, source));
+				break;
+			case GIVE_AGE:
+				this.replyText(replyToken, handleGiveAge(aiResult, source));
+				break;
+			case GIVE_NUMBER:
+				this.replyText(replyToken, handleGiveNumber(aiResult, source));
+				break;
+
+			case GIVE_DEPARTURE_DATE:
+				this.replyText(replyToken, handleGiveDeparture(aiResult, source));
+				break;
+			case GIVE_ADULTS:
+				this.replyText(replyToken, handleGiveAdults(aiResult, source));
+				break;
+			case GIVE_CHILDREN:
+				this.replyText(replyToken, handleGiveChildren(aiResult, source));
+				break;
+			case GIVE_TODDLERS:
+				this.replyText(replyToken, handleGiveToddlers(aiResult, source));
+				break;
+			case GIVE_CONFIRMATION:
+				this.replyText(replyToken, handleGiveConfirmation(source));
+				break;
+			case CANCEL_CONFIRMATION:
+				this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
+				break;
+			default:
+				if (intentName.startsWith(FAQ_PREFIX)) {
+					this.replyText(replyToken, handleFAQ(aiResult));
+				} else {
+					this.replyText(replyToken, "I don't understand your question, try rephrasing");
+				}
 		}
     }
 

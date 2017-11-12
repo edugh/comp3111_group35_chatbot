@@ -39,9 +39,11 @@ abstract class DatabaseEngine {
         return getResultsForQuery(query, SQLDatabaseEngine::planFromResultSet);
     }
 
-    ArrayList<FAQ> getFAQs() {
-        String query = "SELECT question, answer FROM faq;";
-        return getResultsForQuery(query, SQLDatabaseEngine::faqFromResultSet);
+    FAQ getFAQ(String questionId) {
+        String query = "SELECT question, answer FROM faq WHERE questionId=?;";
+        Object[] params = { questionId };
+        ArrayList<FAQ> faqs = getResultsForQuery(query, SQLDatabaseEngine::faqFromResultSet, params);
+        return faqs.size() == 0? null : faqs.get(0);
     }
 
     public Tour getTour(String pid, Date date) {
