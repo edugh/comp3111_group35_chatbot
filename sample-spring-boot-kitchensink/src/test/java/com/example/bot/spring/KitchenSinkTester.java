@@ -9,6 +9,7 @@ import com.linecorp.bot.model.event.source.Source;
 import com.linecorp.bot.model.event.source.UserSource;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 import static org.h2.engine.Constants.UTF8;
 
+@Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { KitchenSinkTester.class, SQLDatabaseEngine.class })
 public class KitchenSinkTester {
@@ -99,13 +101,13 @@ public class KitchenSinkTester {
 		MessageEvent<TextMessageContent> messageEvent;
 		List<Message> responses;
 
-		messageEvent = createMessageEvent("replyToken1", "userId1", "messageId1", "FAQ question 1 1 1");
+		messageEvent = createMessageEvent("replyToken1", "userId1", "messageId1", "How to apply?");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 1);
 		Assert.assertEquals(responses.get(0), new TextMessage("FAQ answer 1"));
 
-		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "FAQ question 2 2 2");
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Where is the gathering/assemble and dismiss spot?");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 1);
@@ -168,8 +170,8 @@ public class KitchenSinkTester {
 
 		Map<String, String> userResponses = new HashMap<>();
 		userResponses.put("We don't have promotion image...", "Which tours are available?");
-		userResponses.put("2D002: Fake Tour 2 - Description2", "2D001");
-		userResponses.put("What's your name, please?", "userName1");
+		userResponses.put("Id2: Fake Tour 2 - Description2", "Can I book Fake Tour 2?");
+		userResponses.put("What's your name, please?", "Jason Zukewich");
 		userResponses.put("Male or Female please?", "M");
 		userResponses.put("How old are you please?", "20");
 		userResponses.put("Phone number please?", "0123 4567");
@@ -183,10 +185,11 @@ public class KitchenSinkTester {
 		while (true) {
 			List<Message> botResponses = kitchenSinkController.getLatestMessages();
 			String lastBotMessage = ((TextMessage) botResponses.get(botResponses.size() - 1)).getText();
+			log.info("bot message: {}", lastBotMessage);
 			String userResponse = userResponses.get(lastBotMessage);
 			messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
 			kitchenSinkController.handleTextMessageEvent(messageEvent);
-			System.out.println(userResponse);
+			log.info("user response: {}", userResponse);
 			if (userResponse.equals("yes")) {
 				//Confirmed
 				break;

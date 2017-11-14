@@ -41,9 +41,10 @@ create table Dialogues (
 );
 
 create table FAQ (
+  questionId varchar(5),
   question varchar(128),
   answer varchar(512),
-  primary key (question)
+  primary key (questionId)
 );
 
 create table Tags (
