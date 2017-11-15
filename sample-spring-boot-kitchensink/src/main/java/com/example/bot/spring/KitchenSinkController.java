@@ -395,8 +395,7 @@ public class KitchenSinkController {
 		Source source = event.getSource();
         log.info("Got text message from {}: {}", replyToken, text);
 
-		aiApiWrapper = new AIApiWrapper();
-		Result aiResult = aiApiWrapper.getIntent(text, source);
+		Result aiResult = AIApiWrapper.getIntent(text, source);
 		String intentName = aiResult.getMetadata().getIntentName();
 		log.info("Received intent from api.ai: {}", intentName);
 
