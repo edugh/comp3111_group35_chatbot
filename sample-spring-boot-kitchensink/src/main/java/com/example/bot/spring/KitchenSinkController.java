@@ -25,7 +25,9 @@ import java.nio.file.Path;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -37,6 +39,7 @@ import com.example.bot.spring.model.Plan;
 import com.linecorp.bot.model.event.source.Source;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.google.common.io.ByteStreams;
@@ -521,5 +524,13 @@ public class KitchenSinkController {
 	public static class DownloadedContent {
 		Path path;
 		String uri;
+	}
+
+	@Scheduled(cron = "0 9 * * *")
+	private void informTourStatus() {
+		Date threedays = Date.valueOf(LocalDate.now().plusDays(3));
+		for(Tour t : database.getTours(threedays, threedays)) {
+
+		}
 	}
 }

@@ -84,6 +84,15 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     }
 
     @Override
+    public ArrayList<Tour> getTours(Date start, Date end) {
+        return getResultsForQuery(
+            "SELCT * FROM Tours WHERE tourDate >= ? AND tourDate <= ?;",
+            SQLModelReaders::tourFromResultSet,
+            params(start, end)
+        );
+    }
+
+    @Override
 	public Optional<Plan> getPlan(String pid) {
 	    return getResultForQuery(
             "SELECT * FROM Plans WHERE id=?;",

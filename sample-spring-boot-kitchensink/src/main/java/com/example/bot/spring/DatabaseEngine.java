@@ -30,6 +30,7 @@ abstract class DatabaseEngine {
     abstract public ArrayList<Plan> getPlans(); //TODO: Perhaps take a date range?
     abstract public ArrayList<Tag> getTags(String cid);
     abstract public Optional<Tour> getTour(String pid, Date date);
+    abstract public ArrayList<Tour> getTours(Date start, Date end);
 
     // Other get
     abstract public BigDecimal getAmountOwed(String customerId);
