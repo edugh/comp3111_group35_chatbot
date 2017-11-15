@@ -97,8 +97,8 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException | URISyntaxException e) {
+            throw new DatabaseException(e);
         }
     }
 
@@ -115,8 +115,8 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException | URISyntaxException e) {
+            throw new DatabaseException(e);
         }
     }
 
@@ -133,8 +133,8 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException | URISyntaxException e) {
+            throw new DatabaseException(e);
         }
     }
 
@@ -151,8 +151,8 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException | URISyntaxException e) {
+            throw new DatabaseException(e);
         }
     }
 
@@ -171,17 +171,20 @@ abstract class DatabaseEngine {
         return getResultsForQuery(query, SQLDatabaseEngine::tagFromResultSet);
     }
 
-    public static Dialogue dialogueFromResultSet(ResultSet resultSet) throws SQLException{
-        Timestamp ts = resultSet.getTimestamp(2);
-        //(Timestamp) resultSet.getObject("created");
-        ZonedDateTime zonedDateTime =
-                ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
-        return new Dialogue(resultSet.getString(1),
-                zonedDateTime,
-                resultSet.getString(3));
+    public static Dialogue dialogueFromResultSet(ResultSet resultSet) {
+        try {
+            Timestamp ts = resultSet.getTimestamp(2);
+            ZonedDateTime zonedDateTime =
+                    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
+            return new Dialogue(resultSet.getString(1),
+                    zonedDateTime,
+                    resultSet.getString(3));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public void insertDialogue(Dialogue dlg) throws SQLException{
+    public void insertDialogue(Dialogue dlg) {
         Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
         try {
             Connection connection = getConnection();
@@ -193,8 +196,8 @@ abstract class DatabaseEngine {
             stmt.executeQuery();
             stmt.close();
             connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException | URISyntaxException e) {
+            throw new DatabaseException(e);
         }
     }
 
@@ -203,16 +206,20 @@ abstract class DatabaseEngine {
         return getResultsForQuery(query, SQLDatabaseEngine::dialogueFromResultSet);
     }
 
-    public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Customer(resultSet.getString(1),
-                resultSet.getString(2),
-                resultSet.getString(3),
-                resultSet.getInt(4),
-                resultSet.getString(5),
-                resultSet.getString(6));
+    public static Customer customerFromResultSet(ResultSet resultSet) {
+        try {
+            return new Customer(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getInt(4),
+                    resultSet.getString(5),
+                    resultSet.getString(6));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public Customer getCustomer(String cid){
+    public Customer getCustomer(String cid) {
         Customer customer = null;
         try {
             String query = String.format("SELECT * FROM Customers where id = '%s';", cid);
@@ -225,11 +232,10 @@ abstract class DatabaseEngine {
             resultSet.close();
             stmt.close();
             connection.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            return customer;
+        } catch (SQLException | URISyntaxException e) {
+            throw new DatabaseException(e);
         }
-        return customer;
     }
 
     public void insertCustomer(String cid){
@@ -257,27 +263,35 @@ abstract class DatabaseEngine {
         insertForQuery(query);
     }
 
-    public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Plan(resultSet.getString(1),
-                resultSet.getString(2),
-                resultSet.getString(3),
-                resultSet.getInt(4),
-                resultSet.getString(5),
-                resultSet.getBigDecimal(6),
-                resultSet.getBigDecimal(7));
+    public static Plan planFromResultSet(ResultSet resultSet) {
+        try {
+            return new Plan(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getInt(4),
+                    resultSet.getString(5),
+                    resultSet.getBigDecimal(6),
+                    resultSet.getBigDecimal(7));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public static Tour tourFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Tour(
-                resultSet.getString(1),
-                resultSet.getDate(2),
-                resultSet.getString(3),
-                resultSet.getString(4),
-                resultSet.getString(5),
-                resultSet.getInt(6),
-                resultSet.getInt(7)
+    public static Tour tourFromResultSet(ResultSet resultSet) {
+        try {
+            return new Tour(
+                    resultSet.getString(1),
+                    resultSet.getDate(2),
+                    resultSet.getString(3),
+                    resultSet.getString(4),
+                    resultSet.getString(5),
+                    resultSet.getInt(6),
+                    resultSet.getInt(7)
 
-        );
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     public boolean isTourFull(String pid, Date date) {
@@ -317,11 +331,11 @@ abstract class DatabaseEngine {
             resultSet.close();
             stmt.close();
             connection.close();
-        } catch (Exception e) {
+            return results;
+        } catch (SQLException | URISyntaxException e) {
             log.info("Query '{}' failed", query);
-            e.printStackTrace();
+            throw new DatabaseException(e);
         }
-        return results;
     }
 
     private void insertForQuery (String query) {
@@ -332,8 +346,8 @@ abstract class DatabaseEngine {
             stmt.execute();
             stmt.close();
             connection.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (SQLException | URISyntaxException e) {
+            throw new DatabaseException(e);
         }
     }
 
