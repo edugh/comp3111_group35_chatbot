@@ -11,6 +11,8 @@ import java.util.List;
 import com.example.bot.spring.model.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.validation.constraints.NotNull;
+
 @Slf4j
 abstract class DatabaseEngine {
     ArrayList<Booking> getBookings(String customerId) {
@@ -104,7 +106,7 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
@@ -122,7 +124,7 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
@@ -140,7 +142,7 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
@@ -158,7 +160,7 @@ abstract class DatabaseEngine {
             stmt.executeUpdate();
             stmt.close();
             connection.close();
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
@@ -207,7 +209,7 @@ abstract class DatabaseEngine {
             stmt.executeQuery();
             stmt.close();
             connection.close();
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
@@ -244,7 +246,7 @@ abstract class DatabaseEngine {
             stmt.close();
             connection.close();
             return customer;
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
@@ -319,13 +321,15 @@ abstract class DatabaseEngine {
         return getResultsForQuery(query, modelReader, null);
     }
 
-    private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, Object[] params) {
+    private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {
         log.info("New getResultsForQuery '{}'", query);
         ArrayList<T> results = new ArrayList<>();
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
-            for (int i = 0; i < (params == null? 0 : params.length); i++) {
+        ) {
+            for (int i = 0; i < params.length; i++) {
+                // TODO: This is brittle. We need a better way...
                 if (params[i] instanceof String) {
                     stmt.setString(i + 1, (String) params[i]);
                 } else if (params[i] instanceof Date) {
@@ -333,17 +337,15 @@ abstract class DatabaseEngine {
                 }
             }
             log.info("Prepared query '{}'", stmt.toString());
-            ResultSet resultSet = stmt.executeQuery();
-            while (resultSet.next()) {
-                T result = modelReader.apply(resultSet);
-                log.info("Got result for query: '{}'", result.toString());
-                results.add(result);
+            try(ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    T result = modelReader.apply(resultSet);
+                    log.info("Got result for query: '{}'", result.toString());
+                    results.add(result);
+                }
+                return results;
             }
-            resultSet.close();
-            stmt.close();
-            connection.close();
-            return results;
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             log.info("Query '{}' failed", query);
             throw new DatabaseException(e);
         }
@@ -351,16 +353,15 @@ abstract class DatabaseEngine {
 
     private void insertForQuery (String query) {
         log.info("New insertForQuery '{}'", query);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.execute();
-            stmt.close();
-            connection.close();
-        } catch (SQLException | URISyntaxException e) {
+        } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
 
-    abstract public Connection getConnection() throws URISyntaxException, SQLException;
+    abstract public Connection getConnection();
 }

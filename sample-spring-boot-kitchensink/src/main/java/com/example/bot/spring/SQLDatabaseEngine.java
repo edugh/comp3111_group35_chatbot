@@ -8,20 +8,24 @@ import java.sql.*;
 @Slf4j
 public class SQLDatabaseEngine extends DatabaseEngine {
 
-	public Connection getConnection() throws URISyntaxException, SQLException {
-		Connection connection;
-		URI dbUri = new URI(System.getenv("DATABASE_URL"));
+	public Connection getConnection() {
+		try {
+			URI dbUri = new URI(System.getenv("DATABASE_URL"));
+			String username = dbUri.getUserInfo().split(":")[0];
+			String password = dbUri.getUserInfo().split(":")[1];
+			String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath()
+					+ "?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory";
 
-		String username = dbUri.getUserInfo().split(":")[0];
-		String password = dbUri.getUserInfo().split(":")[1];
-		String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath()
-				+ "?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory";
+			log.info("Username: {} Password: {}", username, password);
+			log.info("dbUrl: {}", dbUrl);
 
-		log.info("Username: {} Password: {}", username, password);
-		log.info("dbUrl: {}", dbUrl);
-
-		connection = DriverManager.getConnection(dbUrl, username, password);
-
-		return connection;
+			return DriverManager.getConnection(dbUrl, username, password);
+		} catch (URISyntaxException e) {
+			log.error("Database URI is malformed!");
+			throw new RuntimeException(e);
+		} catch (SQLException e){
+			log.error("Cannot connect to database");
+			throw new DatabaseException(e);
+		}
 	}
 }
