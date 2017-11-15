@@ -6,6 +6,7 @@ import java.sql.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.example.bot.spring.model.*;
@@ -233,22 +234,11 @@ abstract class DatabaseEngine {
     }
 
     public Customer getCustomer(String cid) {
-        Customer customer = null;
-        try {
-            String query = String.format("SELECT * FROM Customers where id = '%s';", cid);
-            Connection connection = getConnection();
-            PreparedStatement stmt = connection.prepareStatement(query);
-            ResultSet resultSet = stmt.executeQuery();
-            if (resultSet.next()) {
-                customer = customerFromResultSet(resultSet);
-            }
-            resultSet.close();
-            stmt.close();
-            connection.close();
-            return customer;
-        } catch (SQLException e) {
-            throw new DatabaseException(e);
-        }
+        return getResultsForQuery(
+            "SELECT * FROM Customers where id = '%s';",
+            SQLDatabaseEngine::customerFromResultSet,
+            new Object[]{cid}
+        ).get(0);
     }
 
     public void insertCustomer(String cid){
