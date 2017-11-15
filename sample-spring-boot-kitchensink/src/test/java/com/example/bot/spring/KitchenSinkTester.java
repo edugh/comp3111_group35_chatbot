@@ -28,10 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.sql.DataSource;
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
 
@@ -127,8 +124,9 @@ public class KitchenSinkTester {
 		};
 		Assert.assertArrayEquals(responses.toArray(), expectedMessages);
 
-		Customer customer = databaseEngine.getCustomer("userId1");
-		Assert.assertEquals(customer, new Customer("userId1", null, null, 0, null, "new"));
+		Optional<Customer> customer = databaseEngine.getCustomer("userId1");
+		Assert.assertTrue(customer.isPresent());
+		Assert.assertEquals(customer.get(), new Customer("userId1", null, null, 0, null, "new"));
 	}
 
 	@Test
@@ -138,11 +136,13 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleFollowEvent(followEvent1);
 		kitchenSinkController.handleFollowEvent(followEvent2);
 
-		Customer customer1 = databaseEngine.getCustomer("userId1");
-		Assert.assertEquals(customer1, new Customer("userId1", null, null, 0, null, "new"));
+		Optional<Customer> customer1 = databaseEngine.getCustomer("userId1");
+		Assert.assertTrue(customer1.isPresent());
+		Assert.assertEquals(customer1.get(), new Customer("userId1", null, null, 0, null, "new"));
 
-		Customer customer2 = databaseEngine.getCustomer("userId2");
-		Assert.assertEquals(customer2, new Customer("userId2", null, null, 0, null, "new"));
+		Optional<Customer> customer2 = databaseEngine.getCustomer("userId2");
+		Assert.assertTrue(customer2.isPresent());
+		Assert.assertEquals(customer2.get(), new Customer("userId2", null, null, 0, null, "new"));
 	}
 
 	@Test

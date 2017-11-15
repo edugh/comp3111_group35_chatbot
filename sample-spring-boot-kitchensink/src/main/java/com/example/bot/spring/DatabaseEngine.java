@@ -229,9 +229,9 @@ abstract class DatabaseEngine {
         }
     }
 
-    public Customer getCustomer(String cid) {
-        return tryGetResultForQuery(
-            "SELECT * FROM Customers where id = ?;",
+    public Optional<Customer> getCustomer(String cid) {
+        return getResultForQuery(
+            "SELECT * FROM Customers where id = ?",
             SQLDatabaseEngine::customerFromResultSet,
             new Object[]{cid}
         );
@@ -304,7 +304,7 @@ abstract class DatabaseEngine {
     }
 
     private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
-        return getResultsForQuery(query, modelReader, null);
+        return getResultsForQuery(query, modelReader, new Object[0]);
     }
 
     private <T> T tryGetResultForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {

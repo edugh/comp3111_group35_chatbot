@@ -158,13 +158,13 @@ public class KitchenSinkController {
 	public void handleFollowEvent(FollowEvent event) {
 		String replyToken = event.getReplyToken();
 		String customerId = event.getSource().getUserId();
-		if(database.getCustomer(customerId)==null){
+		if(!database.getCustomer(customerId).isPresent()){
 		    database.insertCustomer((customerId));
         }
 		List<Message> msgList = new ArrayList<>();
 		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"));
-        //msgList.add(new ImageMessage(url1, url2));
-        msgList.add(new TextMessage("We don't have promotion image..."));
+        //TODO: Send promotional image
+		msgList.add(new TextMessage("We don't have promotion image..."));
         reply(replyToken, msgList);
 	}
 
@@ -281,7 +281,7 @@ public class KitchenSinkController {
 
 	private String handleBookingRequest(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Customer customer = database.getCustomer(customerId);
+		Customer customer = database.getCustomer(customerId).get(); //TODO: what if customer not in DB?
 		String tour = aiResult.getStringParameter("Tour");
 		ArrayList<Plan> plans = database.getPlans();
 		Plan requestedPlan = plans.stream()
