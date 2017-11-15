@@ -7,6 +7,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Utils {
+    /**
+     * Syntactic sugar for creating an array of objects
+     * @param xs Any number of objects
+     * @return An array containing each parameter supplied
+     */
+    public static Object[] params(Object... xs) {
+        return xs;
+    }
 
     // TODO: Should we use some service like wit.ai for our milestone 3?
     // or at least a better matching thing...

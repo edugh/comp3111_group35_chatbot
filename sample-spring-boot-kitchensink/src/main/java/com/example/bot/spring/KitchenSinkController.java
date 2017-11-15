@@ -70,6 +70,8 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.swing.text.html.Option;
+
 @Slf4j
 @LineMessageHandler
 public class KitchenSinkController {
@@ -226,12 +228,13 @@ public class KitchenSinkController {
 	}
 
 	private String handleFAQ(Result aiResult) {
-		FAQ faq = database.getFAQ(aiResult.getMetadata().getIntentName());
-		return faq.answer;
+		return database.getFAQ(aiResult.getMetadata().getIntentName())
+			.map(faq -> faq.answer)
+			.orElse("I was told to handle this as an FAQ, but it is not one.");
 	}
 
 	private String handleAmountOwed(Source source) {
-		BigDecimal amountOwed = database.getAmmountOwed(source.getUserId());
+		BigDecimal amountOwed = database.getAmountOwed(source.getUserId());
 		String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
 		return String.format("You owe %s", prettyAmount);
 	}
@@ -301,7 +304,8 @@ public class KitchenSinkController {
 
 	private String handleGiveDeparture(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId);
+		Booking booking = database.getCurrentBooking(customerId)
+			.orElseThrow(() -> new IllegalStateException("Can't give a departure because there is no current booking"));
 		String planId = booking.planId;
 
 		java.util.Date date = aiResult.getDateParameter("date-time");
@@ -317,7 +321,8 @@ public class KitchenSinkController {
 
 	private String handleGiveAdults(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId);
+		Booking booking = database.getCurrentBooking(customerId)
+			.orElseThrow(() -> new IllegalStateException("Can't set number of adults because there is no current booking"));
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
@@ -329,7 +334,8 @@ public class KitchenSinkController {
 
 	private String handleGiveChildren(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId);
+		Booking booking = database.getCurrentBooking(customerId)
+			.orElseThrow(() -> new IllegalStateException("Can't set number of children because there is no current booking"));
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
@@ -341,7 +347,8 @@ public class KitchenSinkController {
 
 	private String handleGiveToddlers(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId);
+		Booking booking = database.getCurrentBooking(customerId)
+			.orElseThrow(() -> new IllegalStateException("Can't set number of toddlers because there is no current booking"));
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
@@ -353,12 +360,14 @@ public class KitchenSinkController {
 
 	private String handleGiveConfirmation(Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId);
+		Booking booking = database.getCurrentBooking(customerId)
+			.orElseThrow(() -> new IllegalStateException("Can't give confirmation because there is no current booking"));
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
 		database.updateCustomerState(customerId, "booked");
-		Plan confirmedPlan = database.getPlan(booking.planId);
+		Plan confirmedPlan = database.getPlan(booking.planId)
+			.orElseThrow(() -> new IndexOutOfBoundsException("Can't give confirmation because plan to confirm doesn't exist"));
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(booking.tourDate);
 		int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
