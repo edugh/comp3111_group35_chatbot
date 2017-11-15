@@ -1,11 +1,14 @@
 package com.example.bot.spring;
 
+import java.io.Serializable;
+
 /**
  * This class represents an unchecked database exception used to indicate
  * that an error such as SQLException occurred. This is so checked
  * exceptions can be re-thrown as unchecked while preserving the intent of
  * the exception.
  */
+@SuppressWarnings("serial")
 public class DatabaseException extends RuntimeException {
     /**
      * Constructs a new runtime exception with {@code null} as its

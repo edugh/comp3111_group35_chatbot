@@ -61,21 +61,28 @@ abstract class DatabaseEngine {
     }
 
 
-    public static FAQ faqFromResultSet(ResultSet resultSet) throws SQLException {
-        return new FAQ(resultSet.getString(1),
-                resultSet.getString(2));
+    public static FAQ faqFromResultSet(ResultSet resultSet) {
+        try {
+            return new FAQ(resultSet.getString(1), resultSet.getString(2));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public static Booking bookingFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Booking(resultSet.getString(1),
-                resultSet.getString(2),
-                resultSet.getDate(3),
-                resultSet.getInt(4),
-                resultSet.getInt(5),
-                resultSet.getInt(6),
-                resultSet.getBigDecimal(7),
-                resultSet.getBigDecimal(8),
-                resultSet.getString(9));
+    public static Booking bookingFromResultSet(ResultSet resultSet) {
+        try {
+            return new Booking(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getDate(3),
+                    resultSet.getInt(4),
+                    resultSet.getInt(5),
+                    resultSet.getInt(6),
+                    resultSet.getBigDecimal(7),
+                    resultSet.getBigDecimal(8),
+                    resultSet.getString(9));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     public void insertBooking(String cid, String pid){
@@ -156,9 +163,13 @@ abstract class DatabaseEngine {
         }
     }
 
-    public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
-        return new Tag(resultSet.getString(1),
-                resultSet.getString(2));
+    public static Tag tagFromResultSet(ResultSet resultSet) {
+        try {
+            return new Tag(resultSet.getString(1),
+                    resultSet.getString(2));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     void insertTag(Tag tag) {
@@ -301,7 +312,7 @@ abstract class DatabaseEngine {
 
     @FunctionalInterface
     private interface SQLModelReader<T> {
-        T apply(ResultSet t) throws SQLException;
+        T apply(ResultSet t);
     }
 
     private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
