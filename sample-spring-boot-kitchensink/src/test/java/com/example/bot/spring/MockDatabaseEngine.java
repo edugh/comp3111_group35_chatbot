@@ -15,7 +15,11 @@ public class MockDatabaseEngine extends DatabaseEngine {
         this.dataSource = dataSource;
     }
 
-    public Connection getConnection() throws URISyntaxException, SQLException {
-        return dataSource.getConnection();
+    public Connection getConnection() {
+        try {
+            return dataSource.getConnection();
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 }

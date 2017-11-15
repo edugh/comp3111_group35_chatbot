@@ -6,10 +6,14 @@ import java.sql.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.example.bot.spring.model.*;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.validation.constraints.NotNull;
 
 @Slf4j
 abstract class DatabaseEngine {
@@ -61,21 +65,28 @@ abstract class DatabaseEngine {
     }
 
 
-    public static FAQ faqFromResultSet(ResultSet resultSet) throws SQLException {
-        return new FAQ(resultSet.getString(1),
-                resultSet.getString(2));
+    public static FAQ faqFromResultSet(ResultSet resultSet) {
+        try {
+            return new FAQ(resultSet.getString(1), resultSet.getString(2));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public static Booking bookingFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Booking(resultSet.getString(1),
-                resultSet.getString(2),
-                resultSet.getDate(3),
-                resultSet.getInt(4),
-                resultSet.getInt(5),
-                resultSet.getInt(6),
-                resultSet.getBigDecimal(7),
-                resultSet.getBigDecimal(8),
-                resultSet.getString(9));
+    public static Booking bookingFromResultSet(ResultSet resultSet) {
+        try {
+            return new Booking(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getDate(3),
+                    resultSet.getInt(4),
+                    resultSet.getInt(5),
+                    resultSet.getInt(6),
+                    resultSet.getBigDecimal(7),
+                    resultSet.getBigDecimal(8),
+                    resultSet.getString(9));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     public void insertBooking(String cid, String pid){
@@ -86,79 +97,79 @@ abstract class DatabaseEngine {
 
     public void updateBookingDate(String cid, String pid, Date date){
         Date defaultDate = new Date(0);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(
-                    "UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
+                "UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
+        ) {
             stmt.setDate(1, date);
             stmt.setString(2, cid);
             stmt.setString(3, pid);
             stmt.setDate(4, defaultDate);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
         }
     }
 
     public void updateBooking(String cid, String pid, Date date, String field, String value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
                 "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.setDate(4, date);
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setString(1, value);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
         }
     }
 
     public void updateBooking(String cid, String pid, Date date, String field, int value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
                 "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.setDate(4, date);
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setInt(1, value);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
         }
     }
 
     public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
                 "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.setDate(4, date);
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setBigDecimal(1, value);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
         }
     }
 
-    public static Tag tagFromResultSet(ResultSet resultSet)  throws SQLException{
-        return new Tag(resultSet.getString(1),
-                resultSet.getString(2));
+    public static Tag tagFromResultSet(ResultSet resultSet) {
+        try {
+            return new Tag(resultSet.getString(1),
+                    resultSet.getString(2));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     void insertTag(Tag tag) {
@@ -171,30 +182,32 @@ abstract class DatabaseEngine {
         return getResultsForQuery(query, SQLDatabaseEngine::tagFromResultSet);
     }
 
-    public static Dialogue dialogueFromResultSet(ResultSet resultSet) throws SQLException{
-        Timestamp ts = resultSet.getTimestamp(2);
-        //(Timestamp) resultSet.getObject("created");
-        ZonedDateTime zonedDateTime =
-                ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
-        return new Dialogue(resultSet.getString(1),
-                zonedDateTime,
-                resultSet.getString(3));
+    public static Dialogue dialogueFromResultSet(ResultSet resultSet) {
+        try {
+            Timestamp ts = resultSet.getTimestamp(2);
+            ZonedDateTime zonedDateTime =
+                    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
+            return new Dialogue(resultSet.getString(1),
+                    zonedDateTime,
+                    resultSet.getString(3));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public void insertDialogue(Dialogue dlg) throws SQLException{
+    public void insertDialogue(Dialogue dlg) {
         Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(
-                    "INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
+                "INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
+        ) {
             stmt.setString(3, dlg.content);
             stmt.setTimestamp(2, ts);
             stmt.setString(1, dlg.customerId);
             stmt.executeQuery();
-            stmt.close();
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
         }
     }
 
@@ -203,33 +216,25 @@ abstract class DatabaseEngine {
         return getResultsForQuery(query, SQLDatabaseEngine::dialogueFromResultSet);
     }
 
-    public static Customer customerFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Customer(resultSet.getString(1),
-                resultSet.getString(2),
-                resultSet.getString(3),
-                resultSet.getInt(4),
-                resultSet.getString(5),
-                resultSet.getString(6));
+    public static Customer customerFromResultSet(ResultSet resultSet) {
+        try {
+            return new Customer(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getInt(4),
+                    resultSet.getString(5),
+                    resultSet.getString(6));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public Customer getCustomer(String cid){
-        Customer customer = null;
-        try {
-            String query = String.format("SELECT * FROM Customers where id = '%s';", cid);
-            Connection connection = getConnection();
-            PreparedStatement stmt = connection.prepareStatement(query);
-            ResultSet resultSet = stmt.executeQuery();
-            if (resultSet.next()) {
-                customer = customerFromResultSet(resultSet);
-            }
-            resultSet.close();
-            stmt.close();
-            connection.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return customer;
+    public Optional<Customer> getCustomer(String cid) {
+        return getResultForQuery(
+            "SELECT * FROM Customers where id = ?",
+            SQLDatabaseEngine::customerFromResultSet,
+            new Object[]{cid}
+        );
     }
 
     public void insertCustomer(String cid){
@@ -257,27 +262,35 @@ abstract class DatabaseEngine {
         insertForQuery(query);
     }
 
-    public static Plan planFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Plan(resultSet.getString(1),
-                resultSet.getString(2),
-                resultSet.getString(3),
-                resultSet.getInt(4),
-                resultSet.getString(5),
-                resultSet.getBigDecimal(6),
-                resultSet.getBigDecimal(7));
+    public static Plan planFromResultSet(ResultSet resultSet) {
+        try {
+            return new Plan(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getInt(4),
+                    resultSet.getString(5),
+                    resultSet.getBigDecimal(6),
+                    resultSet.getBigDecimal(7));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
-    public static Tour tourFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Tour(
-                resultSet.getString(1),
-                resultSet.getDate(2),
-                resultSet.getString(3),
-                resultSet.getString(4),
-                resultSet.getString(5),
-                resultSet.getInt(6),
-                resultSet.getInt(7)
+    public static Tour tourFromResultSet(ResultSet resultSet) {
+        try {
+            return new Tour(
+                    resultSet.getString(1),
+                    resultSet.getDate(2),
+                    resultSet.getString(3),
+                    resultSet.getString(4),
+                    resultSet.getString(5),
+                    resultSet.getInt(6),
+                    resultSet.getInt(7)
 
-        );
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     public boolean isTourFull(String pid, Date date) {
@@ -287,20 +300,32 @@ abstract class DatabaseEngine {
 
     @FunctionalInterface
     private interface SQLModelReader<T> {
-        T apply(ResultSet t) throws SQLException;
+        T apply(ResultSet t);
     }
 
     private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
-        return getResultsForQuery(query, modelReader, null);
+        return getResultsForQuery(query, modelReader, new Object[0]);
     }
 
-    private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, Object[] params) {
+    private <T> T tryGetResultForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {
+        return getResultForQuery(query, modelReader, params).orElseThrow(
+            () -> new DatabaseException("Query did not return any rows")
+        );
+    }
+
+    private <T> Optional<T> getResultForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {
+        return getResultsForQuery(query, modelReader, params).stream().findFirst();
+    }
+
+    private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {
         log.info("New getResultsForQuery '{}'", query);
         ArrayList<T> results = new ArrayList<>();
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
-            for (int i = 0; i < (params == null? 0 : params.length); i++) {
+        ) {
+            for (int i = 0; i < params.length; i++) {
+                // TODO: This is brittle. We need a better way...
                 if (params[i] instanceof String) {
                     stmt.setString(i + 1, (String) params[i]);
                 } else if (params[i] instanceof Date) {
@@ -308,34 +333,31 @@ abstract class DatabaseEngine {
                 }
             }
             log.info("Prepared query '{}'", stmt.toString());
-            ResultSet resultSet = stmt.executeQuery();
-            while (resultSet.next()) {
-                T result = modelReader.apply(resultSet);
-                log.info("Got result for query: '{}'", result.toString());
-                results.add(result);
+            try(ResultSet resultSet = stmt.executeQuery()) {
+                while (resultSet.next()) {
+                    T result = modelReader.apply(resultSet);
+                    log.info("Got result for query: '{}'", result.toString());
+                    results.add(result);
+                }
+                return results;
             }
-            resultSet.close();
-            stmt.close();
-            connection.close();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             log.info("Query '{}' failed", query);
-            e.printStackTrace();
+            throw new DatabaseException(e);
         }
-        return results;
     }
 
     private void insertForQuery (String query) {
         log.info("New insertForQuery '{}'", query);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.execute();
-            stmt.close();
-            connection.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
         }
     }
 
-    abstract public Connection getConnection() throws URISyntaxException, SQLException;
+    abstract public Connection getConnection();
 }
