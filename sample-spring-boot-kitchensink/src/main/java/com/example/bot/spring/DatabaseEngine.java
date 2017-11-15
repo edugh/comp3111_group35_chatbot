@@ -97,17 +97,16 @@ abstract class DatabaseEngine {
 
     public void updateBookingDate(String cid, String pid, Date date){
         Date defaultDate = new Date(0);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(
-                    "UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
+                "UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
+        ) {
             stmt.setDate(1, date);
             stmt.setString(2, cid);
             stmt.setString(3, pid);
             stmt.setDate(4, defaultDate);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -116,16 +115,15 @@ abstract class DatabaseEngine {
     public void updateBooking(String cid, String pid, Date date, String field, String value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
                 "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.setDate(4, date);
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setString(1, value);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -134,16 +132,15 @@ abstract class DatabaseEngine {
     public void updateBooking(String cid, String pid, Date date, String field, int value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
                 "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.setDate(4, date);
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setInt(1, value);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -152,16 +149,15 @@ abstract class DatabaseEngine {
     public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){
         String query = String.format("UPDATE Bookings SET %s = ? " +
                 "WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
+        ) {
             stmt.setDate(4, date);
             stmt.setString(3, pid);
             stmt.setString(2, cid);
             stmt.setBigDecimal(1, value);
             stmt.executeUpdate();
-            stmt.close();
-            connection.close();
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -201,16 +197,15 @@ abstract class DatabaseEngine {
 
     public void insertDialogue(Dialogue dlg) {
         Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
-        try {
+        try (
             Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(
-                    "INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
+                "INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
+        ) {
             stmt.setString(3, dlg.content);
             stmt.setTimestamp(2, ts);
             stmt.setString(1, dlg.customerId);
             stmt.executeQuery();
-            stmt.close();
-            connection.close();
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -236,7 +231,7 @@ abstract class DatabaseEngine {
 
     public Customer getCustomer(String cid) {
         return tryGetResultForQuery(
-            "SELECT * FROM Customers where id = '%s';",
+            "SELECT * FROM Customers where id = ?;",
             SQLDatabaseEngine::customerFromResultSet,
             new Object[]{cid}
         );
