@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.example.bot.spring.model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -234,11 +235,11 @@ abstract class DatabaseEngine {
     }
 
     public Customer getCustomer(String cid) {
-        return getResultsForQuery(
+        return tryGetResultForQuery(
             "SELECT * FROM Customers where id = '%s';",
             SQLDatabaseEngine::customerFromResultSet,
             new Object[]{cid}
-        ).get(0);
+        );
     }
 
     public void insertCustomer(String cid){
@@ -309,6 +310,16 @@ abstract class DatabaseEngine {
 
     private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
         return getResultsForQuery(query, modelReader, null);
+    }
+
+    private <T> T tryGetResultForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {
+        return getResultForQuery(query, modelReader, params).orElseThrow(
+            () -> new DatabaseException("Query did not return any rows")
+        );
+    }
+
+    private <T> Optional<T> getResultForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {
+        return getResultsForQuery(query, modelReader, params).stream().findFirst();
     }
 
     private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader, @NotNull Object[] params) {
