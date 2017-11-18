@@ -213,9 +213,8 @@ abstract class DatabaseEngine {
 
     ArrayList<Dialogue> getDialogues(String cid) {
     	String query = "SELECT * FROM Dialogues where customerId = ?;";
-        Object[] params = { cid };
-        ArrayList<Dialogue> dialogues = getResultsForQuery(query, SQLDatabaseEngine::dialogueFromResultSet, params);
-        return dialogues;
+        String[] params = { cid };
+        return getResultsForQuery(query, SQLDatabaseEngine::dialogueFromResultSet, params);
     }
 
     public static Customer customerFromResultSet(ResultSet resultSet) {
