@@ -456,7 +456,7 @@ public class KitchenSinkController {
 					if (intentName.startsWith(FAQ_PREFIX)) {
 						this.replyText(replyToken, handleFAQ(aiResult));
 					} else {
-						this.replyText(replyToken, "I don't understand your question, try rephrasing");
+						this.replyText(replyToken, handleUnknowDialogue(text, source));
 					}
 			}
 		} else {
