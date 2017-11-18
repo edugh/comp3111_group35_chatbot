@@ -9,6 +9,7 @@ import com.linecorp.bot.model.event.source.Source;
 import com.linecorp.bot.model.event.source.UserSource;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.ImageMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
@@ -116,11 +117,15 @@ public class KitchenSinkTester {
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
 		kitchenSinkController.handleFollowEvent(followEvent);
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 2);
+		Assert.assertEquals(responses.size(), 3);
 
 		Message[] expectedMessages = {
-				new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"),
-				new TextMessage("We don't have promotion image...")
+				new TextMessage("Welcome. This is travel chatbot No.35."),
+				//new TextMessage("We don't have promotion image...")
+				new ImageMessage(
+						"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg",
+						"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg"),
+				new TextMessage("What can I do for you?")
 		};
 		Assert.assertArrayEquals(responses.toArray(), expectedMessages);
 
@@ -156,9 +161,9 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 4);
-		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Fake Tour 1 - Description1"));
-		Assert.assertEquals(responses.get(3), new TextMessage("Id2: Fake Tour 2 - Description2"));
+		Assert.assertEquals(responses.size(), 5);
+		Assert.assertEquals(responses.get(3), new TextMessage("Id1: Fake Tour 1 - Description1"));
+		Assert.assertEquals(responses.get(4), new TextMessage("Id2: Fake Tour 2 - Description2"));
 	}
 
 	/*
@@ -176,7 +181,7 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleFollowEvent(followEvent);
 
 		Map<String, String> userResponses = new HashMap<>();
-		userResponses.put("We don't have promotion image...", "Which tours are available?");
+		userResponses.put("What can I do for you?", "Which tours are available?");
 		userResponses.put("Id2: Fake Tour 2 - Description2", "Can I book Fake Tour 2?");
 		userResponses.put("What's your name, please?", "Jason Zukewich");
 		userResponses.put("Male or Female please?", "M");

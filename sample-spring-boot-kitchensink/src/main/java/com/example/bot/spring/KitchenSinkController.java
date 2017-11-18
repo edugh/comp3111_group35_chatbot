@@ -162,9 +162,13 @@ public class KitchenSinkController {
 		    database.insertCustomer((customerId));
         }
 		List<Message> msgList = new ArrayList<>();
-		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"));
+		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35."));
         //TODO: Send promotional image
-		msgList.add(new TextMessage("We don't have promotion image..."));
+		msgList.add(new ImageMessage(
+				"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg",
+				"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg"));
+		//msgList.add(new TextMessage("We don't have promotion image..."));
+		msgList.add(new TextMessage("What can I do for you?"));
         reply(replyToken, msgList);
 	}
 
