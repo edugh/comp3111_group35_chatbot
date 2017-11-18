@@ -1,7 +1,11 @@
 package com.example.bot.spring.model;
 
+import com.example.bot.spring.DatabaseException;
+
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Booking {
     public final String customerId;
@@ -78,5 +82,21 @@ public class Booking {
                 ", paid=" + paid +
                 ", specialRequest='" + specialRequest + '\'' +
                 '}';
+    }
+
+    public static Booking fromResultSet(ResultSet resultSet) {
+        try {
+            return new Booking(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getDate(3),
+                    resultSet.getInt(4),
+                    resultSet.getInt(5),
+                    resultSet.getInt(6),
+                    resultSet.getBigDecimal(7),
+                    resultSet.getBigDecimal(8),
+                    resultSet.getString(9));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 }

@@ -1,5 +1,10 @@
 package com.example.bot.spring.model;
 
+import com.example.bot.spring.DatabaseException;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class Customer {
 	public final String id;
 	public final String name;
@@ -60,5 +65,18 @@ public class Customer {
 				", phoneNumber='" + phoneNumber + '\'' +
 				", state='" + state + '\'' +
 				'}';
+	}
+
+	public static Customer fromResultSet(ResultSet resultSet) {
+		try {
+			return new Customer(resultSet.getString(1),
+					resultSet.getString(2),
+					resultSet.getString(3),
+					resultSet.getInt(4),
+					resultSet.getString(5),
+					resultSet.getString(6));
+		} catch (SQLException e) {
+			throw new DatabaseException(e);
+		}
 	}
 }
