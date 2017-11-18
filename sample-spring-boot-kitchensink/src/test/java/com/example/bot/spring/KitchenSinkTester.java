@@ -169,16 +169,19 @@ public class KitchenSinkTester {
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
 		kitchenSinkController.handleFollowEvent(followEvent);
 
+		ArrayList<Dialogue> dialogueRecord = databaseEngine.getDialogues("userId1");
+		Assert.assertTrue(dialogueRecord.isEmpty());
+		
 		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Elephants fly inward from the sky");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 3);
 		Assert.assertEquals(responses.get(2), new TextMessage("I don't understand your question, try rephrasing"));
-		ArrayList<Dialogue> dialogueRecord = databaseEngine.getDialogues("userId1");
-		Assert.assertTrue(!dialogueRecord.isEmpty());
-		Assert.assertEquals(dialogueRecord.get(0).customerId, "userId1");
-		Assert.assertEquals(dialogueRecord.get(0).content, "Elephants fly inward from the sky");
+		ArrayList<Dialogue> dialogueRecordAfter = databaseEngine.getDialogues("userId1");
+		Assert.assertTrue(!dialogueRecordAfter.isEmpty());
+		Assert.assertEquals(dialogueRecordAfter.get(0).customerId, "userId1");
+		Assert.assertEquals(dialogueRecordAfter.get(0).content, "Elephants fly inward from the sky");
 	}
 
 	/*
