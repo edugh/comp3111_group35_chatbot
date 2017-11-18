@@ -208,7 +208,7 @@ public class KitchenSinkTester {
 
 		Assert.assertEquals(databaseEngine.getCustomer("userId1").get(), new Customer("userId1", "Jason", "M", 20, "01234567", "booked"));
 
-		BigDecimal ammountOwed = databaseEngine.getAmmountOwed("userId1");
+		BigDecimal ammountOwed = databaseEngine.getAmountOwed("userId1");
 		Assert.assertTrue(closeEnough(ammountOwed, 1247.5));
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
