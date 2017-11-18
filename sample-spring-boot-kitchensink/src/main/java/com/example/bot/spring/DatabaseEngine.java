@@ -24,9 +24,11 @@ abstract class DatabaseEngine {
     abstract public Optional<Booking> getCurrentBooking(String cid);
     abstract public ArrayList<Booking> getBookings(String customerId);
     abstract public Optional<Customer> getCustomer(String cid);
+    abstract public ArrayList<Customer> getCustomers(Tour t);
     abstract public ArrayList<Dialogue> getDialogues(String cid);
     abstract public Optional<FAQ> getFAQ(String questionId);
     abstract public Optional<Plan> getPlan(String pid);
+    abstract public Plan tryGetPlan(Tour t);
     abstract public ArrayList<Plan> getPlans(); //TODO: Perhaps take a date range?
     abstract public ArrayList<Tag> getTags(String cid);
     abstract public Optional<Tour> getTour(String pid, Date date);

@@ -13,15 +13,17 @@ public class Tour {
     public String guideAccount;
     public String hotel;
     public int capacity;
+    public int booked;
     public int minimum;
 
-    public Tour(String planId, Date tourDate, String guideName, String guideAccount, String hotel, int capacity, int minimum) {
+    public Tour(String planId, Date tourDate, String guideName, String guideAccount, String hotel, int capacity, int booked, int minimum) {
         this.planId = planId;
         this.tourDate = tourDate;
         this.guideName = guideName;
         this.guideAccount = guideAccount;
         this.hotel = hotel;
         this.capacity = capacity;
+        this.booked = booked;
         this.minimum = minimum;
     }
 
@@ -33,6 +35,7 @@ public class Tour {
         Tour tour = (Tour) o;
 
         if (capacity != tour.capacity) return false;
+        if (booked != tour.booked) return false;
         if (minimum != tour.minimum) return false;
         if (planId != null ? !planId.equals(tour.planId) : tour.planId != null) return false;
         if (tourDate != null ? !tourDate.equals(tour.tourDate) : tour.tourDate != null) return false;
@@ -49,10 +52,12 @@ public class Tour {
         result = 31 * result + (guideAccount != null ? guideAccount.hashCode() : 0);
         result = 31 * result + (hotel != null ? hotel.hashCode() : 0);
         result = 31 * result + capacity;
+        result = 31 * result + booked;
         result = 31 * result + minimum;
         return result;
     }
 
+    @Override
     public String toString() {
         return "Tour{" +
                 "planId='" + planId + '\'' +
@@ -61,6 +66,7 @@ public class Tour {
                 ", guideAccount='" + guideAccount + '\'' +
                 ", hotel='" + hotel + '\'' +
                 ", capacity=" + capacity +
+                ", booked=" + booked +
                 ", minimum=" + minimum +
                 '}';
     }
@@ -68,14 +74,14 @@ public class Tour {
     public static Tour fromResultSet(ResultSet resultSet) {
         try {
             return new Tour(
-                    resultSet.getString(1),
-                    resultSet.getDate(2),
-                    resultSet.getString(3),
-                    resultSet.getString(4),
-                    resultSet.getString(5),
-                    resultSet.getInt(6),
-                    resultSet.getInt(7)
-
+                resultSet.getString(1),
+                resultSet.getDate(2),
+                resultSet.getString(3),
+                resultSet.getString(4),
+                resultSet.getString(5),
+                resultSet.getInt(6),
+                resultSet.getInt(7),
+                resultSet.getInt(8)
             );
         } catch (SQLException e) {
             throw new DatabaseException(e);

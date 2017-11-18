@@ -36,8 +36,10 @@ import com.example.bot.spring.model.*;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
+import com.sun.org.apache.bcel.internal.generic.PUSH;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -526,11 +528,39 @@ public class KitchenSinkController {
 		String uri;
 	}
 
+	/**
+	 * Decides whether a tour will be cancelled or not, and informs
+	 * customers this.
+	 */
 	@Scheduled(cron = "0 9 * * *")
-	private void informTourStatus() {
+	private void decideTourStatus() {
 		Date threedays = Date.valueOf(LocalDate.now().plusDays(3));
-		for(Tour t : database.getTours(threedays, threedays)) {
-
+		for(Tour tour : database.getTours(threedays, threedays)) {
+			Plan tourPlan = database.tryGetPlan(tour);
+			ArrayList<Message> messages = new ArrayList<>();
+			if(tour.booked >= tour.minimum) {
+				messages.add(new TextMessage(String.format(
+					"Your tour '%s' on %s has been confirmed. Your guide will be %s." +
+					" Please meet them at %s at %s. ",
+					tourPlan.name,
+					tour.tourDate,
+					tour.guideName,
+					tourPlan.departure,
+					"TODO: tour time"
+				)));
+			} else {
+				messages.add(new TextMessage(String.format(
+					"Unfortunately, your tour '%s' on %s has been cancelled because " +
+					"the minimum number of participants did not sign up. You can " +
+					"find information about getting a refund here: %s",
+					tourPlan.name,
+					tour.tourDate,
+					"TODO: refund url"
+				)));
+			}
+			for(Customer c : database.getCustomers(tour)) {
+				lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
+			}
 		}
 	}
 }

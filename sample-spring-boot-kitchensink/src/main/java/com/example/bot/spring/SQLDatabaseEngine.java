@@ -85,7 +85,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
     public ArrayList<Tour> getTours(Date start, Date end) {
         return getResultsForQuery(
             "SELCT * FROM Tours WHERE tourDate >= ? AND tourDate <= ?;",
-            SQLModelReaders::tourFromResultSet,
+            Tour::fromResultSet,
             params(start, end)
         );
     }
@@ -264,7 +264,24 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		return false;
 	}
 
-    /**
+	public ArrayList<Customer> getCustomers(Tour t) {
+		return getResultsForQuery(
+				"SELECT customers.* FROM bookings JOIN customers ON bookings.customerid = customers.id " +
+						"WHERE planid = ? and tourdate = ?;",
+				Customer::fromResultSet,
+				params(t.planId, t.tourDate)
+		);
+	}
+
+	@Override
+	public Plan tryGetPlan(Tour t) {
+		return tryGetResultForQuery (
+			"SELECT * FROM plans WHERE id = ?",
+			Plan::fromResultSet
+		);
+	}
+
+	/**
      * Executes a query in the database, transforms each row of the result into a model type
      * and returns an array of models.
      * @param query The SQL query to execute
@@ -274,6 +291,20 @@ public class SQLDatabaseEngine extends DatabaseEngine {
      */
 	private <T> ArrayList<T> getResultsForQuery (String query, SQLModelReader<T> modelReader) {
 		return getResultsForQuery(query, modelReader, new Object[0]);
+	}
+
+	/**
+	 * Executes a query in the database and transforms the first row of the result if it
+	 * exists. A DatabaseException is thrown if the query does not evalaute to any rows.
+	 * @param query The SQL query to execute
+	 * @param modelReader The function used to transform a database row into a model
+	 * @param <T> The model type to retrieve
+	 * @return The first row of the result of the query, transformed into a model.
+	 */
+	private <T> T tryGetResultForQuery (String query, SQLModelReader<T> modelReader) {
+		return getResultForQuery(query, modelReader, new Object[0]).orElseThrow(
+				() -> new DatabaseException("Query did not return any rows")
+		);
 	}
 
     /**
