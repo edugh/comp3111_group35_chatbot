@@ -34,6 +34,8 @@ import com.example.bot.spring.model.*;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
+import com.linecorp.bot.client.LineMessagingServiceBuilder;
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +98,8 @@ public class KitchenSinkController {
 	private static final String GIVE_TODDLERS = "GiveToddlers";
 	private static final String GIVE_CONFIRMATION = "GiveConfirmation";
 	private static final String CANCEL_CONFIRMATION = "CancelConfirmation";
+
+	private static final String CHANNEL_TOKEN = "86G0LghgbbwHzoX8UIIvnaMGMAAJL6/mXQQEWNat4Jlsk0dRMaC91ksPZtG1whpuma/7LJsBO/UVqY7eweieJGNdOHnimA5dW4ElA3QBeVOlBGmqk+c+ypmGrdzuir8nLfpMD4Yc/7Vciz8wbbizTgdB04t89/1O/w1cDnyilFU=";
 
 	@EventMapping
 	public void handleTextMessageEvent(MessageEvent<TextMessageContent> event) throws Exception {
@@ -208,6 +212,15 @@ public class KitchenSinkController {
 		} catch (InterruptedException | ExecutionException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	protected void push(@NonNull String userId, @NonNull List<Message> messages){
+        PushMessage pushMessage = new PushMessage(userId, messages);
+        try{
+            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().pushMessage(pushMessage).execute();
+        }catch(IOException ex){
+            //TODO(Shaw): should I do something here?
+        }
 	}
 
 	private void replyText(@NonNull String replyToken, @NonNull String message) {
