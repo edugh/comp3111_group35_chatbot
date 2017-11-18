@@ -3,13 +3,11 @@ package com.example.bot.spring;
 import com.example.bot.spring.model.*;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.net.URI;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static com.example.bot.spring.Utils.params;
@@ -41,7 +39,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public ArrayList<Booking> getBookings(String customerId) {
 		String query = "SELECT * FROM Bookings WHERE customerId=?;";
 		String[] params = { customerId };
-		return getResultsForQuery(query, SQLModelReaders::bookingFromResultSet, params);
+		return getResultsForQuery(query, Booking::fromResultSet, params);
 	}
 
     @Override
@@ -62,14 +60,14 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
     @Override
 	public ArrayList<Plan> getPlans() {
-	    return getResultsForQuery("SELECT * FROM Plans;", SQLModelReaders::planFromResultSet);
+	    return getResultsForQuery("SELECT * FROM Plans;", Plan::fromResultSet);
     }
 
     @Override
 	public Optional<FAQ> getFAQ(String questionId) {
 	    return getResultForQuery(
             "SELECT question, answer FROM faq WHERE questionId=?;",
-            SQLModelReaders::faqFromResultSet,
+            FAQ::fromResultSet,
             params(questionId)
         );
     }
@@ -78,7 +76,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public Optional<Tour> getTour(String pid, Date date) {
 	    return getResultForQuery(
             "SELECT * FROM Tours WHERE planID=? AND tourDate=?;",
-            SQLModelReaders::tourFromResultSet,
+            Tour::fromResultSet,
             params(pid, date)
         );
     }
@@ -96,7 +94,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public Optional<Plan> getPlan(String pid) {
 	    return getResultForQuery(
             "SELECT * FROM Plans WHERE id=?;",
-            SQLModelReaders::planFromResultSet,
+            Plan::fromResultSet,
             params(pid)
         );
 	}
@@ -190,7 +188,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public ArrayList<Tag> getTags(String cid) {
 		return getResultsForQuery(
             "SELECT name FROM Tags where customerId = ?;",
-            SQLModelReaders::tagFromResultSet,
+            Tag::fromResultSet,
             params(cid)
         );
 	}
@@ -216,7 +214,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public ArrayList<Dialogue> getDialogues(String cid) {
 		return getResultsForQuery(
             "SELECT sendTime, content FROM Tags where customerId = ?;",
-            SQLModelReaders::dialogueFromResultSet,
+            Dialogue::fromResultSet,
             params(cid)
         );
 	}
@@ -225,7 +223,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	public Optional<Customer> getCustomer(String cid) {
 		return getResultForQuery(
             "SELECT * FROM Customers where id = ?",
-            SQLModelReaders::customerFromResultSet,
+            Customer::fromResultSet,
             params(cid)
 		);
 	}

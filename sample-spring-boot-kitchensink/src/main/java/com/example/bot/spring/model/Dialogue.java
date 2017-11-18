@@ -1,5 +1,11 @@
 package com.example.bot.spring.model;
 
+import com.example.bot.spring.DatabaseException;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public class Dialogue {
@@ -43,6 +49,19 @@ public class Dialogue {
                 ", sendTime=" + sendTime +
                 ", content='" + content + '\'' +
                 '}';
+    }
+
+    public static Dialogue fromResultSet(ResultSet resultSet) {
+        try {
+            Timestamp ts = resultSet.getTimestamp(2);
+            ZonedDateTime zonedDateTime =
+                    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
+            return new Dialogue(resultSet.getString(1),
+                    zonedDateTime,
+                    resultSet.getString(3));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 }
 

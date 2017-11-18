@@ -1,5 +1,10 @@
 package com.example.bot.spring.model;
 
+import com.example.bot.spring.DatabaseException;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class Tag {
 	public final String name;
 	public final String customerId;
@@ -32,5 +37,14 @@ public class Tag {
 				"name='" + name + '\'' +
 				", customerId='" + customerId + '\'' +
 				'}';
+	}
+
+	public static Tag fromResultSet(ResultSet resultSet) {
+		try {
+			return new Tag(resultSet.getString(1),
+					resultSet.getString(2));
+		} catch (SQLException e) {
+			throw new DatabaseException(e);
+		}
 	}
 }

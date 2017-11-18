@@ -157,8 +157,15 @@ public class KitchenSinkTester {
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 4);
-		Assert.assertEquals(responses.get(2), new TextMessage("2D001: Fake Tour 1 - Description1"));
-		Assert.assertEquals(responses.get(3), new TextMessage("2D002: Fake Tour 2 - Description2"));
+		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Fake Tour 1 - Description1"));
+		Assert.assertEquals(responses.get(3), new TextMessage("Id2: Fake Tour 2 - Description2"));
+	}
+
+	/*
+	Since we arent really using postresql we need to do some weird comparison stuff between floats and bigdecimals
+	 */
+	private boolean closeEnough(BigDecimal num1, double num2) {
+		return num1.intValue() == (int) num2;
 	}
 
 	@Test
@@ -175,7 +182,7 @@ public class KitchenSinkTester {
 		userResponses.put("Male or Female please?", "M");
 		userResponses.put("How old are you please?", "20");
 		userResponses.put("Phone number please?", "0123 4567");
-		userResponses.put("When are you planing to set out? Please answer in YYYYMMDD.", "20171108");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
 		userResponses.put("How many adults(Age>11) are planning to go?", "1");
 		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
 		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
@@ -199,11 +206,17 @@ public class KitchenSinkTester {
 		Assert.assertEquals(responses.size(), 1);
 		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
 
-		Assert.assertEquals(databaseEngine.getCustomer("userId1"), new Customer("userId1", "userName1", "M", 20, "0123 4567", "booked"));
-		//Assert.assertEquals(databaseEngine.getAmmountOwed("userId1"), new BigDecimal(1247.5));
+		Assert.assertEquals(databaseEngine.getCustomer("userId1").get(), new Customer("userId1", "Jason", "M", 20, "01234567", "booked"));
+
+		BigDecimal ammountOwed = databaseEngine.getAmountOwed("userId1");
+		Assert.assertTrue(closeEnough(ammountOwed, 1247.5));
+
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 1);
-		Booking expectedBooking = new Booking("userId1", "2D001", Utils.getDateFromText("20171108"), 1, 3, 5, new BigDecimal(1247.5), BigDecimal.ZERO, "null");
-		Assert.assertEquals(bookings.get(0), expectedBooking);
+		Booking booking = bookings.get(0);
+		Assert.assertTrue(closeEnough(booking.fee, 1247.5));
+		Assert.assertTrue(closeEnough(booking.paid, 0));
+		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
+		Assert.assertEquals(booking, expectedBooking);
 	}
 }

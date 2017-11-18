@@ -1,6 +1,10 @@
 package com.example.bot.spring.model;
 
+import com.example.bot.spring.DatabaseException;
+
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Plan {
     public final String id;
@@ -67,5 +71,19 @@ public class Plan {
         result = 31 * result + (weekdayPrice != null ? weekdayPrice.hashCode() : 0);
         result = 31 * result + (weekendPrice != null ? weekendPrice.hashCode() : 0);
         return result;
+    }
+
+    public static Plan fromResultSet(ResultSet resultSet) {
+        try {
+            return new Plan(resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getInt(4),
+                    resultSet.getString(5),
+                    resultSet.getBigDecimal(6),
+                    resultSet.getBigDecimal(7));
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 }
