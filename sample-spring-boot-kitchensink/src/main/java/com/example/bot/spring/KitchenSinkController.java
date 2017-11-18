@@ -390,6 +390,14 @@ public class KitchenSinkController {
 		}
 	}
 
+	private String handleUnknowDialogue(String receivedText, Source source) {
+		String customerId = source.getUserId();
+		java.time.ZonedDateTime receiveDateTime = java.time.ZonedDateTime.now();
+		Dialogue newDialogue = new Dialogue(customerId, receiveDateTime, receivedText);
+		database.insertDialogue(newDialogue);
+		return "I don't understand your question, try rephrasing";
+	}
+	
 	private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
 		Source source = event.getSource();
@@ -399,56 +407,60 @@ public class KitchenSinkController {
 		String intentName = aiResult.getMetadata().getIntentName();
 		log.info("Received intent from api.ai: {}", intentName);
 
-		switch (intentName) {
-			case AMOUNT_OWED:
-				this.replyText(replyToken, handleAmountOwed(source));
-				break;
-			case BOOK_TOUR:
-				this.replyText(replyToken, handleBookingRequest(aiResult, source));
-				break;
-			case ENROLLED_TOURS:
-				this.reply(replyToken, handleEnrolledTours(source));
-				break;
-			case TOUR_SEARCH:
-				this.reply(replyToken, handleTourSearch());
-				break;
-			case GIVE_NAME:
-				this.replyText(replyToken, handleGiveName(aiResult, source));
-				break;
-			case GIVE_GENDER:
-				this.replyText(replyToken, handleGiveGender(aiResult, source));
-				break;
-			case GIVE_AGE:
-				this.replyText(replyToken, handleGiveAge(aiResult, source));
-				break;
-			case GIVE_NUMBER:
-				this.replyText(replyToken, handleGiveNumber(aiResult, source));
-				break;
-
-			case GIVE_DEPARTURE_DATE:
-				this.replyText(replyToken, handleGiveDeparture(aiResult, source));
-				break;
-			case GIVE_ADULTS:
-				this.replyText(replyToken, handleGiveAdults(aiResult, source));
-				break;
-			case GIVE_CHILDREN:
-				this.replyText(replyToken, handleGiveChildren(aiResult, source));
-				break;
-			case GIVE_TODDLERS:
-				this.replyText(replyToken, handleGiveToddlers(aiResult, source));
-				break;
-			case GIVE_CONFIRMATION:
-				this.replyText(replyToken, handleGiveConfirmation(source));
-				break;
-			case CANCEL_CONFIRMATION:
-				this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
-				break;
-			default:
-				if (intentName.startsWith(FAQ_PREFIX)) {
-					this.replyText(replyToken, handleFAQ(aiResult));
-				} else {
-					this.replyText(replyToken, "I don't understand your question, try rephrasing");
-				}
+		if(intentName != null) {
+			switch (intentName) {
+				case AMOUNT_OWED:
+					this.replyText(replyToken, handleAmountOwed(source));
+					break;
+				case BOOK_TOUR:
+					this.replyText(replyToken, handleBookingRequest(aiResult, source));
+					break;
+				case ENROLLED_TOURS:
+					this.reply(replyToken, handleEnrolledTours(source));
+					break;
+				case TOUR_SEARCH:
+					this.reply(replyToken, handleTourSearch());
+					break;
+				case GIVE_NAME:
+					this.replyText(replyToken, handleGiveName(aiResult, source));
+					break;
+				case GIVE_GENDER:
+					this.replyText(replyToken, handleGiveGender(aiResult, source));
+					break;
+				case GIVE_AGE:
+					this.replyText(replyToken, handleGiveAge(aiResult, source));
+					break;
+				case GIVE_NUMBER:
+					this.replyText(replyToken, handleGiveNumber(aiResult, source));
+					break;
+	
+				case GIVE_DEPARTURE_DATE:
+					this.replyText(replyToken, handleGiveDeparture(aiResult, source));
+					break;
+				case GIVE_ADULTS:
+					this.replyText(replyToken, handleGiveAdults(aiResult, source));
+					break;
+				case GIVE_CHILDREN:
+					this.replyText(replyToken, handleGiveChildren(aiResult, source));
+					break;
+				case GIVE_TODDLERS:
+					this.replyText(replyToken, handleGiveToddlers(aiResult, source));
+					break;
+				case GIVE_CONFIRMATION:
+					this.replyText(replyToken, handleGiveConfirmation(source));
+					break;
+				case CANCEL_CONFIRMATION:
+					this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
+					break;
+				default:
+					if (intentName.startsWith(FAQ_PREFIX)) {
+						this.replyText(replyToken, handleFAQ(aiResult));
+					} else {
+						this.replyText(replyToken, "I don't understand your question, try rephrasing");
+					}
+			}
+		} else {
+			this.replyText(replyToken, handleUnknowDialogue(text, source));
 		}
     }
 

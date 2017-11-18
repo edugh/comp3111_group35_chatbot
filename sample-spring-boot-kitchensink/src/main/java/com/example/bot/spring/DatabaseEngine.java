@@ -205,14 +205,14 @@ abstract class DatabaseEngine {
             stmt.setString(3, dlg.content);
             stmt.setTimestamp(2, ts);
             stmt.setString(1, dlg.customerId);
-            stmt.executeQuery();
+            stmt.execute();
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
     }
 
     ArrayList<Dialogue> getDialogues(String cid) {
-        String query = String.format("SELECT sendTime, content FROM Tags where customerId = %s;", cid);
+        String query = String.format("SELECT customerId, sendTime, content FROM Dialogues where customerId = '%s';", cid);
         return getResultsForQuery(query, SQLDatabaseEngine::dialogueFromResultSet);
     }
 

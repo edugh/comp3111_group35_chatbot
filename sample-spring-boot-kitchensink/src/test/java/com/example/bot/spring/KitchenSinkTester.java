@@ -2,6 +2,7 @@ package com.example.bot.spring;
 
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.Customer;
+import com.example.bot.spring.model.Dialogue;
 import com.linecorp.bot.model.event.FollowEvent;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
@@ -159,6 +160,25 @@ public class KitchenSinkTester {
 		Assert.assertEquals(responses.size(), 4);
 		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Fake Tour 1 - Description1"));
 		Assert.assertEquals(responses.get(3), new TextMessage("Id2: Fake Tour 2 - Description2"));
+	}
+	
+	@Test
+	public void testUnhandledUserText() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Elephants fly inward from the sky");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 3);
+		Assert.assertEquals(responses.get(2), new TextMessage("I don't understand your question, try rephrasing"));
+		ArrayList<Dialogue> dialogueRecord = databaseEngine.getDialogues("userId1");
+		Assert.assertTrue(!dialogueRecord.isEmpty());
+		Assert.assertEquals(dialogueRecord.get(0).customerId, "userId1");
+		Assert.assertEquals(dialogueRecord.get(0).content, "Elephants fly inward from the sky");
 	}
 
 	/*
