@@ -3,12 +3,10 @@ package com.example.bot.spring;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.sql.*;
+import java.sql.Date;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import com.example.bot.spring.model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -229,12 +227,30 @@ abstract class DatabaseEngine {
         }
     }
 
+    public static String customerIdFromResultSet(ResultSet resultSet) {
+        try {
+            return resultSet.getString(1);
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
+    }
+
     public Optional<Customer> getCustomer(String cid) {
         return getResultForQuery(
             "SELECT * FROM Customers where id = ?",
             SQLDatabaseEngine::customerFromResultSet,
             new Object[]{cid}
         );
+    }
+
+    public Set<String> getCustomerIdSet(){
+        Set<String> set = new HashSet<>();
+        ArrayList<String> cidList =  getResultsForQuery(
+          "SELECT id FROM Customers",
+            SQLDatabaseEngine::customerIdFromResultSet
+        );
+        set.addAll(cidList);
+        return set;
     }
 
     public void insertCustomer(String cid){

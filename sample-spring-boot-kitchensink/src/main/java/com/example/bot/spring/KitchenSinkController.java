@@ -215,23 +215,30 @@ public class KitchenSinkController {
 		}
 	}
 
-	protected void push(@NonNull String userId, @NonNull List<Message> messages){
+    protected void push(@NonNull String userId, @NonNull List<Message> messages) {
         PushMessage pushMessage = new PushMessage(userId, messages);
-        try{
+        try {
             LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().pushMessage(pushMessage).execute();
-        }catch(IOException ex){
+        } catch (IOException ex) {
             //TODO(Shaw): should I do something here?
         }
-	}
+    }
 
-	protected void push(@NonNull Set<String> userId, @NonNull List<Message> messages){
-		Multicast pushMessage = new Multicast(userId, messages);
-		try{
-			LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().multicast(pushMessage).execute();
-		}catch(IOException ex){
-			//TODO(Shaw): should I do something here?
-		}
-	}
+    protected void push(@NonNull Set<String> userId, @NonNull Message message) {
+        Multicast pushMessage = new Multicast(userId, message);
+        try {
+            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().multicast(pushMessage).execute();
+        } catch (IOException ex) {
+            //TODO(Shaw): should I do something here?
+        }
+    }
+
+    public void pushDiscount(String planId, Date date){
+	    String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
+                "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book.",
+                database.getPlan(planId).name, date.toString(), planId, date.toString());
+	    push(database.getCustomerIdSet(), new TextMessage(message));
+    }
 
 	private void replyText(@NonNull String replyToken, @NonNull String message) {
 		if (replyToken.isEmpty()) {
