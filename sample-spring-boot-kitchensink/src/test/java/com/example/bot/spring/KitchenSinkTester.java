@@ -121,7 +121,6 @@ public class KitchenSinkTester {
 
 		Message[] expectedMessages = {
 				new TextMessage("Welcome. This is travel chatbot No.35."),
-				//new TextMessage("We don't have promotion image...")
 				new ImageMessage(
 						"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg",
 						"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg"),
