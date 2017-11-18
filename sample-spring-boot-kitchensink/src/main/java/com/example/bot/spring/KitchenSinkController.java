@@ -279,7 +279,7 @@ public class KitchenSinkController {
 		String customerId = source.getUserId();
 		String phoneNumber = aiResult.getStringParameter("phone-number");
 		database.updateCustomer(customerId, "phoneNumber", Utils.filterString(phoneNumber));
-		return "When are you planing to set out? Please answer in YYYYMMDD.";
+		return "When are you planing to set out? Please answer in YYYY/MM/DD.";
 	}
 
 	private String handleBookingRequest(Result aiResult, Source source) {
@@ -297,7 +297,7 @@ public class KitchenSinkController {
 			if (customer.name == null) {
 				return "What's your name, please?";
 			} else {
-				return "When are you planing to set out? Please answer in YYYYMMDD.";
+				return "When are you planing to set out? Please answer in YYYY/MM/DD.";
 			}
 		}
 	}

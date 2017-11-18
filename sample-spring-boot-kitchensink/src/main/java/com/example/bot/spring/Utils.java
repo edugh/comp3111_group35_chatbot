@@ -36,7 +36,7 @@ public class Utils {
 
     public static java.sql.Date getDateFromText(String answer)throws ParseException {
         //TODO: standardize YYYYMMDD
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
         java.util.Date parsed = format.parse(answer);
         return(new java.sql.Date(parsed.getTime()));
     }
