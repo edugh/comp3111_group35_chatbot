@@ -407,60 +407,60 @@ public class KitchenSinkController {
 		String intentName = aiResult.getMetadata().getIntentName();
 		log.info("Received intent from api.ai: {}", intentName);
 
-		if(intentName != null) {
-			switch (intentName) {
-				case AMOUNT_OWED:
-					this.replyText(replyToken, handleAmountOwed(source));
-					break;
-				case BOOK_TOUR:
-					this.replyText(replyToken, handleBookingRequest(aiResult, source));
-					break;
-				case ENROLLED_TOURS:
-					this.reply(replyToken, handleEnrolledTours(source));
-					break;
-				case TOUR_SEARCH:
-					this.reply(replyToken, handleTourSearch());
-					break;
-				case GIVE_NAME:
-					this.replyText(replyToken, handleGiveName(aiResult, source));
-					break;
-				case GIVE_GENDER:
-					this.replyText(replyToken, handleGiveGender(aiResult, source));
-					break;
-				case GIVE_AGE:
-					this.replyText(replyToken, handleGiveAge(aiResult, source));
-					break;
-				case GIVE_NUMBER:
-					this.replyText(replyToken, handleGiveNumber(aiResult, source));
-					break;
-	
-				case GIVE_DEPARTURE_DATE:
-					this.replyText(replyToken, handleGiveDeparture(aiResult, source));
-					break;
-				case GIVE_ADULTS:
-					this.replyText(replyToken, handleGiveAdults(aiResult, source));
-					break;
-				case GIVE_CHILDREN:
-					this.replyText(replyToken, handleGiveChildren(aiResult, source));
-					break;
-				case GIVE_TODDLERS:
-					this.replyText(replyToken, handleGiveToddlers(aiResult, source));
-					break;
-				case GIVE_CONFIRMATION:
-					this.replyText(replyToken, handleGiveConfirmation(source));
-					break;
-				case CANCEL_CONFIRMATION:
-					this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
-					break;
-				default:
-					if (intentName.startsWith(FAQ_PREFIX)) {
-						this.replyText(replyToken, handleFAQ(aiResult));
-					} else {
-						this.replyText(replyToken, handleUnknowDialogue(text, source));
-					}
-			}
-		} else {
+		if(intentName == null) {
 			this.replyText(replyToken, handleUnknowDialogue(text, source));
+			return;
+		}
+		switch (intentName) {
+			case AMOUNT_OWED:
+				this.replyText(replyToken, handleAmountOwed(source));
+				break;
+			case BOOK_TOUR:
+				this.replyText(replyToken, handleBookingRequest(aiResult, source));
+				break;
+			case ENROLLED_TOURS:
+				this.reply(replyToken, handleEnrolledTours(source));
+				break;
+			case TOUR_SEARCH:
+				this.reply(replyToken, handleTourSearch());
+				break;
+			case GIVE_NAME:
+				this.replyText(replyToken, handleGiveName(aiResult, source));
+				break;
+			case GIVE_GENDER:
+				this.replyText(replyToken, handleGiveGender(aiResult, source));
+				break;
+			case GIVE_AGE:
+				this.replyText(replyToken, handleGiveAge(aiResult, source));
+				break;
+			case GIVE_NUMBER:
+				this.replyText(replyToken, handleGiveNumber(aiResult, source));
+				break;
+
+			case GIVE_DEPARTURE_DATE:
+				this.replyText(replyToken, handleGiveDeparture(aiResult, source));
+				break;
+			case GIVE_ADULTS:
+				this.replyText(replyToken, handleGiveAdults(aiResult, source));
+				break;
+			case GIVE_CHILDREN:
+				this.replyText(replyToken, handleGiveChildren(aiResult, source));
+				break;
+			case GIVE_TODDLERS:
+				this.replyText(replyToken, handleGiveToddlers(aiResult, source));
+				break;
+			case GIVE_CONFIRMATION:
+				this.replyText(replyToken, handleGiveConfirmation(source));
+				break;
+			case CANCEL_CONFIRMATION:
+				this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
+				break;
+			default:
+				if (intentName.startsWith(FAQ_PREFIX)) {
+					this.replyText(replyToken, handleFAQ(aiResult));
+				} else {
+					this.replyText(replyToken, handleUnknowDialogue(text, source));
+				}
 		}
     }
 
