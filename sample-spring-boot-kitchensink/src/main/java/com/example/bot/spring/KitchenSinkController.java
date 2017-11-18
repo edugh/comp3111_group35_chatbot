@@ -79,8 +79,8 @@ public class KitchenSinkController {
 
 	private AIApiWrapper aiApiWrapper;
 	
-	private static final String PREVIEW_IMG_URL = "https://lh3.googleusercontent.com/bw1zVo3svYFJsZFq2Oui_MI-uOMIKyKu3lNAeo72wOrt4lnXdM00g4dy3lpckzKAGE3-SuYcKkCQzmzQr_RS";
-	private static final String FULL_IMG_URL = "https://lh5.googleusercontent.com/baDpgHEqwrEmhvKKK95qhnzMmdzwLt0dm2sCwopJM36kK_J_EQXBVe-0XBonI66fYF2kHJ3c1tl0V7jjUdRx";
+	private static final String PREVIEW_IMG_URL = "https://i.imgur.com/kQNwgcK.jpg";
+	private static final String FULL_IMG_URL = "https://i.imgur.com/RpIsqnC.jpg";
 
 	private static final String AMOUNT_OWED = "AmountOwed";
 	private static final String BOOK_TOUR = "BookTour";

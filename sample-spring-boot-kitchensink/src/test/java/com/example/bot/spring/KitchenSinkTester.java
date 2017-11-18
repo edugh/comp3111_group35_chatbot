@@ -121,9 +121,7 @@ public class KitchenSinkTester {
 
 		Message[] expectedMessages = {
 				new TextMessage("Welcome. This is travel chatbot No.35."),
-				new ImageMessage(
-						"https://lh5.googleusercontent.com/baDpgHEqwrEmhvKKK95qhnzMmdzwLt0dm2sCwopJM36kK_J_EQXBVe-0XBonI66fYF2kHJ3c1tl0V7jjUdRx",
-						"https://lh3.googleusercontent.com/bw1zVo3svYFJsZFq2Oui_MI-uOMIKyKu3lNAeo72wOrt4lnXdM00g4dy3lpckzKAGE3-SuYcKkCQzmzQr_RS"),
+				new ImageMessage("https://i.imgur.com/RpIsqnC.jpg",	"https://i.imgur.com/kQNwgcK.jpg"),
 				new TextMessage("What can I do for you?")
 		};
 		Assert.assertArrayEquals(responses.toArray(), expectedMessages);
