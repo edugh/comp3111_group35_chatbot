@@ -35,6 +35,7 @@ import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
 import com.linecorp.bot.client.LineMessagingServiceBuilder;
+import com.linecorp.bot.model.Multicast;
 import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
@@ -221,6 +222,15 @@ public class KitchenSinkController {
         }catch(IOException ex){
             //TODO(Shaw): should I do something here?
         }
+	}
+
+	protected void push(@NonNull Set<String> userId, @NonNull List<Message> messages){
+		Multicast pushMessage = new Multicast(userId, messages);
+		try{
+			LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().multicast(pushMessage).execute();
+		}catch(IOException ex){
+			//TODO(Shaw): should I do something here?
+		}
 	}
 
 	private void replyText(@NonNull String replyToken, @NonNull String message) {
