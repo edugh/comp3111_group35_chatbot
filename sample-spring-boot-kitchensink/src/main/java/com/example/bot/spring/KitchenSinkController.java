@@ -78,6 +78,9 @@ public class KitchenSinkController {
 	private LineMessagingClient lineMessagingClient;
 
 	private AIApiWrapper aiApiWrapper;
+	
+	private static final String PREVIEW_IMG_URL = "https://drive.google.com/file/d/1q6qYe0NZgwauJPkR8wnK0dF9F__yeLxN/view?usp=sharing";
+	private static final String FULL_IMG_URL = "https://drive.google.com/file/d/1kb9VzidYEAIgoh9LIZOeYBWhywCEPTjS/view?usp=sharing";
 
 	private static final String AMOUNT_OWED = "AmountOwed";
 	private static final String BOOK_TOUR = "BookTour";
@@ -163,9 +166,7 @@ public class KitchenSinkController {
         }
 		List<Message> msgList = new ArrayList<>();
 		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35."));
-		msgList.add(new ImageMessage(
-				"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg",
-				"https://kendrickuy.com/wp-content/uploads/2016/01/Travel-for-One-Year-Update-Kendrick-Uy.jpg"));
+		msgList.add(new ImageMessage(FULL_IMG_URL, PREVIEW_IMG_URL));
 		msgList.add(new TextMessage("What can I do for you?"));
         reply(replyToken, msgList);
 	}
