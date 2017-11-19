@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.net.URI;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.sql.Date;
+import java.util.*;
 
 import static com.example.bot.spring.Utils.params;
 
@@ -49,6 +49,16 @@ public class DatabaseEngine {
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
+    }
+
+    public Set<String> getCustomerIdSet() {
+        Set<String> set = new HashSet<>();
+        ArrayList<String> cidList = getResultsForQuery(
+                "SELECT id FROM Customers",
+                resultSet -> resultSet.getString(1)
+        );
+        set.addAll(cidList);
+        return set;
     }
 
     public ArrayList<Booking> getBookings(String customerId) {
@@ -215,6 +225,53 @@ public class DatabaseEngine {
     public boolean isTourFull(String pid, Date date) {
         // TODO(What should this be)
         return false;
+    }
+
+    public ArrayList<Discount> getDiscounts(String pid, Date date) {
+        return getResultsForQuery(
+                "SELECT * FROM DiscountBookings WHERE planId = ? and tourDate = ?;",
+                Discount::fromResultSet,
+                params(pid, date)
+        );
+    }
+
+
+    public int checkDiscount(String cid, String pid, Date date) {
+        List<Discount> discountList = getResultsForQuery(
+                "SELECT seats FROM DiscountBookings WHERE customerId = ? and planId = ? and tourDate = ?;",
+                Discount::fromResultSet,
+                params(cid, pid, date)
+        );
+        if (discountList.size() > 0) {
+            return discountList.get(0).seats;
+        } else {
+            return 0;
+        }
+    }
+
+    public boolean isDiscountFull(String pid, Date date) {
+        List<Discount> discountList = this.getDiscounts(pid, date);
+        return discountList.size() >= 4;
+    }
+
+    public boolean insertDiscount(String cid, String pid, Date date) {
+        if (isDiscountFull(pid, date) || checkDiscount(cid, pid, date) > 0) {
+            return false;
+        } else {
+            executeStatement(
+                    "INSERT INTO discountBooking(customerId, planId, tourDate) VALUES(?,?,?);",
+                    params(cid, pid, date)
+            );
+            return true;
+        }
+    }
+
+    public ArrayList<DiscountSchedule> getDiscountSchedules(Timestamp timestamp) {
+        return getResultsForQuery(
+                "SELECT * FROM DiscountTours",
+                DiscountSchedule::fromResultSet,
+                params(timestamp)
+        );
     }
 
     /**
