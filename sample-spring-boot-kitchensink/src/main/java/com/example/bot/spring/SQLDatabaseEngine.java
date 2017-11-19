@@ -37,9 +37,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 
 	@Override
 	public ArrayList<Booking> getBookings(String customerId) {
-		String query = "SELECT * FROM Bookings WHERE customerId=?;";
-		String[] params = { customerId };
-		return getResultsForQuery(query, Booking::fromResultSet, params);
+    	return getResultsForQuery(
+			"SELECT * FROM Bookings WHERE customerId=?;",
+			Booking::fromResultSet,
+			params(customerId)
+		);
 	}
 
     @Override
