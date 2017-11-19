@@ -3,6 +3,7 @@
     <bookings/>
     <customers/>
     <dialogues/>
+    <discountbookings/>
     <faq questionId="FAQ1" question="How to apply?" answer="FAQ answer 1"/>
     <faq questionId="FAQ2" question="Where is the gathering/assemble and dismiss spot?" answer="FAQ answer 2"/>
     <plans id="Id1" name="Shimen National Forest Tour" shortdescription="Description1" length="2" departure="Mon" price="499.0" weekendprice="599.0"/>
