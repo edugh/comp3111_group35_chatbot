@@ -5,8 +5,9 @@
     <dialogues/>
     <faq questionId="FAQ1" question="How to apply?" answer="FAQ answer 1"/>
     <faq questionId="FAQ2" question="Where is the gathering/assemble and dismiss spot?" answer="FAQ answer 2"/>
-    <plans id="Id1" name="Fake Tour 1" shortdescription="Description1" length="2" departure="Mon, Wed, Sat" price="499.0" weekendprice="599.0"/>
-    <plans id="Id2" name="Fake Tour 2" shortdescription="Description2" length="2" departure="Mon, Wed, Fri" price="499.0" weekendprice="399.0"/>
+    <plans id="Id1" name="Shimen National Forest Tour" shortdescription="Description1" length="2" departure="Mon" price="499.0" weekendprice="599.0"/>
+    <plans id="Id2" name="Yangshan Hot Spring Tour" shortdescription="Description2" length="2" departure="Mon, Tue" price="399.0" weekendprice="499.0"/>
+    <plans id="Id3" name="National Park Tour" shortdescription="Description2" length="2" departure="Tue" price="299.0" weekendprice="399.0"/>
     <tags/>
     <tours planid="2D001" tourdate="2017-11-06" guidename="Guide1" guideaccount="Guide1&apos;s Account" hotel="Hotel1" capacity="20" minimum="4"/>
     <tours planid="2D001" tourdate="2017-11-08" guidename="Guide2" guideaccount="Guide2&apos;s Account" hotel="Hotel2" capacity="20" minimum="4"/>

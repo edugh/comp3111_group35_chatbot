@@ -376,16 +376,18 @@ public class KitchenSinkController {
 		return "Booking calcelled";
 	}
 
-	private List<Message> handleTourSearch() {
-		// TODO(Jason): real search
-		ArrayList<Plan> plans = database.getPlans();
-		if (plans.size() == 0) {
+	private List<Message> handleTourSearch(Result aiResult) {
+		java.util.Date date = aiResult.getDateParameter("date");
+		String keywords = aiResult.getStringParameter("any");
+		// TODO(Jason) also deal with date ranges eg next weekend or next week
+
+		Iterator<Plan> plans = Utils.filterAndSortTourResults(date, keywords, database.getPlans());
+		if (!plans.hasNext()) {
 			return Collections.singletonList(new TextMessage("No tours found"));
 		} else {
 			ArrayList<Message> messages = new ArrayList<>();
-			for (Plan plan : plans) {
-				messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription)));
-			}
+			plans.forEachRemaining(plan -> messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription))));
+			messages.add(new TextMessage("Here are some tours that may interest you, please respond which one you would like to book"));
 			return messages;
 		}
 	}
@@ -410,7 +412,7 @@ public class KitchenSinkController {
 				this.reply(replyToken, handleEnrolledTours(source));
 				break;
 			case TOUR_SEARCH:
-				this.reply(replyToken, handleTourSearch());
+				this.reply(replyToken, handleTourSearch(aiResult));
 				break;
 			case GIVE_NAME:
 				this.replyText(replyToken, handleGiveName(aiResult, source));
