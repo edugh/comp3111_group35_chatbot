@@ -439,9 +439,11 @@ public class KitchenSinkController {
         return "Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it.";
     }
 
-    private String handleCancelConfirmation(Result aiResult, Source source) {
-        //TODO(Jason): do it
-        return "Booking cancelled";
+    private String handleCancelConfirmation(Source source) {
+        String customerId = source.getUserId();
+        Booking booking = database.getCurrentBooking(customerId);
+        database.dropBooking(customerId, booking.planId, booking.tourDate);
+        return "Booking Cancelled";
     }
 
     private List<Message> handleTourSearch(Result aiResult) {
@@ -523,7 +525,7 @@ public class KitchenSinkController {
                 this.replyText(replyToken, handleGiveConfirmation(source));
                 break;
             case CANCEL_CONFIRMATION:
-                this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
+                this.replyText(replyToken, handleCancelConfirmation(source));
                 break;
             case DISCOUNT:
                 this.replyText(replyToken, handleDiscount(aiResult, source));
