@@ -314,6 +314,42 @@ abstract class DatabaseEngine {
         return false;
     }
 
+    //Discount related
+    public static Discount discountFromResultSet(ResultSet resultSet) {
+        try {
+            return new Discount(
+                    resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getDate(3),
+                    resultSet.getInt(4)
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
+    }
+
+    public ArrayList<Discount> getDiscounts(String pid, Date date) {
+        String query = "SELECT * FROM DiscountBookings WHERE planId = ? and tourDate = ?;";
+        String[] params = {pid, date.toString()};
+        return getResultsForQuery(query, SQLDatabaseEngine::discountFromResultSet);
+    }
+
+    public boolean isDiscountFull(String pid, Date date) {
+        List<Discount> discountList = this.getDiscounts(pid, date);
+        return discountList.size() >= 4;
+    }
+
+    public boolean insertDiscount(String cid, String pid, Date date) {
+        if (isDiscountFull(pid, date)) {
+            return false;
+        } else {
+            String query = String.format("INSERT INTO discountBooking(customerId, planId, tourDate) " +
+                    "VALUES('%s', '%s', %s);", cid, pid, date.toString());
+            insertForQuery(query);
+            return true;
+        }
+    }
+
     @FunctionalInterface
     private interface SQLModelReader<T> {
         T apply(ResultSet t);

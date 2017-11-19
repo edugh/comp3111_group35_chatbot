@@ -235,7 +235,7 @@ public class KitchenSinkController {
 
     public void pushDiscount(String planId, Date date){
 	    String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
-                "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book.",
+                "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
                 database.getPlan(planId).name, date.toString(), planId, date.toString());
 	    push(database.getCustomerIdSet(), new TextMessage(message));
     }
