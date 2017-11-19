@@ -14,15 +14,15 @@ import java.util.Optional;
 import static com.example.bot.spring.Utils.params;
 
 @Slf4j
-public class SQLDatabaseEngine {
+public class DatabaseEngine {
 
 	private Connection connection;
 
-	public SQLDatabaseEngine(Connection c) {
+	public DatabaseEngine(Connection c) {
 		this.connection = c;
 	}
 
-    public static SQLDatabaseEngine connectToProduction() {
+    public static DatabaseEngine connectToProduction() {
 		try {
 			URI dbUri = new URI(System.getenv("DATABASE_URL"));
 			String username = dbUri.getUserInfo().split(":")[0];
@@ -33,7 +33,7 @@ public class SQLDatabaseEngine {
 			log.info("Username: {} Password: {}", username, password);
 			log.info("dbUrl: {}", dbUrl);
 
-			return new SQLDatabaseEngine(DriverManager.getConnection(dbUrl, username, password));
+			return new DatabaseEngine(DriverManager.getConnection(dbUrl, username, password));
 		} catch (URISyntaxException e) {
 			log.error("Database URI is malformed!");
 			throw new RuntimeException(e);
@@ -43,9 +43,9 @@ public class SQLDatabaseEngine {
 		}
 	}
 
-	public static SQLDatabaseEngine connectToTest(DataSource ds) {
+	public static DatabaseEngine connectToTest(DataSource ds) {
 		try {
-			return new SQLDatabaseEngine(ds.getConnection());
+			return new DatabaseEngine(ds.getConnection());
 		} catch (SQLException e) {
 			throw new DatabaseException(e);
 		}
@@ -59,13 +59,13 @@ public class SQLDatabaseEngine {
 		);
 	}
 
-	public Optional<Booking> getCurrentBooking(String cid) {
+	public Booking getCurrentBooking(String cid) {
 		for(Booking booking : getBookings(cid)){
 			if(booking.fee == null){
-				return Optional.of(booking);
+				return booking;
 			}
 		}
-		return Optional.empty();
+		throw new IllegalStateException("Can't give confirmation because there is no current booking");
 	}
 
 	public BigDecimal getAmountOwed(String customerId) {

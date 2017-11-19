@@ -9,7 +9,7 @@ import java.util.List;
 public class MockKitchenSinkController extends KitchenSinkController {
     private List<Message> messages = new ArrayList<>();
 
-    public MockKitchenSinkController(SQLDatabaseEngine databaseEngine) {
+    public MockKitchenSinkController(DatabaseEngine databaseEngine) {
         super(databaseEngine);
     }
 

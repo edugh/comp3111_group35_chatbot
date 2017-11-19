@@ -38,7 +38,7 @@ import static org.h2.engine.Constants.UTF8;
 @SpringBootTest(classes = { KitchenSinkTester.class })
 public class KitchenSinkTester {
 
-	private SQLDatabaseEngine databaseEngine;
+	private DatabaseEngine databaseEngine;
 	private MockKitchenSinkController kitchenSinkController;
 
 	private static final String TESTDATA_FILE = "dataset.xml";
@@ -58,7 +58,7 @@ public class KitchenSinkTester {
 		cleanlyInsert(dataSet);
 		// only initialize once
 		if (databaseEngine == null) {
-			databaseEngine = SQLDatabaseEngine.connectToTest(dataSource());
+			databaseEngine = DatabaseEngine.connectToTest(dataSource());
 			kitchenSinkController = new MockKitchenSinkController(databaseEngine);
 		}
 		kitchenSinkController.clearMessages();

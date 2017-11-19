@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import ai.api.model.Result;
 import com.example.bot.spring.model.*;
 import com.example.bot.spring.model.Booking;
-import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
 import com.linecorp.bot.model.event.source.Source;
 
@@ -69,8 +68,6 @@ import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.swing.text.html.Option;
 
 @Slf4j
 @LineMessageHandler
@@ -304,8 +301,7 @@ public class KitchenSinkController {
 
 	private String handleGiveDeparture(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId)
-			.orElseThrow(() -> new IllegalStateException("Can't give a departure because there is no current booking"));
+		Booking booking = database.getCurrentBooking(customerId);
 		String planId = booking.planId;
 
 		java.util.Date date = aiResult.getDateParameter("date-time");
@@ -321,8 +317,7 @@ public class KitchenSinkController {
 
 	private String handleGiveAdults(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId)
-			.orElseThrow(() -> new IllegalStateException("Can't set number of adults because there is no current booking"));
+		Booking booking = database.getCurrentBooking(customerId);
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
@@ -334,8 +329,7 @@ public class KitchenSinkController {
 
 	private String handleGiveChildren(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId)
-			.orElseThrow(() -> new IllegalStateException("Can't set number of children because there is no current booking"));
+		Booking booking = database.getCurrentBooking(customerId);
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
@@ -347,8 +341,7 @@ public class KitchenSinkController {
 
 	private String handleGiveToddlers(Result aiResult, Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId)
-			.orElseThrow(() -> new IllegalStateException("Can't set number of toddlers because there is no current booking"));
+		Booking booking = database.getCurrentBooking(customerId);
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
@@ -360,8 +353,7 @@ public class KitchenSinkController {
 
 	private String handleGiveConfirmation(Source source) {
 		String customerId = source.getUserId();
-		Booking booking = database.getCurrentBooking(customerId)
-			.orElseThrow(() -> new IllegalStateException("Can't give confirmation because there is no current booking"));
+		Booking booking = database.getCurrentBooking(customerId);
 		String planId = booking.planId;
 		Date date = booking.tourDate;
 
@@ -514,15 +506,15 @@ public class KitchenSinkController {
 	}
 
 	public KitchenSinkController() {
-		this(SQLDatabaseEngine.connectToProduction());
+		this(DatabaseEngine.connectToProduction());
 	}
 
-	public KitchenSinkController(SQLDatabaseEngine databaseEngine) {
+	public KitchenSinkController(DatabaseEngine databaseEngine) {
 		this.database = databaseEngine;
 		itscLOGIN = System.getenv("ITSC_LOGIN");
 	}
 
-	private SQLDatabaseEngine database;
+	private DatabaseEngine database;
 	private String itscLOGIN;
 
 
