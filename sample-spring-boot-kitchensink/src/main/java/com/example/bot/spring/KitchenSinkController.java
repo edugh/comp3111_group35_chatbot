@@ -390,6 +390,14 @@ public class KitchenSinkController {
 		}
 	}
 
+	private String handleUnknowDialogue(String receivedText, Source source) {
+		String customerId = source.getUserId();
+		java.time.ZonedDateTime receiveDateTime = java.time.ZonedDateTime.now();
+		Dialogue newDialogue = new Dialogue(customerId, receiveDateTime, receivedText);
+		database.insertDialogue(newDialogue);
+		return "I don't understand your question, try rephrasing";
+	}
+	
 	private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
 		Source source = event.getSource();
@@ -399,6 +407,10 @@ public class KitchenSinkController {
 		String intentName = aiResult.getMetadata().getIntentName();
 		log.info("Received intent from api.ai: {}", intentName);
 
+		if(intentName == null) {
+			this.replyText(replyToken, handleUnknowDialogue(text, source));
+			return;
+		}
 		switch (intentName) {
 			case AMOUNT_OWED:
 				this.replyText(replyToken, handleAmountOwed(source));
@@ -447,7 +459,7 @@ public class KitchenSinkController {
 				if (intentName.startsWith(FAQ_PREFIX)) {
 					this.replyText(replyToken, handleFAQ(aiResult));
 				} else {
-					this.replyText(replyToken, "I don't understand your question, try rephrasing");
+					this.replyText(replyToken, handleUnknowDialogue(text, source));
 				}
 		}
     }
