@@ -34,10 +34,10 @@ import static org.h2.engine.Constants.UTF8;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { KitchenSinkTester.class, SQLDatabaseEngine.class })
+@SpringBootTest(classes = { KitchenSinkTester.class })
 public class KitchenSinkTester {
 
-	private DatabaseEngine databaseEngine;
+	private SQLDatabaseEngine databaseEngine;
 	private MockKitchenSinkController kitchenSinkController;
 
 	private static final String TESTDATA_FILE = "dataset.xml";
@@ -57,7 +57,7 @@ public class KitchenSinkTester {
 		cleanlyInsert(dataSet);
 		// only initialize once
 		if (databaseEngine == null) {
-			databaseEngine = new MockDatabaseEngine(dataSource());
+			databaseEngine = SQLDatabaseEngine.connectToTest(dataSource());
 			kitchenSinkController = new MockKitchenSinkController(databaseEngine);
 		}
 		kitchenSinkController.clearMessages();

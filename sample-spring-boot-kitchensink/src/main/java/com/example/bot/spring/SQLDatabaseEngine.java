@@ -3,6 +3,7 @@ package com.example.bot.spring;
 import com.example.bot.spring.model.*;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.net.URI;
@@ -13,8 +14,15 @@ import java.util.Optional;
 import static com.example.bot.spring.Utils.params;
 
 @Slf4j
-public class SQLDatabaseEngine extends DatabaseEngine {
-    public Connection getConnection() {
+public class SQLDatabaseEngine {
+
+	private Connection connection;
+
+	public SQLDatabaseEngine(Connection c) {
+		this.connection = c;
+	}
+
+    public static SQLDatabaseEngine connectToProduction() {
 		try {
 			URI dbUri = new URI(System.getenv("DATABASE_URL"));
 			String username = dbUri.getUserInfo().split(":")[0];
@@ -25,7 +33,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 			log.info("Username: {} Password: {}", username, password);
 			log.info("dbUrl: {}", dbUrl);
 
-			return DriverManager.getConnection(dbUrl, username, password);
+			return new SQLDatabaseEngine(DriverManager.getConnection(dbUrl, username, password));
 		} catch (URISyntaxException e) {
 			log.error("Database URI is malformed!");
 			throw new RuntimeException(e);
@@ -35,7 +43,14 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		}
 	}
 
-	@Override
+	public static SQLDatabaseEngine connectToTest(DataSource ds) {
+		try {
+			return new SQLDatabaseEngine(ds.getConnection());
+		} catch (SQLException e) {
+			throw new DatabaseException(e);
+		}
+	}
+
 	public ArrayList<Booking> getBookings(String customerId) {
     	return getResultsForQuery(
 			"SELECT * FROM Bookings WHERE customerId=?;",
@@ -44,7 +59,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		);
 	}
 
-    @Override
 	public Optional<Booking> getCurrentBooking(String cid) {
 		for(Booking booking : getBookings(cid)){
 			if(booking.fee == null){
@@ -54,18 +68,15 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		return Optional.empty();
 	}
 
-	@Override
 	public BigDecimal getAmountOwed(String customerId) {
 		ArrayList<Booking> bookings = getBookings(customerId);
 		return bookings.stream().map(booking -> (booking.fee.subtract(booking.paid))).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
-    @Override
 	public ArrayList<Plan> getPlans() {
 	    return getResultsForQuery("SELECT * FROM Plans;", Plan::fromResultSet);
     }
 
-    @Override
 	public Optional<FAQ> getFAQ(String questionId) {
 	    return getResultForQuery(
             "SELECT question, answer FROM faq WHERE questionId=?;",
@@ -74,7 +85,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         );
     }
 
-    @Override
 	public Optional<Tour> getTour(String pid, Date date) {
 	    return getResultForQuery(
             "SELECT * FROM Tours WHERE planID=? AND tourDate=?;",
@@ -83,7 +93,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         );
     }
 
-    @Override
 	public Optional<Plan> getPlan(String pid) {
 	    return getResultForQuery(
             "SELECT * FROM Plans WHERE id=?;",
@@ -92,20 +101,17 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         );
 	}
 
-    @Override
 	public void insertBooking(String cid, String pid){
 		Date defaultDate = new Date(0);
 		String query = String.format("INSERT INTO bookings(customerId, planId, tourDate) VALUES('%s','%s','%s')", cid, pid, defaultDate);
 		insertForQuery(query);
 	}
 
-    @Override
 	public void updateBookingDate(String cid, String pid, Date date){
 		Date defaultDate = new Date(0);
 		try (
-				Connection connection = getConnection();
-				PreparedStatement stmt = connection.prepareStatement(
-						"UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
+			PreparedStatement stmt = connection.prepareStatement(
+					"UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
 		) {
 			stmt.setDate(1, date);
 			stmt.setString(2, cid);
@@ -117,13 +123,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		}
 	}
 
-    @Override
 	public void updateBooking(String cid, String pid, Date date, String field, String value) {
 		String query = String.format("UPDATE Bookings SET %s = ? " +
 				"WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
 		try (
-				Connection connection = getConnection();
-				PreparedStatement stmt = connection.prepareStatement(query);
+			PreparedStatement stmt = connection.prepareStatement(query);
 		) {
 			stmt.setDate(4, date);
 			stmt.setString(3, pid);
@@ -135,13 +139,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		}
 	}
 
-    @Override
 	public void updateBooking(String cid, String pid, Date date, String field, int value){
 		String query = String.format("UPDATE Bookings SET %s = ? " +
 				"WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
 		try (
-				Connection connection = getConnection();
-				PreparedStatement stmt = connection.prepareStatement(query);
+			PreparedStatement stmt = connection.prepareStatement(query);
 		) {
 			stmt.setDate(4, date);
 			stmt.setString(3, pid);
@@ -153,13 +155,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		}
 	}
 
-    @Override
 	public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){
 		String query = String.format("UPDATE Bookings SET %s = ? " +
 				"WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
 		try (
-				Connection connection = getConnection();
-				PreparedStatement stmt = connection.prepareStatement(query);
+			PreparedStatement stmt = connection.prepareStatement(query);
 		) {
 			stmt.setDate(4, date);
 			stmt.setString(3, pid);
@@ -171,13 +171,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		}
 	}
 
-    @Override
 	public void insertTag(Tag tag) {
 		String query = String.format("INSERT INTO Tags(name, customerID) VALUES('%s','%s')",tag.customerId,tag.name);
 		insertForQuery(query);
 	}
 
-    @Override
 	public ArrayList<Tag> getTags(String cid) {
 		return getResultsForQuery(
             "SELECT name FROM Tags where customerId = ?;",
@@ -186,13 +184,11 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         );
 	}
 
-    @Override
 	public void insertDialogue(Dialogue dlg) {
 		Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
 		try (
-				Connection connection = getConnection();
-				PreparedStatement stmt = connection.prepareStatement(
-						"INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
+			PreparedStatement stmt = connection.prepareStatement(
+					"INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
 		) {
 			stmt.setString(3, dlg.content);
 			stmt.setTimestamp(2, ts);
@@ -203,7 +199,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		}
 	}
 
-    @Override
 	public ArrayList<Dialogue> getDialogues(String cid) {
 		return getResultsForQuery(
             "SELECT sendTime, content FROM Tags where customerId = ?;",
@@ -212,7 +207,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
         );
 	}
 
-    @Override
 	public Optional<Customer> getCustomer(String cid) {
 		return getResultForQuery(
             "SELECT * FROM Customers where id = ?",
@@ -221,37 +215,31 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		);
 	}
 
-    @Override
 	public void insertCustomer(String cid) {
 		String query = String.format("INSERT INTO Customers(id,state) VALUES('%s', 'new');", cid);
 		insertForQuery(query);
 	}
 
-    @Override
 	public void updateCustomerState(String cid, String state){
 		String query = String.format("UPDATE Customers SET state = '%s' WHERE id = '%s'", state, cid);
 		insertForQuery(query);
 	}
 
-    @Override
 	public void updateCustomer(String cid, String field, String value){
 		String query = String.format("UPDATE Customers SET %s = '%s' WHERE id = '%s'",field, value, cid);
 		insertForQuery(query);
 	}
 
-    @Override
 	public void updateCustomer(String cid, String field, int value){
 		String query = String.format("UPDATE Customers SET %s = %d WHERE id = '%s'",field, value, cid);
 		insertForQuery(query);
 	}
 
-    @Override
 	public void updateCustomer(String cid, String field, BigDecimal value){
 		String query = String.format("UPDATE Customers SET %s = %d WHERE id = '%s'",field, value, cid);
 		insertForQuery(query);
 	}
 
-	@Override
 	public boolean isTourFull(String pid, Date date) {
 		// TODO(What should this be)
 		return false;
@@ -311,8 +299,7 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 		log.info("New getResultsForQuery '{}'", query);
 		ArrayList<T> results = new ArrayList<>();
 		try (
-				Connection connection = getConnection();
-				PreparedStatement stmt = connection.prepareStatement(query);
+			PreparedStatement stmt = connection.prepareStatement(query);
 		) {
 			for (int i = 0; i < params.length; i++) {
 				// TODO: This is brittle. We need a better way...
@@ -340,7 +327,6 @@ public class SQLDatabaseEngine extends DatabaseEngine {
 	private void insertForQuery (String query) {
 		log.info("New insertForQuery '{}'", query);
 		try (
-				Connection connection = getConnection();
 				PreparedStatement stmt = connection.prepareStatement(query);
 		) {
 			stmt.execute();

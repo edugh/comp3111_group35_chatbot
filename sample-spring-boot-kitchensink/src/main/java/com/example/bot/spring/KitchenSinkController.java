@@ -499,18 +499,16 @@ public class KitchenSinkController {
 		return new DownloadedContent(tempFile, createUri("/downloaded/" + tempFile.getFileName()));
 	}
 
-
-
 	public KitchenSinkController() {
-		this(new SQLDatabaseEngine());
+		this(SQLDatabaseEngine.connectToProduction());
 	}
 
-	public KitchenSinkController(DatabaseEngine databaseEngine) {
+	public KitchenSinkController(SQLDatabaseEngine databaseEngine) {
 		this.database = databaseEngine;
 		itscLOGIN = System.getenv("ITSC_LOGIN");
 	}
 
-	private DatabaseEngine database;
+	private SQLDatabaseEngine database;
 	private String itscLOGIN;
 
 
