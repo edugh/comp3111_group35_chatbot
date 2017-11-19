@@ -41,11 +41,11 @@ public class UtilTester {
         Plan plan = new Plan("Id1", "Shimen National Forest Tour", "Nanhua Temple", 0, "Thu, Fri", null, null);
         Assert.assertEquals(Utils.ratePlanForCriteria(thursday, null, plan), 100);
         Assert.assertEquals(Utils.ratePlanForCriteria(friday, null, plan), 100);
-        Assert.assertEquals(Utils.ratePlanForCriteria(saturday, null, plan), 50);
+        Assert.assertEquals(Utils.ratePlanForCriteria(saturday, null, plan), 60);
         Assert.assertEquals(Utils.ratePlanForCriteria(null, "Shimen National", plan), 100);
         Assert.assertEquals(Utils.ratePlanForCriteria(null, "Shimen Nanhua", plan), 100);
         Assert.assertEquals(Utils.ratePlanForCriteria(saturday, "Other Place", plan), 0);
-        Assert.assertEquals(Utils.ratePlanForCriteria(friday, "Shimen and Other", plan), 66);
+        Assert.assertEquals(Utils.ratePlanForCriteria(friday, "Shimen and Other", plan), 60);
     }
 
     public <T> void assertIteratorEquals(Iterator<T> first, Iterator<T> second) {
@@ -67,27 +67,28 @@ public class UtilTester {
         Plan plan1 = new Plan("Id1", "Shimen National Forest Tour", "", 0, "Thu", null, null);
         Plan plan2 = new Plan("Id2", "Yangshan Hot Spring Tour", "", 0, "Thu, Fri", null, null);
         Plan plan3 = new Plan("Id3", "Shaoguan sight-seeing tour", "Nanhua Temple", 0, "Fri", null, null);
-        List<Plan> plans = Arrays.asList(plan1, plan2, plan3);
+        Plan plan4 = new Plan("Id3", "National Park Tour", "Also Nanhua Temple", 0, "Thu", null, null);
+        List<Plan> plans = Arrays.asList(plan1, plan2, plan3, plan4);
 
-        Iterator<Plan> expectedPlans = Arrays.asList(plan3, plan1, plan2).iterator();
+        Iterator<Plan> expectedPlans = Arrays.asList(plan3, plan4).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(null, "Nanhua", plans), expectedPlans);
 
-        expectedPlans = Arrays.asList(plan1, plan2, plan3).iterator();
+        expectedPlans = Arrays.asList(plan1, plan4).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(null, "Shimen National", plans), expectedPlans);
 
-        expectedPlans = Arrays.asList(plan1, plan2, plan3).iterator();
+        expectedPlans = Arrays.asList(plan1, plan2, plan4, plan3).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(thursday, null, plans), expectedPlans);
 
-        expectedPlans = Arrays.asList(plan2, plan3, plan1).iterator();
+        expectedPlans = Arrays.asList(plan2, plan3, plan1, plan4).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(friday, null, plans), expectedPlans);
 
-        expectedPlans = Arrays.asList(plan3, plan2).iterator();
-        assertIteratorEquals(Utils.filterAndSortTourResults(friday, "Nanhua", plans), expectedPlans);
+        expectedPlans = Arrays.asList(plan4, plan3).iterator();
+        assertIteratorEquals(Utils.filterAndSortTourResults(thursday, "Nanhua", plans), expectedPlans);
 
-        expectedPlans = Arrays.asList(plan3, plan2).iterator();
+        expectedPlans = Arrays.asList(plan3).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(friday, "Shaoguan", plans), expectedPlans);
 
-        expectedPlans = Arrays.asList(plan2, plan1).iterator();
+        expectedPlans = Arrays.asList(plan2).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(thursday, "Yangshan", plans), expectedPlans);
     }
 }

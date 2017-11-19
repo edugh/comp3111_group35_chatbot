@@ -27,14 +27,14 @@ public class Utils {
         if (date != null) {
             boolean matchedDate = Arrays.asList(plan.departure.split(", ")).stream().anyMatch(abbr -> getDateOfWeek(date) == getDateOfWeek(abbr));
             if (!matchedDate) {
-                score -= 50;
+                score -= 40;
             }
         }
 
         if (search != null) {
             String fullSearchableText = plan.name + plan.shortDescription;
             List<String> keywords = Arrays.asList(search.split(" "));
-            score -= 50 * keywords.stream().mapToDouble(keyword -> fullSearchableText.contains(keyword) ? 0 : 1).sum() / keywords.size();
+            score -= 60 * keywords.stream().mapToDouble(keyword -> fullSearchableText.contains(keyword) ? 0 : 1).sum() / keywords.size();
         }
 
         return score;
@@ -43,7 +43,7 @@ public class Utils {
     public static Iterator<Plan> filterAndSortTourResults(Date date, String keywords, List<Plan> plans) {
         return plans.stream()
                 .map(plan -> new Pair<>(plan, ratePlanForCriteria(date, keywords, plan)))
-                .filter(o -> o.snd > 40)
+                .filter(o -> o.snd > 50)
                 .sorted((o1, o2) -> o2.snd - o1.snd)
                 .map(o -> o.fst)
                 .iterator();
