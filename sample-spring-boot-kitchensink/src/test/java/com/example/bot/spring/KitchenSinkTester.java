@@ -35,7 +35,7 @@ import static org.h2.engine.Constants.UTF8;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { KitchenSinkTester.class, SQLDatabaseEngine.class })
+@SpringBootTest(classes = { KitchenSinkTester.class })
 public class KitchenSinkTester {
 
 	private DatabaseEngine databaseEngine;
@@ -58,7 +58,7 @@ public class KitchenSinkTester {
 		cleanlyInsert(dataSet);
 		// only initialize once
 		if (databaseEngine == null) {
-			databaseEngine = new MockDatabaseEngine(dataSource());
+			databaseEngine = DatabaseEngine.connectToTest(dataSource());
 			kitchenSinkController = new MockKitchenSinkController(databaseEngine);
 		}
 		kitchenSinkController.clearMessages();
@@ -269,7 +269,7 @@ public class KitchenSinkTester {
 
 		Assert.assertEquals(databaseEngine.getCustomer("userId1").get(), new Customer("userId1", "Jason", "M", 20, "01234567", "booked"));
 
-		BigDecimal ammountOwed = databaseEngine.getAmmountOwed("userId1");
+		BigDecimal ammountOwed = databaseEngine.getAmountOwed("userId1");
 		Assert.assertTrue(closeEnough(ammountOwed, 1247.5));
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");

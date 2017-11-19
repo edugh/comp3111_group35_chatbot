@@ -1,15 +1,21 @@
 package com.example.bot.spring;
 
 import com.example.bot.spring.model.Plan;
-import com.sun.tools.javac.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 public class Utils {
+    /**
+     * Syntactic sugar for creating an array of objects
+     * @param xs Any number of objects
+     * @return An array containing each parameter supplied
+     */
+    public static Object[] params(Object... xs) {
+        return xs;
+    }
 
     public static int getDateOfWeek(Date date) {
         Calendar calendar = Calendar.getInstance();
@@ -42,10 +48,10 @@ public class Utils {
 
     public static Iterator<Plan> filterAndSortTourResults(Date date, String keywords, List<Plan> plans) {
         return plans.stream()
-                .map(plan -> new Pair<>(plan, ratePlanForCriteria(date, keywords, plan)))
-                .filter(o -> o.snd > 50)
-                .sorted((o1, o2) -> o2.snd - o1.snd)
-                .map(o -> o.fst)
+                .map(plan -> Pair.of(plan, ratePlanForCriteria(date, keywords, plan)))
+                .filter(o -> o.getRight() > 50)
+                .sorted((o1, o2) -> o2.getRight() - o1.getRight())
+                .map(o -> o.getLeft())
                 .iterator();
     }
 
