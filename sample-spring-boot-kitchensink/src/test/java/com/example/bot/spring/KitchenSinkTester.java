@@ -152,14 +152,52 @@ public class KitchenSinkTester {
 
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
 		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
 
 		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Which tours are available?");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 4);
-		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Fake Tour 1 - Description1"));
-		Assert.assertEquals(responses.get(3), new TextMessage("Id2: Fake Tour 2 - Description2"));
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(2), new TextMessage("Id3: National Park Tour - Description3"));
+	}
+
+	@Test
+	public void testQueryToursWithParameters() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Are there tours going to Shimen National Forest?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 3);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
+
+		messageEvent = createMessageEvent("replyToken3", "userId1", "messageId3", "Any Hot Spring Tours on Tuesday?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 2);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+
+		messageEvent = createMessageEvent("replyToken4", "userId1", "messageId4", "Are there tours going to a Hot Spring on Wednesday?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 2);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+
+		messageEvent = createMessageEvent("replyToken4", "userId1", "messageId4", "What tours are available on Tuesday?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 4);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
+		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
 	}
 	
 	@Test
@@ -200,7 +238,7 @@ public class KitchenSinkTester {
 
 		Map<String, String> userResponses = new HashMap<>();
 		userResponses.put("We don't have promotion image...", "Which tours are available?");
-		userResponses.put("Id2: Fake Tour 2 - Description2", "Can I book Fake Tour 2?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
 		userResponses.put("What's your name, please?", "Jason Zukewich");
 		userResponses.put("Male or Female please?", "M");
 		userResponses.put("How old are you please?", "20");
