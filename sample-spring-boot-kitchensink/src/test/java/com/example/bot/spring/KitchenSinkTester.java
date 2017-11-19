@@ -251,13 +251,6 @@ public class KitchenSinkTester {
 		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
 		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
 		userResponses.put("Confirmed?", "yes");
-        userResponses.put("Double 11 Festival discount! First 4 reply will get a 50% discount in National Park Tour on 2017/11/06. " +
-                        "Please reply 'Discount n seats for 2D001 on 2017/11/06'. The n here is the number of seats you book, 1 or 2.",
-                "Discount 2 seats for 2D001 on 2017/11/06");
-        userResponses.put("Double 11 Festival discount! First 4 reply will get a 50% discount in National Park Tour on 2017/11/11. " +
-                        "Please reply 'Discount n seats for 2D001 on 2017/11/11'. The n here is the number of seats you book, 1 or 2.",
-                "Discount 2 seats for 2D001 on 2017/11/11");
-
 
 		while (true) {
 			List<Message> botResponses = kitchenSinkController.getLatestMessages();
