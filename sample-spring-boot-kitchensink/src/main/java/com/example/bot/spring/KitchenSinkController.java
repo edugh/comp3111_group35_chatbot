@@ -242,10 +242,10 @@ public class KitchenSinkController {
 
     public void pushDiscount(String planId, Date date) {
         Plan plan = database.getPlan(planId).orElseThrow(() -> new IndexOutOfBoundsException("Can't push discount because plan doesn't exist"));
-        String nlpDate = new SimpleDateFormat("yyyy/MM/dd").format(date);
+        String nlpDate = new SimpleDateFormat("yyyy/MM/dd").format()
         String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
                         "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
-                plan.name, date.toString(), planId, nlpDate);
+                plan.name, nlpDate, planId, nlpDate);
         push(database.getCustomerIdSet(), new TextMessage(message));
     }
 
