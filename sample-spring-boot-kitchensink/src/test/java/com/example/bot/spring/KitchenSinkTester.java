@@ -10,7 +10,6 @@ import com.linecorp.bot.model.event.source.Source;
 import com.linecorp.bot.model.event.source.UserSource;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.model.message.ImageMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
@@ -118,12 +117,11 @@ public class KitchenSinkTester {
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
 		kitchenSinkController.handleFollowEvent(followEvent);
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 3);
+		Assert.assertEquals(responses.size(), 2);
 
 		Message[] expectedMessages = {
-				new TextMessage("Welcome. This is travel chatbot No.35."),
-				new ImageMessage("https://i.imgur.com/RpIsqnC.jpg",	"https://i.imgur.com/kQNwgcK.jpg"),
-				new TextMessage("What can I do for you?")
+				new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"),
+				new TextMessage("We don't have promotion image...")
 		};
 		Assert.assertArrayEquals(responses.toArray(), expectedMessages);
 
@@ -208,7 +206,6 @@ public class KitchenSinkTester {
 
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
 		kitchenSinkController.handleFollowEvent(followEvent);
-		kitchenSinkController.clearMessages();
 
 		ArrayList<Dialogue> dialogueRecord = databaseEngine.getDialogues("userId1");
 		Assert.assertTrue(dialogueRecord.isEmpty());
@@ -217,8 +214,8 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 1);
-		Assert.assertEquals(responses.get(0), new TextMessage("I don't understand your question, try rephrasing"));
+		Assert.assertEquals(responses.size(), 3);
+		Assert.assertEquals(responses.get(2), new TextMessage("I don't understand your question, try rephrasing"));
 		ArrayList<Dialogue> dialogueRecordAfter = databaseEngine.getDialogues("userId1");
 		Assert.assertTrue(!dialogueRecordAfter.isEmpty());
 		Assert.assertEquals(dialogueRecordAfter.get(0).customerId, "userId1");
@@ -240,7 +237,7 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleFollowEvent(followEvent);
 
 		Map<String, String> userResponses = new HashMap<>();
-		userResponses.put("What can I do for you?", "Which tours are available?");
+		userResponses.put("We don't have promotion image...", "Which tours are available?");
 		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
 		userResponses.put("What's your name, please?", "Jason Zukewich");
 		userResponses.put("Male or Female please?", "M");
