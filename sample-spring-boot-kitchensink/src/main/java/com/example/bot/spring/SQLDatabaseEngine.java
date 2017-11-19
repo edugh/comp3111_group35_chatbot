@@ -103,77 +103,44 @@ public class SQLDatabaseEngine {
 
 	public void insertBooking(String cid, String pid){
 		Date defaultDate = new Date(0);
-		String query = String.format("INSERT INTO bookings(customerId, planId, tourDate) VALUES('%s','%s','%s')", cid, pid, defaultDate);
-		insertForQuery(query);
+		executeStatement(
+			"INSERT INTO bookings(customerId, planId, tourDate) VALUES(?,?,?)",
+			params(cid, pid, defaultDate)
+		);
 	}
 
 	public void updateBookingDate(String cid, String pid, Date date){
-		Date defaultDate = new Date(0);
-		try (
-			PreparedStatement stmt = connection.prepareStatement(
-					"UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?");
-		) {
-			stmt.setDate(1, date);
-			stmt.setString(2, cid);
-			stmt.setString(3, pid);
-			stmt.setDate(4, defaultDate);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			throw new DatabaseException(e);
-		}
+		Date defaultDate = new Date(0); //TODO: Why do we need this?
+		executeStatement(
+			"UPDATE Bookings SET tourDate=? WHERE customerId=? AND planId=? AND tourDate=?",
+			params(date, cid, pid, defaultDate)
+		);
 	}
 
 	public void updateBooking(String cid, String pid, Date date, String field, String value) {
-		String query = String.format("UPDATE Bookings SET %s = ? " +
-				"WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-		try (
-			PreparedStatement stmt = connection.prepareStatement(query);
-		) {
-			stmt.setDate(4, date);
-			stmt.setString(3, pid);
-			stmt.setString(2, cid);
-			stmt.setString(1, value);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			throw new DatabaseException(e);
-		}
+		executeStatement(
+			String.format("UPDATE Bookings SET %s = ? WHERE customerId = ? AND planId = ? AND tourDate = ?", field),
+			params(date, pid, cid, value)
+		);
 	}
 
 	public void updateBooking(String cid, String pid, Date date, String field, int value){
-		String query = String.format("UPDATE Bookings SET %s = ? " +
-				"WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-		try (
-			PreparedStatement stmt = connection.prepareStatement(query);
-		) {
-			stmt.setDate(4, date);
-			stmt.setString(3, pid);
-			stmt.setString(2, cid);
-			stmt.setInt(1, value);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			throw new DatabaseException(e);
-		}
+		executeStatement(
+			String.format("UPDATE Bookings SET %s = ? WHERE customerId = ? AND planId = ? AND tourDate = ?", field),
+			params(date, pid, cid, value)
+		);
 	}
 
 	public void updateBooking(String cid, String pid, Date date, String field, BigDecimal value){
-		String query = String.format("UPDATE Bookings SET %s = ? " +
-				"WHERE customerId = ? AND planId = ? AND tourDate = ?" ,field);
-		try (
-			PreparedStatement stmt = connection.prepareStatement(query);
-		) {
-			stmt.setDate(4, date);
-			stmt.setString(3, pid);
-			stmt.setString(2, cid);
-			stmt.setBigDecimal(1, value);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			throw new DatabaseException(e);
-		}
+		executeStatement(
+			String.format("UPDATE Bookings SET %s = ? WHERE customerId = ? AND planId = ? AND tourDate = ?", field),
+			params(date, pid, cid, value)
+		);
 	}
 
 	public void insertTag(Tag tag) {
 		String query = String.format("INSERT INTO Tags(name, customerID) VALUES('%s','%s')",tag.customerId,tag.name);
-		insertForQuery(query);
+		executeStatement(query);
 	}
 
 	public ArrayList<Tag> getTags(String cid) {
@@ -186,17 +153,10 @@ public class SQLDatabaseEngine {
 
 	public void insertDialogue(Dialogue dlg) {
 		Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
-		try (
-			PreparedStatement stmt = connection.prepareStatement(
-					"INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)");
-		) {
-			stmt.setString(3, dlg.content);
-			stmt.setTimestamp(2, ts);
-			stmt.setString(1, dlg.customerId);
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new DatabaseException(e);
-		}
+		executeStatement(
+			"INSERT INTO Dialogues(customerId, sendTime, content) VALUES(?,?,?)",
+			params(dlg.content, ts, dlg.customerId)
+		);
 	}
 
 	public ArrayList<Dialogue> getDialogues(String cid) {
@@ -216,28 +176,38 @@ public class SQLDatabaseEngine {
 	}
 
 	public void insertCustomer(String cid) {
-		String query = String.format("INSERT INTO Customers(id,state) VALUES('%s', 'new');", cid);
-		insertForQuery(query);
+		executeStatement(
+			"INSERT INTO Customers(id,state) VALUES(?, 'new');",
+			params(cid)
+		);
 	}
 
-	public void updateCustomerState(String cid, String state){
-		String query = String.format("UPDATE Customers SET state = '%s' WHERE id = '%s'", state, cid);
-		insertForQuery(query);
+	public void updateCustomerState(String cid, String state) {
+		executeStatement(
+			"UPDATE Customers SET state = ? WHERE id = ?",
+			params(state, cid)
+		);
 	}
 
-	public void updateCustomer(String cid, String field, String value){
-		String query = String.format("UPDATE Customers SET %s = '%s' WHERE id = '%s'",field, value, cid);
-		insertForQuery(query);
+	public void updateCustomer(String cid, String field, String value) {
+		executeStatement(
+			String.format("UPDATE Customers SET %s = ? WHERE id = ?", field),
+			params(value, cid)
+		);
 	}
 
-	public void updateCustomer(String cid, String field, int value){
-		String query = String.format("UPDATE Customers SET %s = %d WHERE id = '%s'",field, value, cid);
-		insertForQuery(query);
+	public void updateCustomer(String cid, String field, int value) {
+		executeStatement(
+			String.format("UPDATE Customers SET %s = ? WHERE id = ?", field),
+			params(value, cid)
+		);
 	}
 
 	public void updateCustomer(String cid, String field, BigDecimal value){
-		String query = String.format("UPDATE Customers SET %s = %d WHERE id = '%s'",field, value, cid);
-		insertForQuery(query);
+		executeStatement(
+			String.format("UPDATE Customers SET %s = ? WHERE id = ?", field),
+			params(value, cid)
+		);
 	}
 
 	public boolean isTourFull(String pid, Date date) {
@@ -301,14 +271,7 @@ public class SQLDatabaseEngine {
 		try (
 			PreparedStatement stmt = connection.prepareStatement(query);
 		) {
-			for (int i = 0; i < params.length; i++) {
-				// TODO: This is brittle. We need a better way...
-				if (params[i] instanceof String) {
-					stmt.setString(i + 1, (String) params[i]);
-				} else if (params[i] instanceof Date) {
-					stmt.setDate(i + 1, (Date) params[i]);
-				}
-			}
+			setParameters(stmt, params);
 			log.info("Prepared query '{}'", stmt.toString());
 			try(ResultSet resultSet = stmt.executeQuery()) {
 				while (resultSet.next()) {
@@ -324,11 +287,35 @@ public class SQLDatabaseEngine {
 		}
 	}
 
-	private void insertForQuery (String query) {
-		log.info("New insertForQuery '{}'", query);
+	private void setParameters(PreparedStatement stmt, Object[] params) throws SQLException {
+		for (int i = 0; i < params.length; i++) {
+			// TODO: This is brittle. We need a better way...
+			if (params[i] instanceof String) {
+				stmt.setString(i + 1, (String) params[i]);
+			} else if (params[i] instanceof Integer) {
+				stmt.setInt(i + 1, (Integer) params[i]);
+			} else if (params[i] instanceof Date) {
+				stmt.setDate(i + 1, (Date) params[i]);
+			} else if (params[i] instanceof  Timestamp) {
+				stmt.setTimestamp(i + 1, (Timestamp) params[i]);
+			} else if (params[i] instanceof  BigDecimal) {
+				stmt.setBigDecimal(i + 1, (BigDecimal) params[i]);
+			} else {
+				throw new RuntimeException(String.format("Can't handle type %s!", params[i].getClass().getTypeName()));
+			}
+		}
+	}
+
+	private void executeStatement(String query) {
+		executeStatement(query, new Object[0]);
+	}
+
+	private void executeStatement(String query, Object[] parameters) {
 		try (
-				PreparedStatement stmt = connection.prepareStatement(query);
+			PreparedStatement stmt = connection.prepareStatement(query);
 		) {
+			log.info("Prepared query '{}'", stmt.toString());
+			setParameters(stmt, parameters);
 			stmt.execute();
 		} catch (SQLException e) {
 			throw new DatabaseException(e);
