@@ -385,20 +385,30 @@ public class KitchenSinkController {
 		return "Booking calcelled";
 	}
 
-	private List<Message> handleTourSearch() {
-		// TODO(Jason): real search
-		ArrayList<Plan> plans = database.getPlans();
-		if (plans.size() == 0) {
+	private List<Message> handleTourSearch(Result aiResult) {
+		java.util.Date date = aiResult.getDateParameter("date");
+		String keywords = aiResult.getStringParameter("any");
+		// TODO(Jason) also deal with date ranges eg next weekend or next week
+
+		Iterator<Plan> plans = Utils.filterAndSortTourResults(date, keywords, database.getPlans());
+		if (!plans.hasNext()) {
 			return Collections.singletonList(new TextMessage("No tours found"));
 		} else {
 			ArrayList<Message> messages = new ArrayList<>();
-			for (Plan plan : plans) {
-				messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription)));
-			}
+			plans.forEachRemaining(plan -> messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription))));
+			messages.add(new TextMessage("Here are some tours that may interest you, please respond which one you would like to book"));
 			return messages;
 		}
 	}
 
+	private String handleUnknowDialogue(String receivedText, Source source) {
+		String customerId = source.getUserId();
+		java.time.ZonedDateTime receiveDateTime = java.time.ZonedDateTime.now();
+		Dialogue newDialogue = new Dialogue(customerId, receiveDateTime, receivedText);
+		database.insertDialogue(newDialogue);
+		return "I don't understand your question, try rephrasing";
+	}
+	
 	private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
 		Source source = event.getSource();
@@ -408,6 +418,10 @@ public class KitchenSinkController {
 		String intentName = aiResult.getMetadata().getIntentName();
 		log.info("Received intent from api.ai: {}", intentName);
 
+		if(intentName == null) {
+			this.replyText(replyToken, handleUnknowDialogue(text, source));
+			return;
+		}
 		switch (intentName) {
 			case AMOUNT_OWED:
 				this.replyText(replyToken, handleAmountOwed(source));
@@ -419,7 +433,7 @@ public class KitchenSinkController {
 				this.reply(replyToken, handleEnrolledTours(source));
 				break;
 			case TOUR_SEARCH:
-				this.reply(replyToken, handleTourSearch());
+				this.reply(replyToken, handleTourSearch(aiResult));
 				break;
 			case GIVE_NAME:
 				this.replyText(replyToken, handleGiveName(aiResult, source));
@@ -456,7 +470,7 @@ public class KitchenSinkController {
 				if (intentName.startsWith(FAQ_PREFIX)) {
 					this.replyText(replyToken, handleFAQ(aiResult));
 				} else {
-					this.replyText(replyToken, "I don't understand your question, try rephrasing");
+					this.replyText(replyToken, handleUnknowDialogue(text, source));
 				}
 		}
     }
