@@ -1,15 +1,15 @@
 package com.example.bot.spring.model;
 
-import java.time.ZonedDateTime;
+import java.sql.Timestamp;
 
 public class Dialogue {
     public final String customerId;
-    public final ZonedDateTime sendTime;
+    public final Timestamp sendTime;
     public final String content;
 
     public Dialogue(
             String customerId,
-            ZonedDateTime sendTime,
+            Timestamp sendTime,
             String content
     ) {
         this.customerId = customerId;

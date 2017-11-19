@@ -23,10 +23,10 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -245,8 +245,8 @@ public class KitchenSinkController {
 
     @Scheduled(cron = "0 0 * * * ?")
     private void schedulePushDiscount() {
-        ZonedDateTime now = ZonedDateTime.ofInstant(
-                ZonedDateTime.now().toInstant().truncatedTo(ChronoUnit.HOURS), ZonedDateTime.now().getOffset());
+        Timestamp now = Timestamp.from(
+                Timestamp.valueOf(LocalDateTime.now()).toInstant().truncatedTo(ChronoUnit.HOURS));
         List<DiscountSchedule> listDiscountSchedule = database.getDiscountSchedules(now);
         for (DiscountSchedule ds : listDiscountSchedule) {
             pushDiscount(ds.planId, ds.tourDate);
@@ -262,7 +262,6 @@ public class KitchenSinkController {
 		}
 		this.reply(replyToken, new TextMessage(message));
 	}
-
 
 	private void handleSticker(String replyToken, StickerMessageContent content) {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));

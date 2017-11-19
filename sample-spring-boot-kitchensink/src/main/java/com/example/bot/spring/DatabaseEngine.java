@@ -1,13 +1,8 @@
 package com.example.bot.spring;
 
 import java.math.BigDecimal;
-import java.net.URISyntaxException;
 import java.sql.*;
 import java.sql.Date;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import com.example.bot.spring.model.*;
@@ -184,11 +179,8 @@ abstract class DatabaseEngine {
 
     public static Dialogue dialogueFromResultSet(ResultSet resultSet) {
         try {
-            Timestamp ts = resultSet.getTimestamp(2);
-            ZonedDateTime zonedDateTime =
-                    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
             return new Dialogue(resultSet.getString(1),
-                    zonedDateTime,
+                    resultSet.getTimestamp(2),
                     resultSet.getString(3));
         } catch (SQLException e) {
             throw new DatabaseException(e);
@@ -332,12 +324,10 @@ abstract class DatabaseEngine {
 
     public static DiscountSchedule discountScheduleFromResultSet(ResultSet resultSet) {
         try {
-            Timestamp ts = resultSet.getTimestamp(3);
-            ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
             return new DiscountSchedule(
                     resultSet.getString(1),
                     resultSet.getDate(2),
-                    zonedDateTime
+                    resultSet.getTimestamp(3)
             );
         } catch (SQLException e) {
             throw new DatabaseException(e);
@@ -366,9 +356,9 @@ abstract class DatabaseEngine {
         }
     }
 
-    public ArrayList<DiscountSchedule> getDiscountSchedules(ZonedDateTime zonedDateTime) {
+    public ArrayList<DiscountSchedule> getDiscountSchedules(Timestamp timestamp) {
         String query = "SELECT * FROM DiscountTours";
-        String[] params = {Timestamp.from(zonedDateTime.toInstant()).toString()};
+        String[] params = {timestamp.toString()};
         return getResultsForQuery(query, SQLDatabaseEngine::discountScheduleFromResultSet, params);
     }
 
