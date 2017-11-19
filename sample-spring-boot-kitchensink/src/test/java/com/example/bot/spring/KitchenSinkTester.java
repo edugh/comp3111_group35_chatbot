@@ -208,6 +208,7 @@ public class KitchenSinkTester {
 
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
 		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
 
 		ArrayList<Dialogue> dialogueRecord = databaseEngine.getDialogues("userId1");
 		Assert.assertTrue(dialogueRecord.isEmpty());
@@ -216,8 +217,8 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 3);
-		Assert.assertEquals(responses.get(2), new TextMessage("I don't understand your question, try rephrasing"));
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("I don't understand your question, try rephrasing"));
 		ArrayList<Dialogue> dialogueRecordAfter = databaseEngine.getDialogues("userId1");
 		Assert.assertTrue(!dialogueRecordAfter.isEmpty());
 		Assert.assertEquals(dialogueRecordAfter.get(0).customerId, "userId1");
