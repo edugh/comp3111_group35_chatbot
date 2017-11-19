@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.sql.*;
 import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -328,10 +330,24 @@ abstract class DatabaseEngine {
         }
     }
 
+    public static DiscountSchedule discountScheduleFromResultSet(ResultSet resultSet) {
+        try {
+            Timestamp ts = resultSet.getTimestamp(3);
+            ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
+            return new DiscountSchedule(
+                    resultSet.getString(1),
+                    resultSet.getDate(2),
+                    zonedDateTime
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
+    }
+
     public ArrayList<Discount> getDiscounts(String pid, Date date) {
         String query = "SELECT * FROM DiscountBookings WHERE planId = ? and tourDate = ?;";
         String[] params = {pid, date.toString()};
-        return getResultsForQuery(query, SQLDatabaseEngine::discountFromResultSet);
+        return getResultsForQuery(query, SQLDatabaseEngine::discountFromResultSet, params);
     }
 
     public boolean isDiscountFull(String pid, Date date) {
@@ -348,6 +364,12 @@ abstract class DatabaseEngine {
             insertForQuery(query);
             return true;
         }
+    }
+
+    public ArrayList<DiscountSchedule> getDiscountSchedules(ZonedDateTime zonedDateTime) {
+        String query = "SELECT * FROM DiscountTours";
+        String[] params = {Timestamp.from(zonedDateTime.toInstant()).toString()};
+        return getResultsForQuery(query, SQLDatabaseEngine::discountScheduleFromResultSet, params);
     }
 
     @FunctionalInterface

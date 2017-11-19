@@ -26,6 +26,8 @@ import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -40,6 +42,7 @@ import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.google.common.io.ByteStreams;
@@ -220,7 +223,7 @@ public class KitchenSinkController {
         try {
             LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().pushMessage(pushMessage).execute();
         } catch (IOException ex) {
-            //TODO(Shaw): should I do something here?
+            throw new RuntimeException(ex);
         }
     }
 
@@ -229,15 +232,25 @@ public class KitchenSinkController {
         try {
             LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().multicast(pushMessage).execute();
         } catch (IOException ex) {
-            //TODO(Shaw): should I do something here?
+            throw new RuntimeException(ex);
         }
     }
 
-    public void pushDiscount(String planId, Date date){
-	    String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
-                "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
+    public void pushDiscount(String planId, Date date) {
+        String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
+                        "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
                 database.getPlan(planId).name, date.toString(), planId, date.toString());
-	    push(database.getCustomerIdSet(), new TextMessage(message));
+        push(database.getCustomerIdSet(), new TextMessage(message));
+    }
+
+    @Scheduled(cron = "0 0 * * * ?")
+    private void schedulePushDiscount() {
+        ZonedDateTime now = ZonedDateTime.ofInstant(
+                ZonedDateTime.now().toInstant().truncatedTo(ChronoUnit.HOURS), ZonedDateTime.now().getOffset());
+        List<DiscountSchedule> listDiscountSchedule = database.getDiscountSchedules(now);
+        for (DiscountSchedule ds : listDiscountSchedule) {
+            pushDiscount(ds.planId, ds.tourDate);
+        }
     }
 
 	private void replyText(@NonNull String replyToken, @NonNull String message) {
