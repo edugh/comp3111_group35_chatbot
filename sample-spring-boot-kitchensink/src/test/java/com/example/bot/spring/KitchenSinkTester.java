@@ -283,4 +283,14 @@ public class KitchenSinkTester {
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
 	}
+
+	// NEGATIVE TEST CASES
+
+	// Test random unanswerable questions
+
+	// Cancel tour at different points
+
+	// Figure out how to set state and insert partial rows into database
+
+	//
 }
