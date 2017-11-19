@@ -105,6 +105,8 @@ public class KitchenSinkController {
     private static final String GIVE_CONFIRMATION = "GiveConfirmation";
     private static final String CANCEL_CONFIRMATION = "CancelConfirmation";
 
+    private static final String DISCOUNT = "Discount";
+
     private static final String CHANNEL_TOKEN = "86G0LghgbbwHzoX8UIIvnaMGMAAJL6/mXQQEWNat4Jlsk0dRMaC91ksPZtG1whpuma/7LJsBO/UVqY7eweieJGNdOHnimA5dW4ElA3QBeVOlBGmqk+c+ypmGrdzuir8nLfpMD4Yc/7Vciz8wbbizTgdB04t89/1O/w1cDnyilFU=";
 
     @EventMapping
@@ -243,7 +245,18 @@ public class KitchenSinkController {
         String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
                         "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
                 plan.name, date.toString(), planId, date.toString());
+        // TODO(Shaw): dont use date.toString, maybe make this sentence less confusing for normal people
         push(database.getCustomerIdSet(), new TextMessage(message));
+    }
+
+    public String handleDiscount(Result aiResult, Source source) {
+        String customerId = source.getUserId();
+        String numberTickets = aiResult.getStringParameter("number-integer");
+        String planId = aiResult.getStringParameter("any");
+        Date tourDate = new Date(aiResult.getDateParameter("date").getTime());
+
+        boolean discountWorked = database.insertDiscount(customerId, planId, tourDate);
+        return discountWorked? "Discount successfully" : "Sorry discount sold out";
     }
 
     @Scheduled(cron = "0 0 * * * ?")
@@ -512,6 +525,8 @@ public class KitchenSinkController {
             case CANCEL_CONFIRMATION:
                 this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
                 break;
+            case DISCOUNT:
+                this.replyText(replyToken, handleDiscount(aiResult, source));
             default:
                 if (intentName.startsWith(FAQ_PREFIX)) {
                     this.replyText(replyToken, handleFAQ(aiResult));

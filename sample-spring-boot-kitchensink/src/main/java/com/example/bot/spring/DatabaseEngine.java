@@ -249,7 +249,7 @@ public class DatabaseEngine {
         }
     }
 
-    public boolean isDiscountFull(String pid, Date date) {
+    private boolean isDiscountFull(String pid, Date date) {
         List<Discount> discountList = this.getDiscounts(pid, date);
         return discountList.size() >= 4;
     }
