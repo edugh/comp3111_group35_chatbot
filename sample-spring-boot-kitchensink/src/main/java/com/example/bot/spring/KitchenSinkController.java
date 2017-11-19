@@ -406,7 +406,16 @@ public class KitchenSinkController {
 		int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
 		boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
 		BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
+		int nDiscount = database.checkDiscount(customerId, planId, date);
 		BigDecimal numPeople = new BigDecimal(booking.adults + (((float) booking.children) / 2));
+		if(booking.adults < nDiscount) {
+		    numPeople = numPeople.subtract(new BigDecimal(
+                    ((float)booking.adults)/2 + ((float)(java.lang.Math.min(nDiscount, booking.children)-booking.adults))/4));
+        }
+        else{
+		    numPeople = numPeople.subtract(new BigDecimal(
+                    ((float)nDiscount)/2));
+        }
 		BigDecimal fee = pricePerPerson.multiply(numPeople);
 		database.updateBooking(customerId, planId, date,"fee", fee);
 		database.updateBooking(customerId, planId, date,"paid", BigDecimal.ZERO);

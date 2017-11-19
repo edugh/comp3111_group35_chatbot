@@ -340,13 +340,25 @@ abstract class DatabaseEngine {
         return getResultsForQuery(query, SQLDatabaseEngine::discountFromResultSet, params);
     }
 
+
+    public int checkDiscount(String cid, String pid, Date date) {
+        String query = "SELECT seats FROM DiscountBookings WHERE customerId = ? and planId = ? and tourDate = ?;";
+        String[] params = {cid, pid, date.toString()};
+        List<Discount> discountList = getResultsForQuery(query, SQLDatabaseEngine::discountFromResultSet, params);
+        if(discountList.size()>0){
+            return discountList.get(0).seats;
+        }
+        else
+            return 0;
+    }
+
     public boolean isDiscountFull(String pid, Date date) {
         List<Discount> discountList = this.getDiscounts(pid, date);
         return discountList.size() >= 4;
     }
 
     public boolean insertDiscount(String cid, String pid, Date date) {
-        if (isDiscountFull(pid, date)) {
+        if (isDiscountFull(pid, date) || checkDiscount(cid, pid, date)>0) {
             return false;
         } else {
             String query = String.format("INSERT INTO discountBooking(customerId, planId, tourDate) " +
