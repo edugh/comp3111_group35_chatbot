@@ -83,6 +83,9 @@ public class KitchenSinkController {
     private LineMessagingClient lineMessagingClient;
 
     private AIApiWrapper aiApiWrapper;
+    
+    private static final String PREVIEW_IMG_URL = "https://i.imgur.com/kQNwgcK.jpg";
+	private static final String FULL_IMG_URL = "https://i.imgur.com/RpIsqnC.jpg";
 
     private static final String AMOUNT_OWED = "AmountOwed";
     private static final String BOOK_TOUR = "BookTour";
@@ -169,9 +172,9 @@ public class KitchenSinkController {
             database.insertCustomer((customerId));
         }
         List<Message> msgList = new ArrayList<>();
-        msgList.add(new TextMessage("Welcome. This is travel chatbot No.35. What can I do for you?"));
-        //TODO: Send promotional image
-        msgList.add(new TextMessage("We don't have promotion image..."));
+		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35."));
+		msgList.add(new ImageMessage(FULL_IMG_URL, PREVIEW_IMG_URL));
+		msgList.add(new TextMessage("What can I do for you?"));
         reply(replyToken, msgList);
     }
 
