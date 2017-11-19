@@ -232,8 +232,23 @@ public class KitchenSinkTester {
 		return num1.intValue() == (int) num2;
 	}
 
+	public void goThroughDialogflow(Map<String, String> userResponses, String breakString) throws Exception {
+		while (true) {
+			List<Message> botResponses = kitchenSinkController.getLatestMessages();
+			String lastBotMessage = ((TextMessage) botResponses.get(botResponses.size() - 1)).getText();
+			log.info("bot message: {}", lastBotMessage);
+			String userResponse = userResponses.get(lastBotMessage);
+			MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
+			kitchenSinkController.handleTextMessageEvent(messageEvent);
+			log.info("user response: {}", userResponse);
+			if (userResponse.equals(breakString)) {
+				break;
+			}
+		}
+	}
+
 	@Test
-	public void testBookingFlowBasic() throws Exception {
+	public void testBookingFlowWithUserCreation() throws Exception {
 		MessageEvent<TextMessageContent> messageEvent;
 
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
@@ -251,21 +266,8 @@ public class KitchenSinkTester {
 		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
 		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
 		userResponses.put("Confirmed?", "yes");
+		goThroughDialogflow(userResponses, "yes");
 
-
-		while (true) {
-			List<Message> botResponses = kitchenSinkController.getLatestMessages();
-			String lastBotMessage = ((TextMessage) botResponses.get(botResponses.size() - 1)).getText();
-			log.info("bot message: {}", lastBotMessage);
-			String userResponse = userResponses.get(lastBotMessage);
-			messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
-			kitchenSinkController.handleTextMessageEvent(messageEvent);
-			log.info("user response: {}", userResponse);
-			if (userResponse.equals("yes")) {
-				//Confirmed
-				break;
-			}
-		}
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 1);
 		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
@@ -284,13 +286,89 @@ public class KitchenSinkTester {
 		Assert.assertEquals(booking, expectedBooking);
 	}
 
+	@Test
+	public void testBookingFlowBasic() throws Exception {
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		databaseEngine.updateCustomer("userId1", "name", "Jason");
+		databaseEngine.updateCustomer("userId1", "age", 20);
+		databaseEngine.updateCustomer("userId1", "gender", "M");
+		databaseEngine.updateCustomer("userId1", "phoneNumber", "01234567");
+
+		Map<String, String> userResponses = new HashMap<>();
+		userResponses.put("We don't have promotion image...", "Which tours are available?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
+		userResponses.put("How many adults(Age>11) are planning to go?", "1");
+		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
+		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
+		userResponses.put("Confirmed?", "yes");
+		goThroughDialogflow(userResponses, "yes");
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
+
+		BigDecimal ammountOwed = databaseEngine.getAmmountOwed("userId1");
+		Assert.assertTrue(closeEnough(ammountOwed, 1247.5));
+
+		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
+		Assert.assertEquals(bookings.size(), 1);
+		Booking booking = bookings.get(0);
+		Assert.assertTrue(closeEnough(booking.fee, 1247.5));
+		Assert.assertTrue(closeEnough(booking.paid, 0));
+		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
+		Assert.assertEquals(booking, expectedBooking);
+	}
+
 	// NEGATIVE TEST CASES
+	@Test
+	public void testUnknownQuestions() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
 
-	// Test random unanswerable questions
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "wubalubadubdub");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
-	// Cancel tour at different points
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("I don't understand your question, try rephrasing"));
+	}
 
-	// Figure out how to set state and insert partial rows into database
+	@Test
+	public void testCancelBookings() throws Exception {
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		databaseEngine.updateCustomer("userId1", "name", "Jason");
+		databaseEngine.updateCustomer("userId1", "age", 20);
+		databaseEngine.updateCustomer("userId1", "gender", "M");
+		databaseEngine.updateCustomer("userId1", "phoneNumber", "01234567");
 
-	//
+		Map<String, String> userResponses = new HashMap<>();
+		userResponses.put("We don't have promotion image...", "Which tours are available?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
+		userResponses.put("How many adults(Age>11) are planning to go?", "1");
+		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
+		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
+		userResponses.put("Confirmed?", "no");
+		goThroughDialogflow(userResponses, "no");
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
+
+		BigDecimal ammountOwed = databaseEngine.getAmmountOwed("userId1");
+		Assert.assertTrue(closeEnough(ammountOwed, 1247.5));
+
+		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
+		Assert.assertEquals(bookings.size(), 1);
+		Booking booking = bookings.get(0);
+		Assert.assertTrue(closeEnough(booking.fee, 1247.5));
+		Assert.assertTrue(closeEnough(booking.paid, 0));
+		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
+		Assert.assertEquals(booking, expectedBooking);
+	}
 }

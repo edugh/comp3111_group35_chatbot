@@ -171,7 +171,7 @@ public class KitchenSinkController {
         String replyToken = event.getReplyToken();
         String customerId = event.getSource().getUserId();
         if (!database.getCustomer(customerId).isPresent()) {
-            database.insertCustomer((customerId));
+            database.insertCustomer(customerId);
         }
         List<Message> msgList = new ArrayList<>();
 		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35."));
@@ -441,7 +441,7 @@ public class KitchenSinkController {
 
     private String handleCancelConfirmation(Result aiResult, Source source) {
         //TODO(Jason): do it
-        return "Booking calcelled";
+        return "Booking cancelled";
     }
 
     private List<Message> handleTourSearch(Result aiResult) {
