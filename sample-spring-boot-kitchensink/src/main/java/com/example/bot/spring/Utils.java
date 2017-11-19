@@ -1,12 +1,59 @@
 package com.example.bot.spring;
 
+import com.example.bot.spring.model.Plan;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class Utils {
+    /**
+     * Syntactic sugar for creating an array of objects
+     * @param xs Any number of objects
+     * @return An array containing each parameter supplied
+     */
+    public static Object[] params(Object... xs) {
+        return xs;
+    }
+
+    public static int getDateOfWeek(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        return calendar.get(Calendar.DAY_OF_WEEK);
+    }
+
+    public static int getDateOfWeek(String abbreviation) {
+        List<String> abbreviations = Arrays.asList("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+        return abbreviations.indexOf(abbreviation) + 1;
+    }
+
+    public static int ratePlanForCriteria(Date date, String search, Plan plan) {
+        int score = 100;
+        if (date != null) {
+            boolean matchedDate = Arrays.asList(plan.departure.split(", ")).stream().anyMatch(abbr -> getDateOfWeek(date) == getDateOfWeek(abbr));
+            if (!matchedDate) {
+                score -= 40;
+            }
+        }
+
+        if (search != null) {
+            String fullSearchableText = plan.name + plan.shortDescription;
+            List<String> keywords = Arrays.asList(search.split(" "));
+            score -= 60 * keywords.stream().mapToDouble(keyword -> fullSearchableText.contains(keyword) ? 0 : 1).sum() / keywords.size();
+        }
+
+        return score;
+    }
+
+    public static Iterator<Plan> filterAndSortTourResults(Date date, String keywords, List<Plan> plans) {
+        return plans.stream()
+                .map(plan -> Pair.of(plan, ratePlanForCriteria(date, keywords, plan)))
+                .filter(o -> o.getRight() > 50)
+                .sorted((o1, o2) -> o2.getRight() - o1.getRight())
+                .map(o -> o.getLeft())
+                .iterator();
+    }
 
     // TODO: Should we use some service like wit.ai for our milestone 3?
     // or at least a better matching thing...

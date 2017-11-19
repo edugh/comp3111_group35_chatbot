@@ -2,6 +2,7 @@ package com.example.bot.spring;
 
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.Customer;
+import com.example.bot.spring.model.Dialogue;
 import com.linecorp.bot.model.event.FollowEvent;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
@@ -35,7 +36,7 @@ import static org.h2.engine.Constants.UTF8;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { KitchenSinkTester.class, SQLDatabaseEngine.class })
+@SpringBootTest(classes = { KitchenSinkTester.class })
 public class KitchenSinkTester {
 
 	private DatabaseEngine databaseEngine;
@@ -58,7 +59,7 @@ public class KitchenSinkTester {
 		cleanlyInsert(dataSet);
 		// only initialize once
 		if (databaseEngine == null) {
-			databaseEngine = new MockDatabaseEngine(dataSource());
+			databaseEngine = DatabaseEngine.connectToTest(dataSource());
 			kitchenSinkController = new MockKitchenSinkController(databaseEngine);
 		}
 		kitchenSinkController.clearMessages();
@@ -153,14 +154,74 @@ public class KitchenSinkTester {
 
 		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
 		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
 
 		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Which tours are available?");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 5);
-		Assert.assertEquals(responses.get(3), new TextMessage("Id1: Fake Tour 1 - Description1"));
-		Assert.assertEquals(responses.get(4), new TextMessage("Id2: Fake Tour 2 - Description2"));
+		Assert.assertEquals(responses.size(), 4);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(2), new TextMessage("Id3: National Park Tour - Description3"));
+	}
+
+	@Test
+	public void testQueryToursWithParameters() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Are there tours going to Shimen National Forest?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 3);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
+
+		messageEvent = createMessageEvent("replyToken3", "userId1", "messageId3", "Any Hot Spring Tours on Tuesday?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 2);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+
+		messageEvent = createMessageEvent("replyToken4", "userId1", "messageId4", "Are there tours going to a Hot Spring on Wednesday?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 2);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+
+		messageEvent = createMessageEvent("replyToken4", "userId1", "messageId4", "What tours are available on Tuesday?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 4);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
+		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
+	}
+	
+	@Test
+	public void testUnhandledUserText() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+
+		ArrayList<Dialogue> dialogueRecord = databaseEngine.getDialogues("userId1");
+		Assert.assertTrue(dialogueRecord.isEmpty());
+		
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Elephants fly inward from the sky");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 3);
+		Assert.assertEquals(responses.get(2), new TextMessage("I don't understand your question, try rephrasing"));
+		ArrayList<Dialogue> dialogueRecordAfter = databaseEngine.getDialogues("userId1");
+		Assert.assertTrue(!dialogueRecordAfter.isEmpty());
+		Assert.assertEquals(dialogueRecordAfter.get(0).customerId, "userId1");
+		Assert.assertEquals(dialogueRecordAfter.get(0).content, "Elephants fly inward from the sky");
 	}
 
 	/*
@@ -179,7 +240,7 @@ public class KitchenSinkTester {
 
 		Map<String, String> userResponses = new HashMap<>();
 		userResponses.put("What can I do for you?", "Which tours are available?");
-		userResponses.put("Id2: Fake Tour 2 - Description2", "Can I book Fake Tour 2?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
 		userResponses.put("What's your name, please?", "Jason Zukewich");
 		userResponses.put("Male or Female please?", "M");
 		userResponses.put("How old are you please?", "20");
@@ -210,7 +271,7 @@ public class KitchenSinkTester {
 
 		Assert.assertEquals(databaseEngine.getCustomer("userId1").get(), new Customer("userId1", "Jason", "M", 20, "01234567", "booked"));
 
-		BigDecimal ammountOwed = databaseEngine.getAmmountOwed("userId1");
+		BigDecimal ammountOwed = databaseEngine.getAmountOwed("userId1");
 		Assert.assertTrue(closeEnough(ammountOwed, 1247.5));
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
