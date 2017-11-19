@@ -1,14 +1,9 @@
 package com.example.bot.spring;
 
 import java.math.BigDecimal;
-import java.net.URISyntaxException;
 import java.sql.*;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.sql.Date;
+import java.util.*;
 
 import com.example.bot.spring.model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -184,11 +179,8 @@ abstract class DatabaseEngine {
 
     public static Dialogue dialogueFromResultSet(ResultSet resultSet) {
         try {
-            Timestamp ts = resultSet.getTimestamp(2);
-            ZonedDateTime zonedDateTime =
-                    ZonedDateTime.ofInstant(ts.toInstant(), ZoneOffset.UTC);
             return new Dialogue(resultSet.getString(1),
-                    zonedDateTime,
+                    resultSet.getTimestamp(2),
                     resultSet.getString(3));
         } catch (SQLException e) {
             throw new DatabaseException(e);
@@ -230,12 +222,30 @@ abstract class DatabaseEngine {
         }
     }
 
+    public static String customerIdFromResultSet(ResultSet resultSet) {
+        try {
+            return resultSet.getString(1);
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
+    }
+
     public Optional<Customer> getCustomer(String cid) {
         return getResultForQuery(
             "SELECT * FROM Customers where id = ?",
             SQLDatabaseEngine::customerFromResultSet,
             new Object[]{cid}
         );
+    }
+
+    public Set<String> getCustomerIdSet(){
+        Set<String> set = new HashSet<>();
+        ArrayList<String> cidList =  getResultsForQuery(
+          "SELECT id FROM Customers",
+            SQLDatabaseEngine::customerIdFromResultSet
+        );
+        set.addAll(cidList);
+        return set;
     }
 
     public void insertCustomer(String cid){
@@ -297,6 +307,72 @@ abstract class DatabaseEngine {
     public boolean isTourFull(String pid, Date date) {
         // TODO(What should this be)
         return false;
+    }
+
+    //Discount related
+    public static Discount discountFromResultSet(ResultSet resultSet) {
+        try {
+            return new Discount(
+                    resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getDate(3),
+                    resultSet.getInt(4)
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
+    }
+
+    public static DiscountSchedule discountScheduleFromResultSet(ResultSet resultSet) {
+        try {
+            return new DiscountSchedule(
+                    resultSet.getString(1),
+                    resultSet.getDate(2),
+                    resultSet.getTimestamp(3)
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
+    }
+
+    public ArrayList<Discount> getDiscounts(String pid, Date date) {
+        String query = "SELECT * FROM DiscountBookings WHERE planId = ? and tourDate = ?;";
+        String[] params = {pid, date.toString()};
+        return getResultsForQuery(query, SQLDatabaseEngine::discountFromResultSet, params);
+    }
+
+
+    public int checkDiscount(String cid, String pid, Date date) {
+        String query = "SELECT seats FROM DiscountBookings WHERE customerId = ? and planId = ? and tourDate = ?;";
+        String[] params = {cid, pid, date.toString()};
+        List<Discount> discountList = getResultsForQuery(query, SQLDatabaseEngine::discountFromResultSet, params);
+        if(discountList.size()>0){
+            return discountList.get(0).seats;
+        }
+        else
+            return 0;
+    }
+
+    public boolean isDiscountFull(String pid, Date date) {
+        List<Discount> discountList = this.getDiscounts(pid, date);
+        return discountList.size() >= 4;
+    }
+
+    public boolean insertDiscount(String cid, String pid, Date date) {
+        if (isDiscountFull(pid, date) || checkDiscount(cid, pid, date)>0) {
+            return false;
+        } else {
+            String query = String.format("INSERT INTO discountBooking(customerId, planId, tourDate) " +
+                    "VALUES('%s', '%s', %s);", cid, pid, date.toString());
+            insertForQuery(query);
+            return true;
+        }
+    }
+
+    public ArrayList<DiscountSchedule> getDiscountSchedules(Timestamp timestamp) {
+        String query = "SELECT * FROM DiscountTours";
+        String[] params = {timestamp.toString()};
+        return getResultsForQuery(query, SQLDatabaseEngine::discountScheduleFromResultSet, params);
     }
 
     @FunctionalInterface

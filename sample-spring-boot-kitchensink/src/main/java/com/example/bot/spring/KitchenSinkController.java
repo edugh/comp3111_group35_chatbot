@@ -23,9 +23,11 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -34,9 +36,13 @@ import com.example.bot.spring.model.*;
 import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.FAQ;
 import com.example.bot.spring.model.Plan;
+import com.linecorp.bot.client.LineMessagingServiceBuilder;
+import com.linecorp.bot.model.Multicast;
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.google.common.io.ByteStreams;
@@ -96,6 +102,8 @@ public class KitchenSinkController {
 	private static final String GIVE_TODDLERS = "GiveToddlers";
 	private static final String GIVE_CONFIRMATION = "GiveConfirmation";
 	private static final String CANCEL_CONFIRMATION = "CancelConfirmation";
+
+	private static final String CHANNEL_TOKEN = "86G0LghgbbwHzoX8UIIvnaMGMAAJL6/mXQQEWNat4Jlsk0dRMaC91ksPZtG1whpuma/7LJsBO/UVqY7eweieJGNdOHnimA5dW4ElA3QBeVOlBGmqk+c+ypmGrdzuir8nLfpMD4Yc/7Vciz8wbbizTgdB04t89/1O/w1cDnyilFU=";
 
 	@EventMapping
 	public void handleTextMessageEvent(MessageEvent<TextMessageContent> event) throws Exception {
@@ -210,6 +218,41 @@ public class KitchenSinkController {
 		}
 	}
 
+    protected void push(@NonNull String userId, @NonNull List<Message> messages) {
+        PushMessage pushMessage = new PushMessage(userId, messages);
+        try {
+            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().pushMessage(pushMessage).execute();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    protected void push(@NonNull Set<String> userId, @NonNull Message message) {
+        Multicast pushMessage = new Multicast(userId, message);
+        try {
+            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().multicast(pushMessage).execute();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void pushDiscount(String planId, Date date) {
+        String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
+                        "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
+                database.getPlan(planId).name, date.toString(), planId, date.toString());
+        push(database.getCustomerIdSet(), new TextMessage(message));
+    }
+
+    @Scheduled(cron = "0 0 * * * ?")
+    private void schedulePushDiscount() {
+        Timestamp now = Timestamp.from(
+                Timestamp.valueOf(LocalDateTime.now()).toInstant().truncatedTo(ChronoUnit.HOURS));
+        List<DiscountSchedule> listDiscountSchedule = database.getDiscountSchedules(now);
+        for (DiscountSchedule ds : listDiscountSchedule) {
+            pushDiscount(ds.planId, ds.tourDate);
+        }
+    }
+
 	private void replyText(@NonNull String replyToken, @NonNull String message) {
 		if (replyToken.isEmpty()) {
 			throw new IllegalArgumentException("replyToken must not be empty");
@@ -219,7 +262,6 @@ public class KitchenSinkController {
 		}
 		this.reply(replyToken, new TextMessage(message));
 	}
-
 
 	private void handleSticker(String replyToken, StickerMessageContent content) {
 		reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
@@ -364,7 +406,16 @@ public class KitchenSinkController {
 		int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
 		boolean isWeekend = dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY;
 		BigDecimal pricePerPerson = isWeekend? confirmedPlan.weekendPrice : confirmedPlan.weekdayPrice;
+		int nDiscount = database.checkDiscount(customerId, planId, date);
 		BigDecimal numPeople = new BigDecimal(booking.adults + (((float) booking.children) / 2));
+		if(booking.adults < nDiscount) {
+		    numPeople = numPeople.subtract(new BigDecimal(
+                    ((float)booking.adults)/2 + ((float)(java.lang.Math.min(nDiscount, booking.children)-booking.adults))/4));
+        }
+        else{
+		    numPeople = numPeople.subtract(new BigDecimal(
+                    ((float)nDiscount)/2));
+        }
 		BigDecimal fee = pricePerPerson.multiply(numPeople);
 		database.updateBooking(customerId, planId, date,"fee", fee);
 		database.updateBooking(customerId, planId, date,"paid", BigDecimal.ZERO);
