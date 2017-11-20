@@ -24,10 +24,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import static org.mockito.Mockito.*;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -421,42 +419,6 @@ public class KitchenSinkTester {
         databaseEngine.insertCustomer("userId2", "Keith", 22, "M", "12345800");
         databaseEngine.insertBooking("userId2", pid, date, 1, 1, 1, BigDecimal.ZERO, BigDecimal.ZERO);
         Assert.assertTrue(databaseEngine.isTourFull(pid, date));
-	}
-
-	@Test
-	public void testBookingStatus() throws Exception {
-		databaseEngine.insertCustomer("userId1", "Elliot", 22, "M", "01234567");
-		Map<String, String> userResponses = new HashMap<>();
-		userResponses.put(null, "Which tours are available?");
-		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
-		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
-		userResponses.put("How many adults(Age>11) are planning to go?", "1");
-		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
-		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
-		userResponses.put("Confirmed?", "yes");
-		goThroughDialogflow(userResponses, "yes");
-
-		ArrayList<Customer> expectedBooked = new ArrayList<>();
-		expectedBooked.add(databaseEngine.getCustomer("userId1").get());
-		BookingStatus expectedStatus = new BookingStatus(
-			databaseEngine.getTour("Id1", Date.valueOf("2017-11-08")).get(),
-			databaseEngine.getPlan("Id1").get(),
-			expectedBooked
-		);
-		Assert.assertEquals(
-			Arrays.asList(expectedStatus),
-			databaseEngine.getBookingStatus(Date.valueOf("2017-11-08"))
-		);
-	}
-
-	@Test
-	public void testTour3DayConfirmed() {
-		// TODO: test that confirmation message is sent
-	}
-
-	@Test
-	public void testTour3DayCancelled() {
-		// TODO: test that cancellation message is sent
 	}
 
 	// NEGATIVE TEST CASES
