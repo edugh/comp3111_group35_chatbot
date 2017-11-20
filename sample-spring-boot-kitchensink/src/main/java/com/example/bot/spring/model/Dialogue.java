@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+/** Pojo representing a Dialogue row in the database */
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString

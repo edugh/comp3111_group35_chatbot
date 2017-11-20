@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Pojo representing a Plan row in the database */
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString

@@ -8,6 +8,7 @@ import lombok.ToString;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Pojo representing a Customer row in the database */
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
