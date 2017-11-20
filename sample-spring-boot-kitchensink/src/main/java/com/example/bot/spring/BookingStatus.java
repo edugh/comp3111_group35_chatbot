@@ -10,6 +10,7 @@ import lombok.ToString;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -29,7 +30,7 @@ public class BookingStatus {
     /**
     A list of customers who have booked the tour.
      */
-    public final ArrayList<Customer> booked;
+    public final List<Customer> booked;
 
     /**
      * Determines whether a tour meets minimum participation quota
