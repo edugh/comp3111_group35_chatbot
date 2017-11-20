@@ -83,6 +83,14 @@ public class DatabaseEngine {
         return bookings.stream().map(booking -> (booking.fee.subtract(booking.paid))).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public ArrayList<Plan> getPastPlansForUser(String customerId) {
+        return getResultsForQuery(
+                "SELECT Plans.* FROM Plans INNER JOIN Bookings ON (Plans.id = Bookings.planId) WHERE Bookings.customerId=?;",
+                Plan::fromResultSet,
+                params(customerId)
+        );
+    }
+
     public ArrayList<Plan> getPlans() {
         return getResultsForQuery("SELECT * FROM Plans;", Plan::fromResultSet);
     }

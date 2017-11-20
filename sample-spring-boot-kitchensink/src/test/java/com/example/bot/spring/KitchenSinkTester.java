@@ -205,6 +205,30 @@ public class KitchenSinkTester {
 	}
 
 	@Test
+	public void testQueryToursWithPastBookings() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
+
+		databaseEngine.insertBooking("userId1", "Id1", new Date(0), 1, 3, 5, new BigDecimal(100), new BigDecimal(0));
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Which tours are available?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 3);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
+
+		databaseEngine.insertBooking("userId1", "Id2", new Date(0), 1, 3, 5, new BigDecimal(100), new BigDecimal(0));
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Which tours are available?");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 2);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id3: National Park Tour - Description3"));
+	}
+
+	@Test
 	public void testUnhandledUserText() throws Exception {
 		MessageEvent<TextMessageContent> messageEvent;
 
