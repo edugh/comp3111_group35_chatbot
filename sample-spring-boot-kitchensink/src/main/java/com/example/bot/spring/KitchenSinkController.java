@@ -158,6 +158,15 @@ public class KitchenSinkController {
         }
     }
 
+    protected void push(@NonNull String userId, @NonNull Message message) {
+        PushMessage pushMessage = new PushMessage(userId, message);
+        try {
+            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().pushMessage(pushMessage).execute();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     public void pushDiscount(String planId, Date date) {
         Plan plan = database.getPlan(planId).orElseThrow(() -> new IndexOutOfBoundsException("Can't push discount because plan doesn't exist"));
         String nlpDate = new SimpleDateFormat("yyyy/MM/dd").format(date);
@@ -177,7 +186,7 @@ public class KitchenSinkController {
         return discountWorked? "Discount successfully" : "Sorry discount sold out";
     }
 
-    @Scheduled(cron = "0 0 * * * ?")
+    @Scheduled(cron = "0 * * * *")
     private void schedulePushDiscount() {
         Timestamp now = Timestamp.from(
                 Timestamp.valueOf(LocalDateTime.now()).toInstant().truncatedTo(ChronoUnit.HOURS));
@@ -464,12 +473,27 @@ public class KitchenSinkController {
 
     @Scheduled(cron = "0 9 * * *")
     private void decideTourStatus() {
-        Date inThreedays = Date.valueOf(LocalDate.now().plusDays(3));
-        for(BookingStatus bs : database.getBookingStatus(inThreedays)) {
+        Date inThreeDays = Date.valueOf(LocalDate.now().plusDays(3));
+        for(BookingStatus bs : database.getBookingStatus(inThreeDays)) {
             if(bs.isConfirmed()) {
                 for(Customer c : bs.booked) { informConfirmed(c, bs); };
             } else {
                 for(Customer c : bs.booked) { informCancelled(c, bs); };
+            }
+        }
+    }
+
+    @Scheduled(cron = "0 9 * * *")
+    private void informOwed(){
+        Date inFiveDays = Date.valueOf(LocalDate.now().plusDays(5));
+        for(BookingStatus bs : database.getBookingStatus(inFiveDays)) {
+            for(Customer c: bs.booked) {
+                BigDecimal owed = database.getAmountOwed(c.id);
+                if(owed.compareTo(BigDecimal.ZERO)>0){
+                    push(c.id, new TextMessage(String.format("I am sorry to tell you that, " +
+                            "if you don't fully pay for the trip in 2 days, it will be canceled. " +
+                            "The amount you owed is: %s", owed.toString())));
+                }
             }
         }
     }
