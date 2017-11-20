@@ -252,12 +252,13 @@ public class DatabaseEngine {
 
     public boolean isTourFull(String pid, Date date) {
         Tour tour = getTour(pid, date).get();
-        return getResultsForQuery(
-            "SELECT customers.* FROM bookings JOIN customers ON bookings.customerid = customers.id " +
+        return tryGetResultForQuery(
+            "SELECT SUM(bookings.adults + bookings.children + bookings.toddlers) FROM bookings " +
+                "JOIN customers ON bookings.customerid = customers.id" +
                 "WHERE planid = ? and tourdate = ?;",
-            Customer::fromResultSet,
+            (rs) -> rs.getInt(1),
             params(tour.planId, date)
-        ).size() >= tour.capacity;
+        ) >= tour.capacity;
     }
 
     public ArrayList<Discount> getDiscounts(String pid, Date date) {
