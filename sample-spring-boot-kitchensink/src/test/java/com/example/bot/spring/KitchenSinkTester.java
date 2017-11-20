@@ -359,8 +359,11 @@ public class KitchenSinkTester {
 		Assert.assertEquals(responses.size(), 1);
 		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
 
-		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
-		Assert.assertEquals(amountOwed.doubleValue(), 1247.5, 1);
+		MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "How much do I owe");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("You owe $1,247.50"));
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 1);
@@ -369,6 +372,12 @@ public class KitchenSinkTester {
 		Assert.assertEquals(booking.paid.doubleValue(), 0, 1);
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "What tours am I enrolled in");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1:\n2017/11/08"));
 	}
 
     @Test
