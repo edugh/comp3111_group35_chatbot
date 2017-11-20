@@ -13,6 +13,10 @@ import java.util.*;
 
 import static com.example.bot.spring.Utils.params;
 
+/**
+ * Handles connection logic to real or test databases, serializing results into our models, and
+ * storing our queries as functions
+ */
 @Slf4j
 public class DatabaseEngine {
 
@@ -176,13 +180,6 @@ public class DatabaseEngine {
         );
     }
 
-    public void updateBooking(String cid, String pid, Date date, String field, String value) {
-        executeStatement(
-                String.format("UPDATE Bookings SET %s = ? WHERE customerId = ? AND planId = ? AND tourDate = ?", field),
-                params(value, cid, pid, date)
-        );
-    }
-
     public void updateBooking(String cid, String pid, Date date, String field, int value) {
         executeStatement(
                 String.format("UPDATE Bookings SET %s = ? WHERE customerId = ? AND planId = ? AND tourDate = ?", field),
@@ -201,21 +198,6 @@ public class DatabaseEngine {
         executeStatement(
                 "DELETE FROM Bookings WHERE customerId = ? AND planId = ? AND tourDate = ?",
                 params(cid, pid, date)
-        );
-    }
-
-    public void insertTag(Tag tag) {
-        executeStatement(
-                "INSERT INTO Tags(name, customerID) VALUES(?,?)",
-                params(tag.name, tag.customerId)
-        );
-    }
-
-    public ArrayList<Tag> getTags(String cid) {
-        return getResultsForQuery(
-                "SELECT name FROM Tags where customerId = ?;",
-                Tag::fromResultSet,
-                params(cid)
         );
     }
 
@@ -285,13 +267,6 @@ public class DatabaseEngine {
         );
     }
 
-    public void updateCustomer(String cid, String field, BigDecimal value) {
-        executeStatement(
-                String.format("UPDATE Customers SET %s = ? WHERE id = ?", field),
-                params(value, cid)
-        );
-    }
-
     public boolean isTourFull(String pid, Date date) {
         Tour tour = getTour(pid, date).get();
         return tryGetResultForQuery(
@@ -330,13 +305,13 @@ public class DatabaseEngine {
         return discountList.size() >= 4;
     }
 
-    public boolean insertDiscount(String cid, String pid, Date date) {
+    public boolean insertDiscount(String cid, String pid, Date date, Integer numberSeats) {
         if (isDiscountFull(pid, date) || checkDiscount(cid, pid, date) > 0) {
             return false;
         } else {
             executeStatement(
-                    "INSERT INTO discountBooking(customerId, planId, tourDate) VALUES(?,?,?);",
-                    params(cid, pid, date)
+                    "INSERT INTO discountBookings(customerId, planId, tourDate, seats) VALUES(?,?,?,?);",
+                    params(cid, pid, date, numberSeats)
             );
             return true;
         }
@@ -344,7 +319,7 @@ public class DatabaseEngine {
 
     public ArrayList<DiscountSchedule> getDiscountSchedules(Timestamp timestamp) {
         return getResultsForQuery(
-                "SELECT * FROM DiscountTours",
+                "SELECT * FROM DiscountTours WHERE sendTime = ?",
                 DiscountSchedule::fromResultSet,
                 params(timestamp)
         );
@@ -462,10 +437,6 @@ public class DatabaseEngine {
                 throw new RuntimeException(String.format("Can't handle type %s!", params[i].getClass().getTypeName()));
             }
         }
-    }
-
-    private void executeStatement(String query) {
-        executeStatement(query, new Object[0]);
     }
 
     private void executeStatement(String query, Object[] parameters) {

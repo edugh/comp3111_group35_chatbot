@@ -1,13 +1,18 @@
 -- noinspection SqlNoDataSourceInspectionForFile
 set mode PostgreSQL;
 
+create table Discounttours(
+  planId varchar(5),
+  tourDate date,
+  sendTime timestamp
+);
+
 create table Discountbookings(
   customerId varchar(33),
   planId varchar(5),
   tourDate date,
   seats int
 );
-
 
 create table Plans ( --Excel tour list
   id varchar(5),

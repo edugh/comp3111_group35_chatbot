@@ -38,6 +38,9 @@ import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
 
+/**
+ * Integration tests for KitchenSinkController
+ */
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { KitchenSinkTester.class })
@@ -268,15 +271,18 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId3", "Allllllll not is watch");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId4", "Elephants fly inward from the sky??!");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId5", "Elephants go inward for the sky??!");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		kitchenSinkController.clearMessages();
 
-		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId4", "admin:question_report");
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId6", "admin:question_report");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 2);
-		Assert.assertEquals(responses.get(0), new TextMessage("Elephants fly inward from the sky"));
-		Assert.assertEquals(responses.get(1), new TextMessage("Allllllll not is watch"));
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("--Question frequency report--\n3 - Elephants fly inward from the sky\n1 - Allllllll not is watch\n--End of Report--"));
 	}
 
 	public void goThroughDialogflow(Map<String, String> userResponses, String breakString) throws Exception {
@@ -352,8 +358,11 @@ public class KitchenSinkTester {
 		Assert.assertEquals(responses.size(), 1);
 		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
 
-		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
-		Assert.assertEquals(amountOwed.doubleValue(), 1247.5, 1);
+		MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "How much do I owe");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("You owe $1,247.50"));
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 1);
@@ -362,6 +371,12 @@ public class KitchenSinkTester {
 		Assert.assertEquals(booking.paid.doubleValue(), 0, 1);
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "What tours am I enrolled in");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1:\n2017/11/08"));
 	}
 
     @Test
@@ -516,4 +531,48 @@ public class KitchenSinkTester {
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
 	}
+  
+  @Test
+	public void testCancelPartialBooking() throws Exception {
+		databaseEngine.insertCustomer("userId1", "Jason", 20, "M", "01234567");
+
+		Map<String, String> userResponses = new HashMap<>();
+		userResponses.put(null, "Which tours are available?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
+		userResponses.put("How many adults(Age>11) are planning to go?", "1");
+		userResponses.put("How many children (Age 4 to 11) are planning to go?", "Cancel Booking");
+		goThroughDialogflow(userResponses, "Cancel Booking");
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Booking Cancelled"));
+
+		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
+		Assert.assertEquals(amountOwed.doubleValue(), 0, 1);
+
+		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
+		Assert.assertEquals(bookings.size(), 0);
+	}
+  
+    @Test
+    public void testDiscountSuccess() throws Exception {
+        String userResponse = "Discount 2 seats for Id1 on 2017/11/06";
+        MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
+        kitchenSinkController.handleTextMessageEvent(messageEvent);
+        log.info("user response: {}", userResponse);
+        List<Message> responses = kitchenSinkController.getLatestMessages();
+        Assert.assertEquals(responses.get(0), new TextMessage("Discount successfully"));
+    }
+
+    @Test
+    public void testDiscountFailure() throws Exception {
+        String userResponse = "Discount 2 seats for Id1 on 2017/11/11";
+        MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
+        kitchenSinkController.handleTextMessageEvent(messageEvent);
+        log.info("user response: {}", userResponse);
+        List<Message> responses = kitchenSinkController.getLatestMessages();
+        Assert.assertEquals(responses.get(0), new TextMessage("Sorry discount sold out"));
+    }
+  
 }
