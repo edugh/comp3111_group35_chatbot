@@ -1,10 +1,18 @@
 package com.example.bot.spring;
 
-import com.example.bot.spring.model.Plan;
+import com.example.bot.spring.model.*;
+import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import javax.validation.constraints.AssertTrue;
+import java.math.BigDecimal;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
+
+import static org.bouncycastle.asn1.ua.DSTU4145NamedCurves.params;
 
 /**
  * Unit tests for methods defined in Utils
@@ -128,5 +136,56 @@ public class UtilTester {
 
         expectedPlans = Arrays.asList(plan3, plan4).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(friday, null, pastPlans, plans), expectedPlans);
+    }
+
+    private ResultSet createFakeResultSet(List<Object> objects) throws SQLException {
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        for (int i = 0; i < objects.size(); i++) {
+            if (objects.get(i) instanceof String) {
+                Mockito.when(rs.getString(i + 1)).thenReturn((String) objects.get(i));
+            } else if (objects.get(i) instanceof Integer) {
+                Mockito.when(rs.getInt(i + 1)).thenReturn((Integer) objects.get(i));
+            } else if (objects.get(i) instanceof java.sql.Date) {
+                Mockito.when(rs.getDate(i + 1)).thenReturn((java.sql.Date) objects.get(i));
+            } else if (objects.get(i) instanceof Timestamp) {
+                Mockito.when(rs.getTimestamp(i + 1)).thenReturn((Timestamp) objects.get(i));
+            } else if (objects.get(i) instanceof BigDecimal) {
+                Mockito.when(rs.getBigDecimal(i + 1)).thenReturn((BigDecimal) objects.get(i));
+            }
+        }
+        return rs;
+    }
+
+    @Test
+    public void testModels() throws SQLException {
+        Booking booking = new Booking("bid", "", new java.sql.Date(0), 1, 1, 1, new BigDecimal(0), new BigDecimal(0), "");
+        Customer customer = new Customer("cid", "", "", 20, "12345678", "new");
+        Dialogue dialogue = new Dialogue("cid", new java.sql.Timestamp(0), "content");
+        Discount discount = new Discount("cid", "pid", new java.sql.Date(0), 1);
+        DiscountSchedule discountSchedule = new DiscountSchedule("pid", new java.sql.Date(0), new java.sql.Timestamp(0));
+        FAQ faq = new FAQ("question", "answer");
+        Plan plan = new Plan("pid", "pname", "description", 1, "departure", new BigDecimal(0), new BigDecimal(0));
+        Tour tour = new Tour("pid", new java.sql.Date(0), "guidename", "guideAccount", "hotel", 20, 4);
+        BookingStatus bookingStatus = new BookingStatus(tour, plan, Arrays.asList(customer));
+
+        Set set = Sets.newHashSet(booking, customer, dialogue, discount, discountSchedule, faq, plan, tour, bookingStatus);
+        Assert.assertTrue(set.contains(booking));
+        Assert.assertTrue(set.contains(customer));
+        Assert.assertTrue(set.contains(dialogue));
+        Assert.assertTrue(set.contains(discount));
+        Assert.assertTrue(set.contains(discountSchedule));
+        Assert.assertTrue(set.contains(faq));
+        Assert.assertTrue(set.contains(plan));
+        Assert.assertTrue(set.contains(tour));
+        Assert.assertTrue(set.contains(bookingStatus));
+
+        Assert.assertEquals(booking, Booking.fromResultSet(createFakeResultSet(Arrays.asList("bid", "", new java.sql.Date(0), 1, 1, 1, new BigDecimal(0), new BigDecimal(0), ""))));
+        Assert.assertEquals(customer, Customer.fromResultSet(createFakeResultSet(Arrays.asList("cid", "", "", 20, "12345678", "new"))));
+        Assert.assertEquals(dialogue, Dialogue.fromResultSet(createFakeResultSet(Arrays.asList("cid", new java.sql.Timestamp(0), "content"))));
+        Assert.assertEquals(discount, Discount.fromResultSet(createFakeResultSet(Arrays.asList("cid", "pid", new java.sql.Date(0), 1))));
+        Assert.assertEquals(discountSchedule, DiscountSchedule.fromResultSet(createFakeResultSet(Arrays.asList("pid", new java.sql.Date(0), new java.sql.Timestamp(0)))));
+        Assert.assertEquals(faq, FAQ.fromResultSet(createFakeResultSet(Arrays.asList("question", "answer"))));
+        Assert.assertEquals(plan, Plan.fromResultSet(createFakeResultSet(Arrays.asList("pid", "pname", "description", 1, "departure", new BigDecimal(0), new BigDecimal(0)))));
+        Assert.assertEquals(tour, Tour.fromResultSet(createFakeResultSet(Arrays.asList("pid", new java.sql.Date(0), "guidename", "guideAccount", "hotel", 20, 4))));
     }
 }
