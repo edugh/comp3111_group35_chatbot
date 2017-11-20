@@ -582,27 +582,39 @@ public class KitchenSinkTester {
 		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
 
 		mockKitchenSinkController.handleTextMessageEvent(messageEvent);
-		Mockito.verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
-		Mockito.verify(mockKitchenSinkController).replyText(anyString(), eq("Push demand received."));
+		verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
+		verify(mockKitchenSinkController).replyText(anyString(), eq("Push demand received."));
 	}
 
 	@Test
 	public void testPushDiscount() {
-		//kitchenSinkController.pushDiscount();
+		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
+		//when(mockKitchenSinkController.getNowTime()).thenReturn();
+		kitchenSinkController.schedulePushDiscount();
+		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
 	}
 
 	@Test
 	public void testInformPaymentRequired() {
-
+		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
+		//when(mockKitchenSinkController.getNowDate()).thenReturn();
+		kitchenSinkController.informOwed();
+		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
 	}
 
 	@Test
 	public void testInformConfirmed() {
-
+		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
+		//when(mockKitchenSinkController.getNowDate()).thenReturn();
+		kitchenSinkController.decideTourStatus();
+		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
 	}
 
 	@Test
 	public void testInformCancelled() {
-
+		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
+		//when(mockKitchenSinkController.getNowDate()).thenReturn();
+		kitchenSinkController.decideTourStatus();
+		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
 	}
 }
