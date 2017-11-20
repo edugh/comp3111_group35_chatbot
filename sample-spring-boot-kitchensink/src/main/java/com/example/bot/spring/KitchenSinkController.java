@@ -495,7 +495,10 @@ public class KitchenSinkController {
             bs.plan.departure,
             "TODO: tour time"
         )));
-        BigDecimal owed = database.getAmountOwed(c.id);
+        BigDecimal owed = database.getBookings(c.id).stream()
+            .filter(b -> b.planId == bs.plan.id && b.tourDate == bs.tour.tourDate)
+            .findFirst()
+            .map(b -> b.fee.subtract(b.paid)).get();
         if(owed.equals(BigDecimal.ZERO)) {
             messages.add(new TextMessage(
                 "Thank you for paying for the tour in full - see you soon!"
