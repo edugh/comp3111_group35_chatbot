@@ -358,19 +358,34 @@ public class KitchenSinkController {
         }
     }
 
-    private String handleGiveDeparture(Result aiResult, Source source) {
+    private List<Message> handleGiveDeparture(Result aiResult, Source source) {
         String customerId = source.getUserId();
         Booking booking = database.getCurrentBooking(customerId);
         String planId = booking.planId;
 
         java.util.Date date = aiResult.getDateParameter("date-time");
         Date sqlDate = new java.sql.Date(date.getTime());
+        Optional<Tour> tourOptional = database.getTour(planId, sqlDate);
+        if (!tourOptional.isPresent()) {
+            return Collections.singletonList(new TextMessage("Could not find a tour on that date"));
+        }
+
+        Tour tour = tourOptional.get();
+        Plan plan = database.getPlan(planId).orElseThrow(() -> new RuntimeException("Plan should exist"));
         if (database.isTourFull(planId, sqlDate)) {
-            return "Sorry it is full-booked that day. What about other trips or departure date?";
+            List<Message> messages = new ArrayList<>();
+            Iterator<Plan> plans = Utils.filterAndSortTourResults(tour.tourDate, plan.name + plan.shortDescription, database.getPlans());
+            if (!plans.hasNext()) {
+                return Collections.singletonList(new TextMessage("Sorry it is full-booked that day, try searching for other tours."));
+            }
+            messages.add(new TextMessage("Sorry it is full-booked that day. Here are some other trips that may interest you"));
+            plans.forEachRemaining(p -> messages.add(new TextMessage(String.format("%s: %s - %s", p.id, p.name, p.shortDescription))));
+            messages.add(new TextMessage("Are you interested in changing to any of these trips?"));
+            return messages;
         } else {
             database.updateBookingDate(customerId, planId, sqlDate);
             database.updateCustomerState(customerId, "reqNAdult");
-            return "How many adults(Age>11) are planning to go?";
+            return Collections.singletonList(new TextMessage("How many adults(Age>11) are planning to go?"));
         }
     }
 
@@ -475,7 +490,7 @@ public class KitchenSinkController {
         Source source = event.getSource();
         log.info("Got text message from {}: {}", replyToken, text);
 
-        Result aiResult = AIApiWrapper.getIntent(text, source);
+        Result aiResult = AIApiWrapper.getIntent(text, source, Collections.EMPTY_LIST);
         String intentName = aiResult.getMetadata().getIntentName();
         log.info("Received intent from api.ai: {}", intentName);
 
@@ -510,7 +525,7 @@ public class KitchenSinkController {
                 break;
 
             case GIVE_DEPARTURE_DATE:
-                this.replyText(replyToken, handleGiveDeparture(aiResult, source));
+                this.reply(replyToken, handleGiveDeparture(aiResult, source));
                 break;
             case GIVE_ADULTS:
                 this.replyText(replyToken, handleGiveAdults(aiResult, source));
