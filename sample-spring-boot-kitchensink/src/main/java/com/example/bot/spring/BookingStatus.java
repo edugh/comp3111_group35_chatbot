@@ -12,12 +12,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-@AllArgsConstructor
-@EqualsAndHashCode
-@ToString
 /**
  * Represents the booking status of customers on a particular tour.
  */
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
 public final class BookingStatus {
     /**
     The particular tour this booking status relates to.
