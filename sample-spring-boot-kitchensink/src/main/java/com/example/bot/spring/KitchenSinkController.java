@@ -108,6 +108,14 @@ public class KitchenSinkController {
         this.database = databaseEngine;
     }
 
+    public LocalDate getNowDate() {
+        return LocalDate.now();
+    }
+
+    public LocalDateTime getNowTime() {
+        return LocalDateTime.now();
+    }
+
     /**
      * Entrance for handling user text messages. Given arbitrary text query, decide how to handle it and resond to user
      * @param event The event containing the user query
@@ -324,9 +332,9 @@ public class KitchenSinkController {
      * Schedule the discount to be pushed out
      */
     @Scheduled(cron = "0 * * * *")
-    private void schedulePushDiscount() {
+    public void schedulePushDiscount() {
         Timestamp now = Timestamp.from(
-                Timestamp.valueOf(LocalDateTime.now()).toInstant().truncatedTo(ChronoUnit.HOURS));
+                Timestamp.valueOf(getNowTime()).toInstant().truncatedTo(ChronoUnit.HOURS));
         List<DiscountSchedule> listDiscountSchedule = database.getDiscountSchedules(now);
         for (DiscountSchedule ds : listDiscountSchedule) {
             pushDiscount(ds.planId, ds.tourDate);
@@ -704,8 +712,8 @@ public class KitchenSinkController {
      * Schedule job to decide whether tour is confirmed or cancelled 3 days before tour
      */
     @Scheduled(cron = "0 9 * * *")
-    private void decideTourStatus() {
-        Date inThreeDays = Date.valueOf(LocalDate.now().plusDays(3));
+    public void decideTourStatus() {
+        Date inThreeDays = Date.valueOf(getNowDate().plusDays(3));
         for(BookingStatus bs : database.getBookingStatus(inThreeDays)) {
             if(bs.isConfirmed()) {
                 for(Customer c : bs.booked) { informConfirmed(c, bs); };
@@ -719,8 +727,8 @@ public class KitchenSinkController {
      * Schedule job to remind user to pay if they havent already 5 days before tour
      */
     @Scheduled(cron = "0 9 * * *")
-    private void informOwed(){
-        Date inFiveDays = Date.valueOf(LocalDate.now().plusDays(5));
+    public void informOwed() {
+        Date inFiveDays = Date.valueOf(getNowDate().plusDays(5));
         for(BookingStatus bs : database.getBookingStatus(inFiveDays)) {
             for(Customer c: bs.booked) {
                 BigDecimal owed = database.getAmountOwed(c.id);
