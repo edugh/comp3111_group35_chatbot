@@ -119,6 +119,13 @@ public class DatabaseEngine {
         );
     }
 
+    public void insertBooking(String cid, String pid, Date date) {
+        executeStatement(
+                "INSERT INTO bookings(customerId, planId, tourDate) VALUES(?,?,?)",
+                params(cid, pid, date)
+        );
+    }
+
     public void updateBookingDate(String cid, String pid, Date date) {
         Date defaultDate = new Date(0); //TODO: Why do we need this?
         executeStatement(
@@ -237,8 +244,13 @@ public class DatabaseEngine {
     }
 
     public boolean isTourFull(String pid, Date date) {
-        // TODO(What should this be)
-        return false;
+        Tour tour = getTour(pid, date).get();
+        return getResultsForQuery(
+            "SELECT customers.* FROM bookings JOIN customers ON bookings.customerid = customers.id " +
+                "WHERE planid = ? and tourdate = ?;",
+            Customer::fromResultSet,
+            params(tour.planId, date)
+        ).size() >= tour.capacity;
     }
 
     public ArrayList<Discount> getDiscounts(String pid, Date date) {

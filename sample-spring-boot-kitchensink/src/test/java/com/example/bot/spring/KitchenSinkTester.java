@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.sql.DataSource;
 import java.io.File;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
@@ -315,6 +316,18 @@ public class KitchenSinkTester {
 		Assert.assertTrue(closeEnough(booking.paid, 0));
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
+	}
+
+	@Test
+	public void testTourFull() throws Exception {
+		String pid = "Id2";
+		Date date = Date.valueOf("2017-11-14");
+		Assert.assertFalse(databaseEngine.isTourFull(pid, date));
+
+		databaseEngine.insertCustomer("userId1", "Elliot", 22, "M", "01234567");
+		databaseEngine.insertBooking("userId1", pid, date);
+
+		Assert.assertTrue(databaseEngine.isTourFull(pid, date));
 	}
 
 	// NEGATIVE TEST CASES
