@@ -498,11 +498,9 @@ public class KitchenSinkController {
     
     private List<Message> handleDialogReport(Source source) {
     	ArrayList<Dialogue> dialogues = database.getAllDialogues();
-    	//HashMap<String, Integer> dialogueType = new HashMap<>();
     	ArrayList<Map.Entry<String, Integer>> dialogueTypeList = new ArrayList<>();
     	for(Dialogue dialogue : dialogues) {
     		String parsedDialogue = dialogue.content.replaceAll("[^A-Za-z0-9 ]", "");
-    		//if(dialogueType.containsKey(parsedDialogue)) {
     		boolean dialogExist = false;
     		for(Map.Entry<String, Integer> existingDialog : dialogueTypeList) {
     			if(Utils.stupidFuzzyMatch(existingDialog.getKey(), parsedDialogue)) {
@@ -511,13 +509,10 @@ public class KitchenSinkController {
     			}
     		}
     		if(dialogExist) {
-    			//dialogueType.replace(parsedDialogue, dialogueType.get(parsedDialogue) + 1);
     		} else {
-    			//dialogueType.put(parsedDialogue, 1);
     			dialogueTypeList.add(new AbstractMap.SimpleEntry<String, Integer>(parsedDialogue, 1));
     		}
     	}
-    	//ArrayList<Map.Entry<String, Integer>> dialogueTypeList = new ArrayList<Map.Entry<String, Integer>>(dialogueType.entrySet());
     	Collections.sort(dialogueTypeList, new Comparator<Map.Entry<String, Integer>>() {
     		@Override
     		public int compare(Map.Entry<String, Integer> x, Map.Entry<String, Integer> y) {
