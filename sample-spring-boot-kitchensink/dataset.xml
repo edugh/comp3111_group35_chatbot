@@ -10,7 +10,7 @@
     <plans id="Id2" name="Yangshan Hot Spring Tour" shortdescription="Description2" length="2" departure="Mon, Tue" price="399.0" weekendprice="499.0"/>
     <plans id="Id3" name="National Park Tour" shortdescription="Description3" length="2" departure="Tue" price="299.0" weekendprice="399.0"/>
     <tags/>
-    <tours planid="2D001" tourdate="2017-11-06" guidename="Guide1" guideaccount="Guide1&apos;s Account" hotel="Hotel1" capacity="20" minimum="4"/>
-    <tours planid="2D001" tourdate="2017-11-08" guidename="Guide2" guideaccount="Guide2&apos;s Account" hotel="Hotel2" capacity="20" minimum="4"/>
-    <tours planid="2D001" tourdate="2017-11-11" guidename="Guide3" guideaccount="Guide3&apos;s Account" hotel="Hotel3" capacity="20" minimum="4"/>
+    <tours planid="Id1" tourdate="2017-11-06" guidename="Guide1" guideaccount="Guide1&apos;s Account" hotel="Hotel1" capacity="0" minimum="4"/>
+    <tours planid="Id1" tourdate="2017-11-08" guidename="Guide2" guideaccount="Guide2&apos;s Account" hotel="Hotel2" capacity="20" minimum="4"/>
+    <tours planid="Id1" tourdate="2017-11-11" guidename="Guide3" guideaccount="Guide3&apos;s Account" hotel="Hotel3" capacity="20" minimum="4"/>
 </dataset>

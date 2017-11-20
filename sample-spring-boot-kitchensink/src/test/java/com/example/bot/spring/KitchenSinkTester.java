@@ -253,13 +253,6 @@ public class KitchenSinkTester {
 		Assert.assertEquals(responses.get(1), new TextMessage("Allllllll not is watch"));
 	}
 
-	/*
-	Since we arent really using postresql we need to do some weird comparison stuff between floats and bigdecimals
-	 */
-	private boolean closeEnough(BigDecimal num1, double num2) {
-		return num1.intValue() == (int) num2;
-	}
-
 	public void goThroughDialogflow(Map<String, String> userResponses, String breakString) throws Exception {
 		while (true) {
 			List<Message> botResponses = kitchenSinkController.getLatestMessages();
@@ -304,13 +297,13 @@ public class KitchenSinkTester {
 		Assert.assertEquals(databaseEngine.getCustomer("userId1").get(), new Customer("userId1", "Jason", "M", 20, "01234567", "booked"));
 
 		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
-		Assert.assertTrue(closeEnough(amountOwed, 1247.5));
+		Assert.assertEquals(amountOwed.doubleValue(), 1247.5, 1);
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 1);
 		Booking booking = bookings.get(0);
-		Assert.assertTrue(closeEnough(booking.fee, 1247.5));
-		Assert.assertTrue(closeEnough(booking.paid, 0));
+		Assert.assertEquals(booking.fee.doubleValue(), 1247.5, 1);
+		Assert.assertEquals(booking.paid.doubleValue(), 0, 1);
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
 	}
@@ -334,13 +327,13 @@ public class KitchenSinkTester {
 		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
 
 		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
-		Assert.assertTrue(closeEnough(amountOwed, 1247.5));
+		Assert.assertEquals(amountOwed.doubleValue(), 1247.5, 1);
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 1);
 		Booking booking = bookings.get(0);
-		Assert.assertTrue(closeEnough(booking.fee, 1247.5));
-		Assert.assertTrue(closeEnough(booking.paid, 0));
+		Assert.assertEquals(booking.fee.doubleValue(), 1247.5, 1);
+		Assert.assertEquals(booking.paid.doubleValue(), 0, 1);
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
 	}
@@ -409,9 +402,41 @@ public class KitchenSinkTester {
 		Assert.assertEquals(responses.get(0), new TextMessage("Booking Cancelled"));
 
 		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
-		Assert.assertTrue(closeEnough(amountOwed, 0));
+		Assert.assertEquals(amountOwed.doubleValue(), 0, 1);
 
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 0);
+	}
+
+	@Test
+	public void testFullBooking() throws Exception {
+		databaseEngine.insertCustomer("userId1", "Jason", 20, "M", "01234567");
+
+		Map<String, String> userResponses = new HashMap<>();
+		userResponses.put(null, "Which tours are available?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/06");
+		userResponses.put("Are you interested in changing to any of these trips?", "How about the Shimen National Forest Tour?");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
+		userResponses.put("How many adults(Age>11) are planning to go?", "1");
+		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
+		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
+		userResponses.put("Confirmed?", "yes");
+		goThroughDialogflow(userResponses, "yes");
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it."));
+
+		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
+		Assert.assertEquals(amountOwed.doubleValue(), 1247.5, 1);
+
+		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
+		Assert.assertEquals(bookings.size(), 1);
+		Booking booking = bookings.get(0);
+		Assert.assertEquals(booking.fee.doubleValue(), 1247.5, 1);
+		Assert.assertEquals(booking.paid.doubleValue(), 0, 1);
+		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
+		Assert.assertEquals(booking, expectedBooking);
 	}
 }
