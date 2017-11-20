@@ -6,6 +6,9 @@ import org.junit.Test;
 
 import java.util.*;
 
+/**
+ * Unit tests for methods defined in Utils
+ */
 public class UtilTester {
 
     @Test

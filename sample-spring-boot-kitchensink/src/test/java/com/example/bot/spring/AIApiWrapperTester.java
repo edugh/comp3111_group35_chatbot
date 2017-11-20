@@ -13,6 +13,9 @@ import org.junit.Test;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Unit tests for AIApiWrapper
+ */
 public class AIApiWrapperTester {
 
     private Source source;

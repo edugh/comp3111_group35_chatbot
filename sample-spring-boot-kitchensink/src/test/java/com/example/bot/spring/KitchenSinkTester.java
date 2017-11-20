@@ -36,6 +36,9 @@ import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
 
+/**
+ * Integration tests for KitchenSinkController
+ */
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { KitchenSinkTester.class })

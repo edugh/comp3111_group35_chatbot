@@ -6,6 +6,9 @@ import lombok.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Mock of KitchenSinkController that stores messages for easier testing
+ */
 public class MockKitchenSinkController extends KitchenSinkController {
     private List<Message> messages = new ArrayList<>();
 
