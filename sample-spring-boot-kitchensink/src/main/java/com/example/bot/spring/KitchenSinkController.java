@@ -40,6 +40,7 @@ import com.linecorp.bot.model.Multicast;
 import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -381,6 +382,8 @@ public class KitchenSinkController {
             messages.add(new TextMessage("Sorry it is full-booked that day. Here are some other trips that may interest you"));
             plans.forEachRemaining(p -> messages.add(new TextMessage(String.format("%s: %s - %s", p.id, p.name, p.shortDescription))));
             messages.add(new TextMessage("Are you interested in changing to any of these trips?"));
+            // Since we need to go back to plan stage manually set dialogFlow context
+            AIApiWrapper.setContext(Arrays.asList(new ImmutablePair<>("NeedAdults", 0), new ImmutablePair<>("NeedPlan", 10)), source);
             return messages;
         } else {
             database.updateBookingDate(customerId, planId, sqlDate);
