@@ -174,21 +174,6 @@ public class DatabaseEngine {
         );
     }
 
-    public void insertTag(Tag tag) {
-        executeStatement(
-                "INSERT INTO Tags(name, customerID) VALUES(?,?)",
-                params(tag.name, tag.customerId)
-        );
-    }
-
-    public ArrayList<Tag> getTags(String cid) {
-        return getResultsForQuery(
-                "SELECT name FROM Tags where customerId = ?;",
-                Tag::fromResultSet,
-                params(cid)
-        );
-    }
-
     public void insertDialogue(Dialogue dlg) {
         Timestamp ts = Timestamp.from(dlg.sendTime.toInstant());
         executeStatement(
