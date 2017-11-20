@@ -478,4 +478,25 @@ public class KitchenSinkTester {
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
 	}
+	public void testCancelPartialBooking() throws Exception {
+		databaseEngine.insertCustomer("userId1", "Jason", 20, "M", "01234567");
+
+		Map<String, String> userResponses = new HashMap<>();
+		userResponses.put(null, "Which tours are available?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
+		userResponses.put("How many adults(Age>11) are planning to go?", "1");
+		userResponses.put("How many children (Age 4 to 11) are planning to go?", "Cancel Booking");
+		goThroughDialogflow(userResponses, "Cancel Booking");
+
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 1);
+		Assert.assertEquals(responses.get(0), new TextMessage("Booking Cancelled"));
+
+		BigDecimal amountOwed = databaseEngine.getAmountOwed("userId1");
+		Assert.assertEquals(amountOwed.doubleValue(), 0, 1);
+
+		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
+		Assert.assertEquals(bookings.size(), 0);
+	}
 }
