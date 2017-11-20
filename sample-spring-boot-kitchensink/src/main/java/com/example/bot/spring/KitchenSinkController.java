@@ -485,9 +485,9 @@ public class KitchenSinkController {
             plans.forEachRemaining(plan -> {
                 List<String> tourDates = database.getTours(plan.id).stream().map(t -> t.tourDate.toString()).collect(Collectors.toList());
                 messages.add(new TextMessage(
-                    String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription)) +
-                    (tourDates. ? "" : " (" + String.join(", ", tourDates) + ")")
-                );
+                    String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription) +
+                    (tourDates.isEmpty() ? "" : " (" + String.join(", ", tourDates) + ")")
+                ));
             });
             messages.add(new TextMessage("Here are some tours that may interest you, please respond which one you would like to book"));
             return messages;
