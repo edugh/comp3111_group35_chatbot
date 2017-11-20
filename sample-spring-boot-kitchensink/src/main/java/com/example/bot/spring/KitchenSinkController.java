@@ -375,7 +375,8 @@ public class KitchenSinkController {
         Plan plan = database.getPlan(planId).orElseThrow(() -> new RuntimeException("Plan should exist"));
         if (database.isTourFull(planId, sqlDate)) {
             List<Message> messages = new ArrayList<>();
-            Iterator<Plan> plans = Utils.filterAndSortTourResults(tour.tourDate, plan.name + plan.shortDescription, database.getPlans());
+            List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
+            Iterator<Plan> plans = Utils.filterAndSortTourResults(tour.tourDate, plan.name + plan.shortDescription, pastPlans, database.getPlans());
             if (!plans.hasNext()) {
                 return Collections.singletonList(new TextMessage("Sorry it is full-booked that day, try searching for other tours."));
             }
@@ -464,12 +465,13 @@ public class KitchenSinkController {
         return "Booking Cancelled";
     }
 
-    private List<Message> handleTourSearch(Result aiResult) {
+    private List<Message> handleTourSearch(Result aiResult, Source source) {
         java.util.Date date = aiResult.getDateParameter("date");
         String keywords = aiResult.getStringParameter("any");
+        List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
         // TODO(Jason) also deal with date ranges eg next weekend or next week
 
-        Iterator<Plan> plans = Utils.filterAndSortTourResults(date, keywords, database.getPlans());
+        Iterator<Plan> plans = Utils.filterAndSortTourResults(date, keywords, pastPlans, database.getPlans());
         if (!plans.hasNext()) {
             return Collections.singletonList(new TextMessage("No tours found"));
         } else {
@@ -520,7 +522,7 @@ public class KitchenSinkController {
         Source source = event.getSource();
         log.info("Got text message from {}: {}", replyToken, text);
 
-        Result aiResult = AIApiWrapper.getIntent(text, source, Collections.EMPTY_LIST);
+        Result aiResult = AIApiWrapper.getIntent(text, source, new ArrayList<>());
         String intentName = aiResult.getMetadata().getIntentName();
         log.info("Received intent from api.ai: {}", intentName);
 
@@ -543,7 +545,7 @@ public class KitchenSinkController {
                 this.reply(replyToken, handleEnrolledTours(source));
                 break;
             case TOUR_SEARCH:
-                this.reply(replyToken, handleTourSearch(aiResult));
+                this.reply(replyToken, handleTourSearch(aiResult, source));
                 break;
             case GIVE_NAME:
                 this.replyText(replyToken, handleGiveName(aiResult, source));
