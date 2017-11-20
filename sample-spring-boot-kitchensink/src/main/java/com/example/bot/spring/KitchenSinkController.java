@@ -488,12 +488,12 @@ public class KitchenSinkController {
         String intentName = aiResult.getMetadata().getIntentName();
         log.info("Received intent from api.ai: {}", intentName);
 
+        if(text.equals("admin:question_report")) {
+    		this.reply(replyToken, handleDialogReport(source));
+    		return;
+    	}
         if (intentName == null) {
-        	if(text.equals("admin:question_report")) {
-        		this.reply(replyToken, handleDialogReport(source));
-        	} else {
-        		this.replyText(replyToken, handleUnknowDialogue(text, source));
-        	}
+        	this.replyText(replyToken, handleUnknowDialogue(text, source));
             return;
         }
         switch (intentName) {
