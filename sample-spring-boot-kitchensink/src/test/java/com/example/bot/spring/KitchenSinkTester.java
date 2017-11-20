@@ -30,8 +30,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.sql.DataSource;
 import java.io.File;
 import java.math.BigDecimal;
-import java.sql.*;
 import java.sql.Date;
+import java.sql.*;
 import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
@@ -250,7 +250,7 @@ public class KitchenSinkTester {
 		Assert.assertEquals(dialogueRecordAfter.get(0).customerId, "userId1");
 		Assert.assertEquals(dialogueRecordAfter.get(0).content, "Elephants fly inward from the sky");
 	}
-	
+
 	@Test
 	public void testUnhandledUserTextReport() throws Exception {
 		MessageEvent<TextMessageContent> messageEvent;
@@ -270,7 +270,7 @@ public class KitchenSinkTester {
 
 		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId4", "admin:question_report");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
-		
+
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 2);
 		Assert.assertEquals(responses.get(0), new TextMessage("Elephants fly inward from the sky"));
@@ -390,6 +390,21 @@ public class KitchenSinkTester {
 		expectedBooking = new Booking("userId2", "Id3", booking.tourDate, 0, 2, 4, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
     }
+
+	@Test
+	public void testTourFull() throws Exception {
+		String pid = "Id2";
+		Date date = Date.valueOf("2017-11-14");
+		Assert.assertFalse(databaseEngine.isTourFull(pid, date));
+
+		databaseEngine.insertCustomer("userId1", "Elliot", 22, "M", "01234567");
+		databaseEngine.insertBooking("userId1", pid, date, 2, 3, 2, BigDecimal.ZERO, BigDecimal.ZERO);
+        Assert.assertFalse(databaseEngine.isTourFull(pid, date));
+
+        databaseEngine.insertCustomer("userId2", "Keith", 22, "M", "12345800");
+        databaseEngine.insertBooking("userId2", pid, date, 1, 1, 1, BigDecimal.ZERO, BigDecimal.ZERO);
+        Assert.assertTrue(databaseEngine.isTourFull(pid, date));
+	}
 
 	// NEGATIVE TEST CASES
 	@Test

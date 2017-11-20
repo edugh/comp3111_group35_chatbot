@@ -200,7 +200,7 @@ public class DatabaseEngine {
                 params(cid)
         );
     }
-    
+
     public ArrayList<Dialogue> getAllDialogues() {
         return getResultsForQuery(
                 "SELECT * FROM Dialogues;",
@@ -259,8 +259,14 @@ public class DatabaseEngine {
     }
 
     public boolean isTourFull(String pid, Date date) {
-        // TODO(What should this be)
-        return false;
+        Tour tour = getTour(pid, date).get();
+        return tryGetResultForQuery(
+            "SELECT SUM(Bookings.adults + Bookings.children + Bookings.toddlers) FROM bookings " +
+                "JOIN Customers ON customerId = id " +
+                "WHERE planId = ? and tourDate = ?;",
+            (rs) -> rs.getInt(1),
+            params(tour.planId, date)
+        ) >= tour.capacity;
     }
 
     public ArrayList<Discount> getDiscounts(String pid, Date date) {
