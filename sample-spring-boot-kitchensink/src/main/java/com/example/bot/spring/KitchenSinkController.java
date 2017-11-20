@@ -18,10 +18,14 @@ package com.example.bot.spring;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Array;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -392,6 +396,69 @@ public class KitchenSinkController {
             plans.forEachRemaining(plan -> messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription))));
             messages.add(new TextMessage("Here are some tours that may interest you, please respond which one you would like to book"));
             return messages;
+        }
+    }
+
+    private void informConfirmed(Customer c, BookingStatus bs) {
+        ArrayList<Message> messages = new ArrayList<>();
+        messages.add(new TextMessage(String.format(
+            "Your tour '%s' on %s has been confirmed. Your guide will be %s." +
+                    " Please meet them at %s at %s. ",
+            bs.plan.name,
+            bs.tour.tourDate,
+            bs.tour.guideName,
+            bs.plan.departure,
+            "TODO: tour time"
+        )));
+        BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
+        if(owed.equals(BigDecimal.ZERO)) {
+            messages.add(new TextMessage(
+                "Thank you for paying for the tour in full - see you soon!"
+            ));
+        } else {
+            messages.add(new TextMessage(String.format(
+                "Please pay %s before the tour departure.",
+                owed.toPlainString()
+            )));
+        }
+        lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
+    }
+
+    private void informCancelled(Customer c, BookingStatus bs) {
+        ArrayList<Message> messages = new ArrayList<>();
+        messages.add(new TextMessage(String.format(
+            "Unfortunately, your tour '%s' on %s has been cancelled because " +
+                    "the minimum number of participants did not sign up. ",
+            bs.plan.name,
+            bs.tour.tourDate
+        )));
+        BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
+        BigDecimal fee = database.getFee(c.id, bs.tour);
+        if(owed.equals(fee)) {
+            messages.add(new TextMessage(String.format(
+                "You have already paid %s - you can get a refund here: %s",
+                owed.toPlainString(),
+                "https://www.easternparadise.com/refund"
+            )));
+        } else if(!owed.equals(BigDecimal.ZERO)) {
+            messages.add(new TextMessage(
+                "Additionally, though this cancellation was no fault of your " +
+                    "own, because you haven't pain in full and so cannot be " +
+                    "offered a refund."
+            ));
+        }
+        lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
+    }
+
+    @Scheduled(cron = "0 9 * * *")
+    private void decideTourStatus() {
+        Date inThreedays = Date.valueOf(LocalDate.now().plusDays(3));
+        for(BookingStatus bs : database.getBookingStatus(inThreedays)) {
+            if(bs.isConfirmed()) {
+                for(Customer c : bs.booked) { informConfirmed(c, bs); };
+            } else {
+                for(Customer c : bs.booked) { informCancelled(c, bs); };
+            }
         }
     }
 
