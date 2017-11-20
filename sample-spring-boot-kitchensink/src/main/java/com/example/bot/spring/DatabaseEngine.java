@@ -83,6 +83,14 @@ public class DatabaseEngine {
         return bookings.stream().map(booking -> (booking.fee.subtract(booking.paid))).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public ArrayList<Plan> getPastPlansForUser(String customerId) {
+        return getResultsForQuery(
+                "SELECT Plans.* FROM Plans INNER JOIN Bookings ON (Plans.id = Bookings.planId) WHERE Bookings.customerId=?;",
+                Plan::fromResultSet,
+                params(customerId)
+        );
+    }
+
     public ArrayList<Plan> getPlans() {
         return getResultsForQuery("SELECT * FROM Plans;", Plan::fromResultSet);
     }
@@ -119,6 +127,13 @@ public class DatabaseEngine {
         );
     }
 
+    public void insertBooking(String cid, String pid, Date date, Integer adults, Integer children, Integer toddlers, BigDecimal fee, BigDecimal paid) {
+        executeStatement(
+                "INSERT INTO bookings(customerId, planId, tourDate, adults, children, toddlers, fee, paid) VALUES(?,?,?,?,?,?,?,?)",
+                params(cid, pid, date, adults, children, toddlers, fee, paid)
+        );
+    }
+
     public void updateBookingDate(String cid, String pid, Date date) {
         Date defaultDate = new Date(0); //TODO: Why do we need this?
         executeStatement(
@@ -145,6 +160,13 @@ public class DatabaseEngine {
         executeStatement(
                 String.format("UPDATE Bookings SET %s = ? WHERE customerId = ? AND planId = ? AND tourDate = ?", field),
                 params(value, cid, pid, date)
+        );
+    }
+
+    public void dropBooking(String cid, String pid, Date date) {
+        executeStatement(
+                "DELETE FROM Bookings WHERE customerId = ? AND planId = ? AND tourDate = ?",
+                params(cid, pid, date)
         );
     }
 
@@ -179,6 +201,13 @@ public class DatabaseEngine {
         );
     }
 
+    public ArrayList<Dialogue> getAllDialogues() {
+        return getResultsForQuery(
+                "SELECT * FROM Dialogues;",
+                Dialogue::fromResultSet
+        );
+    }
+
     public Optional<Customer> getCustomer(String cid) {
         return getResultForQuery(
                 "SELECT * FROM Customers where id = ?",
@@ -191,6 +220,13 @@ public class DatabaseEngine {
         executeStatement(
                 "INSERT INTO Customers(id,state) VALUES(?, 'new');",
                 params(cid)
+        );
+    }
+
+    public void insertCustomer(String cid, String name, int age, String gender, String phoneNumber) {
+        executeStatement(
+                "INSERT INTO Customers(id,name,age,gender,phoneNumber,state) VALUES(?,?,?,?,?, 'new');",
+                params(cid, name, age, gender, phoneNumber)
         );
     }
 
@@ -223,8 +259,14 @@ public class DatabaseEngine {
     }
 
     public boolean isTourFull(String pid, Date date) {
-        // TODO(What should this be)
-        return false;
+        Tour tour = getTour(pid, date).get();
+        return tryGetResultForQuery(
+            "SELECT SUM(Bookings.adults + Bookings.children + Bookings.toddlers) FROM bookings " +
+                "JOIN Customers ON customerId = id " +
+                "WHERE planId = ? and tourDate = ?;",
+            (rs) -> rs.getInt(1),
+            params(tour.planId, date)
+        ) >= tour.capacity;
     }
 
     public ArrayList<Discount> getDiscounts(String pid, Date date) {

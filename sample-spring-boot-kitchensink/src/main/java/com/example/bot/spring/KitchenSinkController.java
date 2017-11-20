@@ -40,6 +40,7 @@ import com.linecorp.bot.model.Multicast;
 import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -106,6 +107,7 @@ public class KitchenSinkController {
     private static final String CANCEL_CONFIRMATION = "CancelConfirmation";
 
     private static final String DISCOUNT = "Discount";
+    private static final String CANCEL_BOOKING = "CancelBooking";
 
     private static final String CHANNEL_TOKEN = "86G0LghgbbwHzoX8UIIvnaMGMAAJL6/mXQQEWNat4Jlsk0dRMaC91ksPZtG1whpuma/7LJsBO/UVqY7eweieJGNdOHnimA5dW4ElA3QBeVOlBGmqk+c+ypmGrdzuir8nLfpMD4Yc/7Vciz8wbbizTgdB04t89/1O/w1cDnyilFU=";
 
@@ -171,7 +173,7 @@ public class KitchenSinkController {
         String replyToken = event.getReplyToken();
         String customerId = event.getSource().getUserId();
         if (!database.getCustomer(customerId).isPresent()) {
-            database.insertCustomer((customerId));
+            database.insertCustomer(customerId);
         }
         List<Message> msgList = new ArrayList<>();
 		msgList.add(new TextMessage("Welcome. This is travel chatbot No.35."));
@@ -358,19 +360,37 @@ public class KitchenSinkController {
         }
     }
 
-    private String handleGiveDeparture(Result aiResult, Source source) {
+    private List<Message> handleGiveDeparture(Result aiResult, Source source) {
         String customerId = source.getUserId();
         Booking booking = database.getCurrentBooking(customerId);
         String planId = booking.planId;
 
         java.util.Date date = aiResult.getDateParameter("date-time");
         Date sqlDate = new java.sql.Date(date.getTime());
+        Optional<Tour> tourOptional = database.getTour(planId, sqlDate);
+        if (!tourOptional.isPresent()) {
+            return Collections.singletonList(new TextMessage("Could not find a tour on that date"));
+        }
+
+        Tour tour = tourOptional.get();
+        Plan plan = database.getPlan(planId).orElseThrow(() -> new RuntimeException("Plan should exist"));
         if (database.isTourFull(planId, sqlDate)) {
-            return "Sorry it is full-booked that day. What about other trips or departure date?";
+            List<Message> messages = new ArrayList<>();
+            List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
+            Iterator<Plan> plans = Utils.filterAndSortTourResults(tour.tourDate, plan.name + plan.shortDescription, pastPlans, database.getPlans());
+            if (!plans.hasNext()) {
+                return Collections.singletonList(new TextMessage("Sorry it is full-booked that day, try searching for other tours."));
+            }
+            messages.add(new TextMessage("Sorry it is full-booked that day. Here are some other trips that may interest you"));
+            plans.forEachRemaining(p -> messages.add(new TextMessage(String.format("%s: %s - %s", p.id, p.name, p.shortDescription))));
+            messages.add(new TextMessage("Are you interested in changing to any of these trips?"));
+            // Since we need to go back to plan stage manually set dialogFlow context
+            AIApiWrapper.setContext(Arrays.asList(new ImmutablePair<>("NeedAdults", 0), new ImmutablePair<>("NeedPlan", 10)), source);
+            return messages;
         } else {
             database.updateBookingDate(customerId, planId, sqlDate);
             database.updateCustomerState(customerId, "reqNAdult");
-            return "How many adults(Age>11) are planning to go?";
+            return Collections.singletonList(new TextMessage("How many adults(Age>11) are planning to go?"));
         }
     }
 
@@ -439,17 +459,25 @@ public class KitchenSinkController {
         return "Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it.";
     }
 
-    private String handleCancelConfirmation(Result aiResult, Source source) {
-        //TODO(Jason): do it
-        return "Booking calcelled";
+    private String handleCancelConfirmation(Source source) {
+        String customerId = source.getUserId();
+        try {
+            Booking booking = database.getCurrentBooking(customerId);
+            database.dropBooking(customerId, booking.planId, booking.tourDate);
+            AIApiWrapper.resetContexts(source);
+            return "Booking Cancelled";
+        } catch (IllegalStateException ex) {
+            return "No booking is currently in progress";
+        }
     }
 
-    private List<Message> handleTourSearch(Result aiResult) {
+    private List<Message> handleTourSearch(Result aiResult, Source source) {
         java.util.Date date = aiResult.getDateParameter("date");
         String keywords = aiResult.getStringParameter("any");
+        List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
         // TODO(Jason) also deal with date ranges eg next weekend or next week
 
-        Iterator<Plan> plans = Utils.filterAndSortTourResults(date, keywords, database.getPlans());
+        Iterator<Plan> plans = Utils.filterAndSortTourResults(date, keywords, pastPlans, database.getPlans());
         if (!plans.hasNext()) {
             return Collections.singletonList(new TextMessage("No tours found"));
         } else {
@@ -467,18 +495,31 @@ public class KitchenSinkController {
         database.insertDialogue(newDialogue);
         return "I don't understand your question, try rephrasing";
     }
+    
+    private List<Message> handleDialogReport(Source source) {
+    	ArrayList<Dialogue> dialogues = database.getAllDialogues();
+    	ArrayList<Message> messages = new ArrayList<>();
+    	for(Dialogue dialogue : dialogues) {
+    		messages.add(new TextMessage(String.format("%s", dialogue.content)));
+    	}
+    	return messages;
+    }
 
     private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
         Source source = event.getSource();
         log.info("Got text message from {}: {}", replyToken, text);
 
-        Result aiResult = AIApiWrapper.getIntent(text, source);
+        Result aiResult = AIApiWrapper.getIntent(text, source, new ArrayList<>());
         String intentName = aiResult.getMetadata().getIntentName();
         log.info("Received intent from api.ai: {}", intentName);
 
+        if(text.equals("admin:question_report")) {
+    		this.reply(replyToken, handleDialogReport(source));
+    		return;
+    	}
         if (intentName == null) {
-            this.replyText(replyToken, handleUnknowDialogue(text, source));
+        	this.replyText(replyToken, handleUnknowDialogue(text, source));
             return;
         }
         switch (intentName) {
@@ -492,7 +533,7 @@ public class KitchenSinkController {
                 this.reply(replyToken, handleEnrolledTours(source));
                 break;
             case TOUR_SEARCH:
-                this.reply(replyToken, handleTourSearch(aiResult));
+                this.reply(replyToken, handleTourSearch(aiResult, source));
                 break;
             case GIVE_NAME:
                 this.replyText(replyToken, handleGiveName(aiResult, source));
@@ -508,7 +549,7 @@ public class KitchenSinkController {
                 break;
 
             case GIVE_DEPARTURE_DATE:
-                this.replyText(replyToken, handleGiveDeparture(aiResult, source));
+                this.reply(replyToken, handleGiveDeparture(aiResult, source));
                 break;
             case GIVE_ADULTS:
                 this.replyText(replyToken, handleGiveAdults(aiResult, source));
@@ -522,11 +563,15 @@ public class KitchenSinkController {
             case GIVE_CONFIRMATION:
                 this.replyText(replyToken, handleGiveConfirmation(source));
                 break;
+            case CANCEL_BOOKING:
+                this.replyText(replyToken, handleCancelConfirmation(source));
+                break;
             case CANCEL_CONFIRMATION:
-                this.replyText(replyToken, handleCancelConfirmation(aiResult, source));
+                this.replyText(replyToken, handleCancelConfirmation(source));
                 break;
             case DISCOUNT:
                 this.replyText(replyToken, handleDiscount(aiResult, source));
+                break;
             default:
                 if (intentName.startsWith(FAQ_PREFIX)) {
                     this.replyText(replyToken, handleFAQ(aiResult));
