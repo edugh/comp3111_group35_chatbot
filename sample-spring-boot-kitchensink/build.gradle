@@ -41,6 +41,7 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
 
     testCompile "org.mockito:mockito-core:2.+"
+    testCompile group: 'nl.jqno.equalsverifier', name: 'equalsverifier', version: '2.4'
 }
 
 test {

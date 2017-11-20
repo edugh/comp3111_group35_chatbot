@@ -11,7 +11,7 @@ import java.sql.SQLException;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class FAQ {
+public final class FAQ {
     public final String question;
     public final String answer;
 

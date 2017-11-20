@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class DiscountSchedule {
+public final class DiscountSchedule {
     public final String planId;
     public final Date tourDate;
     public final Timestamp sendTime;

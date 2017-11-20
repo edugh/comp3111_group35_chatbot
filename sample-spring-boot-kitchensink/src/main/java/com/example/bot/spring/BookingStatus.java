@@ -18,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class BookingStatus {
+public final class BookingStatus {
     /**
     The particular tour this booking status relates to.
      */
