@@ -1,5 +1,6 @@
 package com.example.bot.spring;
 
+import ai.api.model.AIOutputContext;
 import ai.api.model.Result;
 import com.google.common.collect.Sets;
 import com.linecorp.bot.model.event.source.Source;
@@ -10,10 +11,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AIApiWrapperTester {
 
     private Source source;
+
+    private Set<String> getOutputContexts(List<AIOutputContext> contexts) {
+        return contexts.stream().map(AIOutputContext::getName).collect(Collectors.toSet());
+    }
 
     @Before
     public void beforeEachTest() throws Exception {
@@ -40,13 +46,13 @@ public class AIApiWrapperTester {
         Result result = AIApiWrapper.getIntent("3", source, Arrays.asList(new ImmutablePair<>("NeedAdults", 10)));
         Assert.assertEquals(result.getMetadata().getIntentName(), "GiveAdults");
         Assert.assertEquals(result.getIntParameter("number-integer"), 3);
-        Set<String> contexts = AIApiWrapper.getOutputContexts(result.getContexts());
+        Set<String> contexts = getOutputContexts(result.getContexts());
         Assert.assertEquals(contexts, Sets.newHashSet("needchildren"));
 
         result = AIApiWrapper.getIntent("2", source, new ArrayList<>());
         Assert.assertEquals(result.getMetadata().getIntentName(), "GiveChildren");
         Assert.assertEquals(result.getIntParameter("number-integer"), 2);
-        contexts = AIApiWrapper.getOutputContexts(result.getContexts());
+        contexts = getOutputContexts(result.getContexts());
         Assert.assertEquals(contexts,Sets.newHashSet("needtoddlers"));
     }
 
@@ -56,14 +62,14 @@ public class AIApiWrapperTester {
                 new ImmutablePair<>("NeedAdults", 10),
                 new ImmutablePair<>("NeedDeparture", 10)
         ), source);
-        Set<String> contexts = AIApiWrapper.getOutputContexts(result.getContexts());
+        Set<String> contexts = getOutputContexts(result.getContexts());
         Assert.assertEquals(contexts, Sets.newHashSet("needadults", "needdeparture"));
 
         result = AIApiWrapper.setContext(Arrays.asList(
                 new ImmutablePair<>("NeedAdults", 0),
                 new ImmutablePair<>("NeedChildren", 10)
         ), source);
-        contexts = AIApiWrapper.getOutputContexts(result.getContexts());
+        contexts = getOutputContexts(result.getContexts());
         Assert.assertEquals(contexts, Sets.newHashSet("needchildren", "needdeparture"));
     }
 }
