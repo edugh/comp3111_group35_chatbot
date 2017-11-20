@@ -148,6 +148,13 @@ public class DatabaseEngine {
         );
     }
 
+    public void dropBooking(String cid, String pid, Date date) {
+        executeStatement(
+                "DELETE FROM Bookings WHERE customerId = ? AND planId = ? AND tourDate = ?",
+                params(cid, pid, date)
+        );
+    }
+
     public void insertTag(Tag tag) {
         executeStatement(
                 "INSERT INTO Tags(name, customerID) VALUES(?,?)",
@@ -191,6 +198,13 @@ public class DatabaseEngine {
         executeStatement(
                 "INSERT INTO Customers(id,state) VALUES(?, 'new');",
                 params(cid)
+        );
+    }
+
+    public void insertCustomer(String cid, String name, int age, String gender, String phoneNumber) {
+        executeStatement(
+                "INSERT INTO Customers(id,name,age,gender,phoneNumber,state) VALUES(?,?,?,?,?, 'new');",
+                params(cid, name, age, gender, phoneNumber)
         );
     }
 
