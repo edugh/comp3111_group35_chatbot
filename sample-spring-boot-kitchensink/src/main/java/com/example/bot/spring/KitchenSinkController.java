@@ -527,6 +527,7 @@ public class KitchenSinkController {
                 break;
             case DISCOUNT:
                 this.replyText(replyToken, handleDiscount(aiResult, source));
+                break;
             default:
                 if (intentName.startsWith(FAQ_PREFIX)) {
                     this.replyText(replyToken, handleFAQ(aiResult));
