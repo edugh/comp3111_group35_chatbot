@@ -5,6 +5,7 @@ import lombok.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Mock of KitchenSinkController that stores messages for easier testing
@@ -29,5 +30,15 @@ public class MockKitchenSinkController extends KitchenSinkController {
     @Override
     protected void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
         this.messages.addAll(messages);
+    }
+
+    @Override
+    protected void push(@NonNull Set<String> userIds, @NonNull Message message) {
+
+    }
+
+    @Override
+    protected void push(@NonNull String userId, @NonNull Message message) {
+
     }
 }
