@@ -285,7 +285,7 @@ public class KitchenSinkTester {
 
     @Test
     public void testDiscountSuccess() throws Exception {
-        String userResponse = "Discount 2 seats for 2D001 on 2017/11/06";
+        String userResponse = "Discount 2 seats for Id1 on 2017/11/06";
         MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
         kitchenSinkController.handleTextMessageEvent(messageEvent);
         log.info("user response: {}", userResponse);
@@ -295,7 +295,7 @@ public class KitchenSinkTester {
 
     @Test
     public void testDiscountFailure() throws Exception {
-        String userResponse = "Discount 2 seats for 2D001 on 2017/11/11";
+        String userResponse = "Discount 2 seats for Id1 on 2017/11/11";
         MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
         kitchenSinkController.handleTextMessageEvent(messageEvent);
         log.info("user response: {}", userResponse);
