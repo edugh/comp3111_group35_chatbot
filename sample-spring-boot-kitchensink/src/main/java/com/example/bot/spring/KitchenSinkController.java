@@ -214,7 +214,7 @@ public class KitchenSinkController {
 
     private String handleAmountOwed(Source source) {
         BigDecimal amountOwed = database.getAmountOwed(source.getUserId());
-        String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
+        String prettyAmount = NumberFormat.getCurrencyInstance(Locale.US).format(amountOwed);
         return String.format("You owe %s", prettyAmount);
     }
 
