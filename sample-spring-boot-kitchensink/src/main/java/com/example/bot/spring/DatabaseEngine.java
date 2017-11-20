@@ -26,6 +26,10 @@ public class DatabaseEngine {
         this.connection = c;
     }
 
+    /**
+     *
+     * @return
+     */
     public static DatabaseEngine connectToProduction() {
         try {
             URI dbUri = new URI(System.getenv("DATABASE_URL"));

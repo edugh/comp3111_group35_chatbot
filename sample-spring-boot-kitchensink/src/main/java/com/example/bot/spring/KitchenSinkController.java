@@ -275,12 +275,23 @@ public class KitchenSinkController {
         java.util.Date date = aiResult.getDateParameter("date-time");
         Date sqlDate = new java.sql.Date(date.getTime());
         Optional<Tour> tourOptional = database.getTour(planId, sqlDate);
+        Plan plan = database.getPlan(planId).orElseThrow(() -> new RuntimeException("Plan should exist"));
         if (!tourOptional.isPresent()) {
-            return Collections.singletonList(new TextMessage("Could not find a tour on that date"));
+            List<Message> messages = new ArrayList<>();
+            List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
+            Iterator<Plan> plans = Utils.filterAndSortTourResults(date, plan.name + plan.shortDescription, pastPlans, database.getPlans());
+            if (!plans.hasNext()) {
+                return Collections.singletonList(new TextMessage("Could not find a tour on that date, try searching for other tours."));
+            }
+            messages.add(new TextMessage("Could not find a tour on that date. Here are some other trips that may interest you"));
+            plans.forEachRemaining(p -> messages.add(new TextMessage(String.format("%s: %s - %s", p.id, p.name, p.shortDescription))));
+            messages.add(new TextMessage("Are you interested in changing to any of these trips?"));
+            // Since we need to go back to plan stage manually set dialogFlow context
+            AIApiWrapper.setContext(Arrays.asList(new ImmutablePair<>("NeedAdults", 0), new ImmutablePair<>("NeedPlan", 10)), source);
+            return messages;
         }
 
         Tour tour = tourOptional.get();
-        Plan plan = database.getPlan(planId).orElseThrow(() -> new RuntimeException("Plan should exist"));
         if (database.isTourFull(planId, sqlDate)) {
             List<Message> messages = new ArrayList<>();
             List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
