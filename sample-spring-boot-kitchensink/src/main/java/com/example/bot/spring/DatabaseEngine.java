@@ -546,7 +546,7 @@ public class DatabaseEngine {
     /**
      * Gets the booking status (tour, plan, customers booked) of a date
      * @param date the date to check
-     * @return a list of bookings with tour & plan on this date
+     * @return a list of bookings with tour and plan on this date
      */
     public ArrayList<BookingStatus> getBookingStatus(Date date) {
         ArrayList<BookingStatus> statuses = new ArrayList<>();
