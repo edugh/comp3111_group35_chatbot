@@ -336,7 +336,7 @@ public class KitchenSinkController {
     private String handleGiveNumber(Result aiResult, Source source) {
         String customerId = source.getUserId();
         String phoneNumber = aiResult.getStringParameter("phone-number");
-        database.updateCustomer(customerId, "phoneNumber", Utils.filterString(phoneNumber));
+        database.updateCustomer(customerId, "phoneNumber", phoneNumber);
         return "When are you planing to set out? Please answer in YYYY/MM/DD.";
     }
 
