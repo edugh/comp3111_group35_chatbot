@@ -109,7 +109,7 @@ public class KitchenSinkController {
     }
 
     /**
-     * Entrance for handling user text messages
+     * Entrance for handling user text messages. Given arbitrary text query, decide how to handle it and resond to user
      * @param event The event containing the user query
      * @throws Exception
      */
@@ -118,8 +118,86 @@ public class KitchenSinkController {
         log.info("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         log.info("This is your entry point:");
         log.info("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-        TextMessageContent message = event.getMessage();
-        handleTextContent(event.getReplyToken(), event, message);
+        TextMessageContent content = event.getMessage();
+        String replyToken = event.getReplyToken();
+
+        String text = content.getText();
+        Source source = event.getSource();
+        log.info("Got text message from {}: {}", replyToken, text);
+
+        Result aiResult = AIApiWrapper.getIntent(text, source, new ArrayList<>());
+        String intentName = aiResult.getMetadata().getIntentName();
+        log.info("Received intent from api.ai: {}", intentName);
+
+        if(text.equals("admin:question_report")) {
+            this.reply(replyToken, handleDialogReport(source));
+            return;
+        }
+        if(text.contains("admin:push ")) {
+            this.replyText(replyToken, handleDemandPush(new TextMessage(text.replace("admin:push ",""))));
+            return;
+        }
+        if (intentName == null) {
+            this.replyText(replyToken, handleUnknowDialogue(text, source));
+            return;
+        }
+        switch (intentName) {
+            case AMOUNT_OWED:
+                this.replyText(replyToken, handleAmountOwed(source));
+                break;
+            case BOOK_TOUR:
+                this.replyText(replyToken, handleBookingRequest(aiResult, source));
+                break;
+            case ENROLLED_TOURS:
+                this.reply(replyToken, handleEnrolledTours(source));
+                break;
+            case TOUR_SEARCH:
+                this.reply(replyToken, handleTourSearch(aiResult, source));
+                break;
+            case GIVE_NAME:
+                this.replyText(replyToken, handleGiveName(aiResult, source));
+                break;
+            case GIVE_GENDER:
+                this.replyText(replyToken, handleGiveGender(aiResult, source));
+                break;
+            case GIVE_AGE:
+                this.replyText(replyToken, handleGiveAge(aiResult, source));
+                break;
+            case GIVE_NUMBER:
+                this.replyText(replyToken, handleGiveNumber(aiResult, source));
+                break;
+
+            case GIVE_DEPARTURE_DATE:
+                this.reply(replyToken, handleGiveDeparture(aiResult, source));
+                break;
+            case GIVE_ADULTS:
+                this.replyText(replyToken, handleGiveAdults(aiResult, source));
+                break;
+            case GIVE_CHILDREN:
+                this.replyText(replyToken, handleGiveChildren(aiResult, source));
+                break;
+            case GIVE_TODDLERS:
+                this.replyText(replyToken, handleGiveToddlers(aiResult, source));
+                break;
+            case GIVE_CONFIRMATION:
+                this.replyText(replyToken, handleGiveConfirmation(source));
+                break;
+            case CANCEL_BOOKING:
+                this.replyText(replyToken, handleCancelConfirmation(source));
+                break;
+            case CANCEL_CONFIRMATION:
+                this.replyText(replyToken, handleCancelConfirmation(source));
+                break;
+            case DISCOUNT:
+                this.replyText(replyToken, handleDiscount(aiResult, source));
+                break;
+            default:
+                if (intentName.startsWith(FAQ_PREFIX)) {
+                    this.replyText(replyToken, handleFAQ(aiResult));
+                } else {
+                    this.replyText(replyToken, handleUnknowDialogue(text, source));
+                }
+        }
     }
 
     /**
@@ -174,7 +252,7 @@ public class KitchenSinkController {
      * @param replyToken User to send message to
      * @param message Message to send
      */
-    private void replyText(@NonNull String replyToken, @NonNull String message) {
+    public void replyText(@NonNull String replyToken, @NonNull String message) {
         if (replyToken.isEmpty()) {
             throw new IllegalArgumentException("replyToken must not be empty");
         }
@@ -707,95 +785,8 @@ public class KitchenSinkController {
      * @param message Message to push out
      * @return Messages to send back to user
      */
-    private String handleDemandPush(Message message) {
+    public String handleDemandPush(Message message) {
         this.push(database.getCustomerIdSet(), message);
         return "Push demand received.";
-    }
-
-    /**
-     * Given arbitrary text query, decide how to handle it and resond to user
-     * @param replyToken Token to reply back ot the user
-     * @param event Event with user source info
-     * @param content content of the text message
-     * @throws Exception
-     */
-    private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
-        String text = content.getText();
-        Source source = event.getSource();
-        log.info("Got text message from {}: {}", replyToken, text);
-
-        Result aiResult = AIApiWrapper.getIntent(text, source, new ArrayList<>());
-        String intentName = aiResult.getMetadata().getIntentName();
-        log.info("Received intent from api.ai: {}", intentName);
-
-        if(text.equals("admin:question_report")) {
-    		this.reply(replyToken, handleDialogReport(source));
-    		return;
-    	}
-    	if(text.contains("admin:push")) {
-            this.replyText(replyToken, handleDemandPush(new TextMessage(text.replace("admin:push",""))));
-            return;
-        }
-        if (intentName == null) {
-        	this.replyText(replyToken, handleUnknowDialogue(text, source));
-            return;
-        }
-        switch (intentName) {
-            case AMOUNT_OWED:
-                this.replyText(replyToken, handleAmountOwed(source));
-                break;
-            case BOOK_TOUR:
-                this.replyText(replyToken, handleBookingRequest(aiResult, source));
-                break;
-            case ENROLLED_TOURS:
-                this.reply(replyToken, handleEnrolledTours(source));
-                break;
-            case TOUR_SEARCH:
-                this.reply(replyToken, handleTourSearch(aiResult, source));
-                break;
-            case GIVE_NAME:
-                this.replyText(replyToken, handleGiveName(aiResult, source));
-                break;
-            case GIVE_GENDER:
-                this.replyText(replyToken, handleGiveGender(aiResult, source));
-                break;
-            case GIVE_AGE:
-                this.replyText(replyToken, handleGiveAge(aiResult, source));
-                break;
-            case GIVE_NUMBER:
-                this.replyText(replyToken, handleGiveNumber(aiResult, source));
-                break;
-
-            case GIVE_DEPARTURE_DATE:
-                this.reply(replyToken, handleGiveDeparture(aiResult, source));
-                break;
-            case GIVE_ADULTS:
-                this.replyText(replyToken, handleGiveAdults(aiResult, source));
-                break;
-            case GIVE_CHILDREN:
-                this.replyText(replyToken, handleGiveChildren(aiResult, source));
-                break;
-            case GIVE_TODDLERS:
-                this.replyText(replyToken, handleGiveToddlers(aiResult, source));
-                break;
-            case GIVE_CONFIRMATION:
-                this.replyText(replyToken, handleGiveConfirmation(source));
-                break;
-            case CANCEL_BOOKING:
-                this.replyText(replyToken, handleCancelConfirmation(source));
-                break;
-            case CANCEL_CONFIRMATION:
-                this.replyText(replyToken, handleCancelConfirmation(source));
-                break;
-            case DISCOUNT:
-                this.replyText(replyToken, handleDiscount(aiResult, source));
-                break;
-            default:
-                if (intentName.startsWith(FAQ_PREFIX)) {
-                    this.replyText(replyToken, handleFAQ(aiResult));
-                } else {
-                    this.replyText(replyToken, handleUnknowDialogue(text, source));
-                }
-        }
     }
 }

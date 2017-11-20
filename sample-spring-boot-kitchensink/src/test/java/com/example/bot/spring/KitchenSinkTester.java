@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -574,4 +575,34 @@ public class KitchenSinkTester {
         List<Message> responses = kitchenSinkController.getLatestMessages();
         Assert.assertEquals(responses.get(0), new TextMessage("Sorry discount sold out"));
     }
+
+	@Test
+	public void testOnDemandMessage() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "admin:push this is my test message");
+		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
+
+		mockKitchenSinkController.handleTextMessageEvent(messageEvent);
+		Mockito.verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
+		Mockito.verify(mockKitchenSinkController).replyText(anyString(), eq("Push demand received."));
+	}
+
+	@Test
+	public void testPushDiscount() {
+		//kitchenSinkController.pushDiscount();
+	}
+
+	@Test
+	public void testInformPaymentRequired() {
+
+	}
+
+	@Test
+	public void testInformConfirmed() {
+
+	}
+
+	@Test
+	public void testInformCancelled() {
+
+	}
 }
