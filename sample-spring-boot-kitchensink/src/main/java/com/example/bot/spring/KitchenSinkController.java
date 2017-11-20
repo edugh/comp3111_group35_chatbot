@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import ai.api.model.Result;
 import com.example.bot.spring.model.*;
@@ -475,14 +476,19 @@ public class KitchenSinkController {
         java.util.Date date = aiResult.getDateParameter("date");
         String keywords = aiResult.getStringParameter("any");
         List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
-        // TODO(Jason) also deal with date ranges eg next weekend or next week
 
         Iterator<Plan> plans = Utils.filterAndSortTourResults(date, keywords, pastPlans, database.getPlans());
         if (!plans.hasNext()) {
             return Collections.singletonList(new TextMessage("No tours found"));
         } else {
             ArrayList<Message> messages = new ArrayList<>();
-            plans.forEachRemaining(plan -> messages.add(new TextMessage(String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription))));
+            plans.forEachRemaining(plan -> {
+                List<String> tourDates = database.getTours(plan.id).stream().map(t -> t.tourDate.toString()).collect(Collectors.toList());
+                messages.add(new TextMessage(
+                    String.format("%s: %s - %s", plan.id, plan.name, plan.shortDescription)) +
+                    (tourDates. ? "" : " (" + String.join(", ", tourDates) + ")")
+                );
+            });
             messages.add(new TextMessage("Here are some tours that may interest you, please respond which one you would like to book"));
             return messages;
         }

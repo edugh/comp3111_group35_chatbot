@@ -316,6 +316,14 @@ public class DatabaseEngine {
         );
     }
 
+    public ArrayList<Tour> getTours(String pid) {
+        return getResultsForQuery(
+            "SELECT * FROM tours WHERE planid = ?;",
+            Tour::fromResultSet,
+            params(pid)
+        );
+    }
+
     /**
      * Executes a query in the database, transforms each row of the result into a model type
      * and returns an array of models.
