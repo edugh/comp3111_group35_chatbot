@@ -529,6 +529,14 @@ public class DatabaseEngine {
         );
     }
 
+    public ArrayList<Tour> getTours(String pid) {
+        return getResultsForQuery(
+            "SELECT * FROM tours WHERE planid = ?;",
+            Tour::fromResultSet,
+            params(pid)
+        );
+    }
+
     /**
      * Get customers on a particular tour
      * @param t the tour to check

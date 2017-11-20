@@ -168,8 +168,8 @@ public class KitchenSinkTester {
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 4);
-		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
-		Assert.assertEquals(responses.get(1), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1 (2017-11-06, 2017-11-08, 2017-11-11)"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2 (2017-11-14)"));
 		Assert.assertEquals(responses.get(2), new TextMessage("Id3: National Park Tour - Description3"));
 	}
 
@@ -185,28 +185,28 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 3);
-		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
+		Assert.assertEquals(responses.get(0), new TextMessage("Id1: Shimen National Forest Tour - Description1 (2017-11-06, 2017-11-08, 2017-11-11)"));
 		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
 
 		messageEvent = createMessageEvent("replyToken3", "userId1", "messageId3", "Any Hot Spring Tours on Tuesday?");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 2);
-		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2 (2017-11-14)"));
 
 		messageEvent = createMessageEvent("replyToken4", "userId1", "messageId4", "Are there tours going to a Hot Spring on Wednesday?");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 2);
-		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2 (2017-11-14)"));
 
 		messageEvent = createMessageEvent("replyToken4", "userId1", "messageId4", "What tours are available on Tuesday?");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 4);
-		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2 (2017-11-14)"));
 		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
-		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Shimen National Forest Tour - Description1"));
+		Assert.assertEquals(responses.get(2), new TextMessage("Id1: Shimen National Forest Tour - Description1 (2017-11-06, 2017-11-08, 2017-11-11)"));
 	}
 
 	@Test
@@ -222,7 +222,7 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 3);
-		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2"));
+		Assert.assertEquals(responses.get(0), new TextMessage("Id2: Yangshan Hot Spring Tour - Description2 (2017-11-14)"));
 		Assert.assertEquals(responses.get(1), new TextMessage("Id3: National Park Tour - Description3"));
 
 		databaseEngine.insertBooking("userId1", "Id2", new Date(0), 1, 3, 5, new BigDecimal(100), new BigDecimal(0));
