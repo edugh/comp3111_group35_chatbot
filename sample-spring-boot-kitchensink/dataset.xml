@@ -3,7 +3,10 @@
     <bookings/>
     <customers/>
     <dialogues/>
-    <discountbookings/>
+    <discountbookings customerId="Id1" planId="Id1" tourDate="2017-11-11" seats="1"/>
+    <discountbookings customerId="Id2" planId="Id1" tourDate="2017-11-11" seats="1"/>
+    <discountbookings customerId="Id3" planId="Id1" tourDate="2017-11-11" seats="1"/>
+    <discountbookings customerId="Id4" planId="Id1" tourDate="2017-11-11" seats="1"/>
     <faq questionId="FAQ1" question="How to apply?" answer="FAQ answer 1"/>
     <faq questionId="FAQ2" question="Where is the gathering/assemble and dismiss spot?" answer="FAQ answer 2"/>
     <plans id="Id1" name="Shimen National Forest Tour" shortdescription="Description1" length="2" departure="Mon" price="499.0" weekendprice="599.0"/>
@@ -16,8 +19,4 @@
     <tours planid="Id2" tourdate="2017-11-14" guidename="Guide4" guideaccount="Guide4&apos;s Account" hotel="Hotel4" capacity="10"  minimum="1"/>
     <discounttours planid="Id1" tourdate="2017-11-06" sendtime="2017-11-01 09:00:00"/>
     <discounttours planid="Id1" tourdate="2017-11-11" sendtime="2017-11-01 10:00:00"/>
-    <discountbookings customerId="Id1" planId="Id1" tourDate="2017-11-11" seat="1"/>
-    <discountbookings customerId="Id2" planId="Id1" tourDate="2017-11-11" seat="1"/>
-    <discountbookings customerId="Id3" planId="Id1" tourDate="2017-11-11" seat="1"/>
-    <discountbookings customerId="Id4" planId="Id1" tourDate="2017-11-11" seat="1"/>
 </dataset>
