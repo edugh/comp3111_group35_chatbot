@@ -505,7 +505,7 @@ public class KitchenSinkController {
     	return messages;
     }
 
-    private List<Message> handleDemandPush(Message message, Source source) {
+    private List<Message> handleDemandPush(Message message) {
         ArrayList<Message> feedback = new ArrayList<>();
         this.push(database.getCustomerIdSet(), message);
         feedback.add(new TextMessage("Push demand received."));
@@ -525,6 +525,10 @@ public class KitchenSinkController {
     		this.reply(replyToken, handleDialogReport(source));
     		return;
     	}
+    	if(text.contains("admin:push")) {
+            this.reply(replyToken, handleDemandPush(new TextMessage(text.replace("admin:push",""))));
+            return;
+        }
         if (intentName == null) {
         	this.replyText(replyToken, handleUnknowDialogue(text, source));
             return;
