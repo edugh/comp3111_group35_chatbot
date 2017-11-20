@@ -652,29 +652,27 @@ public class KitchenSinkController {
      * @param c custimer
      * @param bs booking status
      */
-    private void informConfirmed(Customer c, BookingStatus bs) {
-        ArrayList<Message> messages = new ArrayList<>();
-        messages.add(new TextMessage(String.format(
-            "Your tour '%s' on %s has been confirmed. Your guide will be %s." +
-                    " Please meet them at %s at %s. ",
-            bs.plan.name,
-            bs.tour.tourDate,
-            bs.tour.guideName,
-            bs.plan.departure,
-            "TODO: tour time"
+    public void informConfirmed(Customer c, BookingStatus bs) {
+        push(c.id, new TextMessage(String.format(
+                "Your tour '%s' on %s has been confirmed. Your guide will be %s." +
+                        " Please meet them at %s at %s.",
+                bs.plan.name,
+                bs.tour.tourDate,
+                bs.tour.guideName,
+                bs.plan.departure,
+                "TODO: tour time"
         )));
         BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
         if(owed.equals(BigDecimal.ZERO)) {
-            messages.add(new TextMessage(
+            push(c.id, new TextMessage(
                 "Thank you for paying for the tour in full - see you soon!"
             ));
         } else {
-            messages.add(new TextMessage(String.format(
+            push(c.id, new TextMessage(String.format(
                 "Please pay %s before the tour departure.",
                 owed.toPlainString()
             )));
         }
-        lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
     }
 
     /**
@@ -682,30 +680,28 @@ public class KitchenSinkController {
      * @param c custimer
      * @param bs booking status
      */
-    private void informCancelled(Customer c, BookingStatus bs) {
-        ArrayList<Message> messages = new ArrayList<>();
-        messages.add(new TextMessage(String.format(
+    public void informCancelled(Customer c, BookingStatus bs) {
+        push(c.id, new TextMessage(String.format(
             "Unfortunately, your tour '%s' on %s has been cancelled because " +
-                    "the minimum number of participants did not sign up. ",
+                    "the minimum number of participants did not sign up.",
             bs.plan.name,
             bs.tour.tourDate
         )));
         BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
         BigDecimal fee = database.getFee(c.id, bs.tour);
         if(owed.equals(fee)) {
-            messages.add(new TextMessage(String.format(
+            push(c.id, new TextMessage(String.format(
                 "You have already paid %s - you can get a refund here: %s",
-                owed.toPlainString(),
+                    (fee.subtract(owed)).toPlainString(),
                 "https://www.easternparadise.com/refund"
             )));
         } else if(!owed.equals(BigDecimal.ZERO)) {
-            messages.add(new TextMessage(
+            push(c.id, new TextMessage(
                 "Additionally, though this cancellation was no fault of your " +
                     "own, because you haven't pain in full and so cannot be " +
                     "offered a refund."
             ));
         }
-        lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
     }
 
     /**
