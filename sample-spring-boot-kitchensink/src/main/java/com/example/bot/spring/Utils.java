@@ -28,7 +28,7 @@ public class Utils {
         return abbreviations.indexOf(abbreviation) + 1;
     }
 
-    public static int ratePlanForCriteria(Date date, String search, Plan plan) {
+    public static int ratePlanForCriteria(Date date, String search, List<Plan> pastPlans, Plan plan) {
         int score = 100;
         if (date != null) {
             boolean matchedDate = Arrays.asList(plan.departure.split(", ")).stream().anyMatch(abbr -> getDateOfWeek(date) == getDateOfWeek(abbr));
@@ -43,15 +43,21 @@ public class Utils {
             score -= 60 * keywords.stream().mapToDouble(keyword -> fullSearchableText.contains(keyword) ? 0 : 1).sum() / keywords.size();
         }
 
+        if (pastPlans != null && !pastPlans.isEmpty()) {
+            if (pastPlans.contains(plan)) {
+                score = 0;
+            }
+        }
+
         return score;
     }
 
-    public static Iterator<Plan> filterAndSortTourResults(Date date, String keywords, List<Plan> plans) {
+    public static Iterator<Plan> filterAndSortTourResults(Date date, String keywords, List<Plan> pastPlans, List<Plan> plans) {
         return plans.stream()
-                .map(plan -> Pair.of(plan, ratePlanForCriteria(date, keywords, plan)))
+                .map(plan -> Pair.of(plan, ratePlanForCriteria(date, keywords, pastPlans, plan)))
                 .filter(o -> o.getRight() > 50)
                 .sorted((o1, o2) -> o2.getRight() - o1.getRight())
-                .map(o -> o.getLeft())
+                .map(Pair::getLeft)
                 .iterator();
     }
 
