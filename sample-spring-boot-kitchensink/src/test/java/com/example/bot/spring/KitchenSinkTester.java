@@ -268,15 +268,17 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId4", "Elephants fly inward from the sky??!");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId5", "Elephants go inward for the sky??!");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
 		kitchenSinkController.clearMessages();
 
-		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId5", "admin:question_report");
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId6", "admin:question_report");
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
 		Assert.assertEquals(responses.size(), 4);
 		Assert.assertEquals(responses.get(0), new TextMessage("--Question frequency report--"));
-		Assert.assertEquals(responses.get(1), new TextMessage("2 - Elephants fly inward from the sky"));
+		Assert.assertEquals(responses.get(1), new TextMessage("3 - Elephants fly inward from the sky"));
 		Assert.assertEquals(responses.get(2), new TextMessage("1 - Allllllll not is watch"));
 		Assert.assertEquals(responses.get(3), new TextMessage("--End of Report--"));
 	}
