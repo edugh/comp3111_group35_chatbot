@@ -498,10 +498,33 @@ public class KitchenSinkController {
     
     private List<Message> handleDialogReport(Source source) {
     	ArrayList<Dialogue> dialogues = database.getAllDialogues();
-    	ArrayList<Message> messages = new ArrayList<>();
+    	ArrayList<Map.Entry<String, Integer>> dialogueTypeList = new ArrayList<>();
     	for(Dialogue dialogue : dialogues) {
-    		messages.add(new TextMessage(String.format("%s", dialogue.content)));
+    		String parsedDialogue = dialogue.content.replaceAll("[^A-Za-z0-9 ]", "");
+    		boolean dialogExist = false;
+    		for(Map.Entry<String, Integer> existingDialog : dialogueTypeList) {
+    			if(Utils.stupidFuzzyMatch(existingDialog.getKey(), parsedDialogue)) {
+    				existingDialog.setValue(existingDialog.getValue() + 1);
+    				dialogExist = true;
+    			}
+    		}
+    		if(dialogExist) {
+    		} else {
+    			dialogueTypeList.add(new AbstractMap.SimpleEntry<String, Integer>(parsedDialogue, 1));
+    		}
     	}
+    	Collections.sort(dialogueTypeList, new Comparator<Map.Entry<String, Integer>>() {
+    		@Override
+    		public int compare(Map.Entry<String, Integer> x, Map.Entry<String, Integer> y) {
+    			return y.getValue() - x.getValue();
+    		}
+    	});
+    	ArrayList<Message> messages = new ArrayList<>();
+    	messages.add(new TextMessage("--Question frequency report--"));
+    	for(Map.Entry<String, Integer> dialogueCount : dialogueTypeList) {
+    		messages.add(new TextMessage(String.format("%d - %s", dialogueCount.getValue(), dialogueCount.getKey())));
+    	}
+    	messages.add(new TextMessage("--End of Report--"));
     	return messages;
     }
 
