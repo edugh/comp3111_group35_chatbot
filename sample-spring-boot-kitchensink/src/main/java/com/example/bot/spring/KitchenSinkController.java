@@ -528,6 +528,12 @@ public class KitchenSinkController {
     	return messages;
     }
 
+    private String handleDemandPush(Message message) {
+        ArrayList<Message> feedback = new ArrayList<>();
+        this.push(database.getCustomerIdSet(), message);
+        return "Push demand received.";
+    }
+
     private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
         Source source = event.getSource();
@@ -541,6 +547,10 @@ public class KitchenSinkController {
     		this.reply(replyToken, handleDialogReport(source));
     		return;
     	}
+    	if(text.contains("admin:push")) {
+            this.replyText(replyToken, handleDemandPush(new TextMessage(text.replace("admin:push",""))));
+            return;
+        }
         if (intentName == null) {
         	this.replyText(replyToken, handleUnknowDialogue(text, source));
             return;
