@@ -301,7 +301,7 @@ public class DatabaseEngine {
             return false;
         } else {
             executeStatement(
-                    "INSERT INTO discountBooking(customerId, planId, tourDate) VALUES(?,?,?);",
+                    "INSERT INTO discountBookings(customerId, planId, tourDate) VALUES(?,?,?);",
                     params(cid, pid, date)
             );
             return true;
