@@ -35,8 +35,10 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.*;
-import java.text.ParseException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.text.ParseException;
 import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
@@ -452,16 +454,6 @@ public class KitchenSinkTester {
 		);
 	}
 
-	@Test
-	public void testTour3DayConfirmed() {
-		// TODO: test that confirmation message is sent
-	}
-
-	@Test
-	public void testTour3DayCancelled() {
-		// TODO: test that cancellation message is sent
-	}
-
 	// NEGATIVE TEST CASES
 	@Test
 	public void testUnknownQuestions() throws Exception {
@@ -589,12 +581,24 @@ public class KitchenSinkTester {
 	}
 
 	@Test
-	public void testPushDiscount() {
+	public void testPushDiscount1() {
 		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
-		//when(mockKitchenSinkController.getNowTime()).thenReturn();
-		kitchenSinkController.schedulePushDiscount();
-		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
+        when(mockKitchenSinkController.getNowTime()).thenReturn(LocalDateTime.parse("2017-11-01T09:00:00"));
+		mockKitchenSinkController.schedulePushDiscount();
+		verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("Double 11 Festival discount! " +
+                "First 4 reply will get a 50% discount in Shimen National Forest Tour on 2017/11/06. " +
+                "Please reply 'Discount n seats for Id1 on 2017/11/06'. The n here is the number of seats you book, 1 or 2.")));
 	}
+
+    @Test
+    public void testPushDiscount2() {
+        KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
+        when(mockKitchenSinkController.getNowTime()).thenReturn(LocalDateTime.parse("2017-11-01T10:00:00"));
+        mockKitchenSinkController.schedulePushDiscount();
+        verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("Double 11 Festival discount! " +
+                "First 4 reply will get a 50% discount in Shimen National Forest Tour on 2017/11/11. " +
+                "Please reply 'Discount n seats for Id1 on 2017/11/11'. The n here is the number of seats you book, 1 or 2.")));
+    }
 
 	@Test
 	public void testInformPaymentRequired() throws ParseException {
