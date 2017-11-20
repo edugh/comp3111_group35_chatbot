@@ -76,6 +76,10 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Contains most business logic for handling what to do given a certain query, interfaces with Database, Utils,
+ * and dialogFlow (through AIApiWrapper)
+ */
 @Slf4j
 @LineMessageHandler
 public class KitchenSinkController {
@@ -83,8 +87,6 @@ public class KitchenSinkController {
     @Autowired
     private LineMessagingClient lineMessagingClient;
 
-    private AIApiWrapper aiApiWrapper;
-    
     private static final String PREVIEW_IMG_URL = "https://i.imgur.com/kQNwgcK.jpg";
 	private static final String FULL_IMG_URL = "https://i.imgur.com/RpIsqnC.jpg";
 

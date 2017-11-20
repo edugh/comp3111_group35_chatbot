@@ -13,6 +13,10 @@ import java.util.*;
 
 import static com.example.bot.spring.Utils.params;
 
+/**
+ * Handles connection logic to real or test databases, serializing results into our models, and
+ * storing our queries as functions
+ */
 @Slf4j
 public class DatabaseEngine {
 

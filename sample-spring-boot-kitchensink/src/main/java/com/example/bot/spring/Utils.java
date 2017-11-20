@@ -7,6 +7,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ * Contains a set of useful static Utility methods
+ */
 public class Utils {
     /**
      * Syntactic sugar for creating an array of objects
