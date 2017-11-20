@@ -186,7 +186,7 @@ public class KitchenSinkController {
         return discountWorked? "Discount successfully" : "Sorry discount sold out";
     }
 
-    @Scheduled(cron = "0 0 * * *")
+    @Scheduled(cron = "0 * * * *")
     private void schedulePushDiscount() {
         Timestamp now = Timestamp.from(
                 Timestamp.valueOf(LocalDateTime.now()).toInstant().truncatedTo(ChronoUnit.HOURS));
