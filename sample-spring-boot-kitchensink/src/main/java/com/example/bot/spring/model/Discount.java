@@ -8,6 +8,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Pojo representing a Discount row in the database */
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
