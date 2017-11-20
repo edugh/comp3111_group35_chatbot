@@ -469,6 +469,15 @@ public class KitchenSinkController {
         database.insertDialogue(newDialogue);
         return "I don't understand your question, try rephrasing";
     }
+    
+    private List<Message> handleDialogReport(Source source) {
+    	ArrayList<Dialogue> dialogues = database.getAllDialogues();
+    	ArrayList<Message> messages = new ArrayList<>();
+    	for(Dialogue dialogue : dialogues) {
+    		messages.add(new TextMessage(String.format("%s", dialogue.content)));
+    	}
+    	return messages;
+    }
 
     private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
@@ -479,8 +488,12 @@ public class KitchenSinkController {
         String intentName = aiResult.getMetadata().getIntentName();
         log.info("Received intent from api.ai: {}", intentName);
 
+        if(text.equals("admin:question_report")) {
+    		this.reply(replyToken, handleDialogReport(source));
+    		return;
+    	}
         if (intentName == null) {
-            this.replyText(replyToken, handleUnknowDialogue(text, source));
+        	this.replyText(replyToken, handleUnknowDialogue(text, source));
             return;
         }
         switch (intentName) {

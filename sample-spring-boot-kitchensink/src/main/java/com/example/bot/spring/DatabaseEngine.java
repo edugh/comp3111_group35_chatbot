@@ -192,6 +192,13 @@ public class DatabaseEngine {
                 params(cid)
         );
     }
+    
+    public ArrayList<Dialogue> getAllDialogues() {
+        return getResultsForQuery(
+                "SELECT * FROM Dialogues;",
+                Dialogue::fromResultSet
+        );
+    }
 
     public Optional<Customer> getCustomer(String cid) {
         return getResultForQuery(
