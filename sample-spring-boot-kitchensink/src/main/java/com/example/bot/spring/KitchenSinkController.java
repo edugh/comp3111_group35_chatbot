@@ -505,7 +505,7 @@ public class KitchenSinkController {
     	Collections.sort(dialogueTypeList, new Comparator<Map.Entry<String, Integer>>() {
     		@Override
     		public int compare(Map.Entry<String, Integer> x, Map.Entry<String, Integer> y) {
-    			return x.getValue() - y.getValue();
+    			return y.getValue() - x.getValue();
     		}
     	});
     	ArrayList<Message> messages = new ArrayList<>();

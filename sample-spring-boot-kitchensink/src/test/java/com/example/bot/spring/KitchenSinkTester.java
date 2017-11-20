@@ -274,9 +274,11 @@ public class KitchenSinkTester {
 		kitchenSinkController.handleTextMessageEvent(messageEvent);
 
 		List<Message> responses = kitchenSinkController.getLatestMessages();
-		Assert.assertEquals(responses.size(), 2);
-		Assert.assertEquals(responses.get(0), new TextMessage("2 -Elephants fly inward from the sky"));
-		Assert.assertEquals(responses.get(1), new TextMessage("1- Allllllll not is watch"));
+		Assert.assertEquals(responses.size(), 4);
+		Assert.assertEquals(responses.get(0), new TextMessage("--Question frequency report--"));
+		Assert.assertEquals(responses.get(1), new TextMessage("2 - Elephants fly inward from the sky"));
+		Assert.assertEquals(responses.get(2), new TextMessage("1 - Allllllll not is watch"));
+		Assert.assertEquals(responses.get(3), new TextMessage("--End of Report--"));
 	}
 
 	public void goThroughDialogflow(Map<String, String> userResponses, String breakString) throws Exception {
