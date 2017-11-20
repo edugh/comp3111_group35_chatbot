@@ -103,6 +103,22 @@ public class DatabaseEngine {
         );
     }
 
+    public ArrayList<Tour> getTours(String pid, Date date) {
+        return getResultsForQuery(
+                "SELECT * FROM Tours WHERE planID=? AND tourDate=?;",
+                Tour::fromResultSet,
+                params(pid, date)
+        );
+    }
+
+    public ArrayList<Tour> getTours(Date date) {
+        return getResultsForQuery(
+            "SELECT * FROM Tours WHERE tourDate=?;",
+            Tour::fromResultSet,
+            params(date)
+        );
+    }
+
     public Optional<Plan> getPlan(String pid) {
         return getResultForQuery(
                 "SELECT * FROM Plans WHERE id=?;",
@@ -110,6 +126,8 @@ public class DatabaseEngine {
                 params(pid)
         );
     }
+
+
 
     public void insertBooking(String cid, String pid) {
         Date defaultDate = new Date(0);
@@ -286,6 +304,25 @@ public class DatabaseEngine {
                 DiscountSchedule::fromResultSet,
                 params(timestamp)
         );
+    }
+
+    public ArrayList<Customer> getCustomers(Tour t) {
+        return getResultsForQuery(
+            "SELECT customers.* FROM bookings JOIN customers ON bookings.customerid = customers.id " +
+                "WHERE planid = ? and tourdate = ?;",
+            Customer::fromResultSet,
+            params(t.planId, t.tourDate)
+        );
+    }
+
+    public ArrayList<BookingStatus> getBookingStatus(Date date) {
+        ArrayList<BookingStatus> statuses = new ArrayList<>();
+        for(Plan p : getPlans()) {
+            for(Tour t : getTours(p.id, date)) {
+                statuses.add(new BookingStatus(t, p, getCustomers(t)));
+            }
+        }
+        return statuses;
     }
 
     /**

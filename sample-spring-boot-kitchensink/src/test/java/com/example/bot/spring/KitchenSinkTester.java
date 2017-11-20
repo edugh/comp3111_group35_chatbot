@@ -317,6 +317,16 @@ public class KitchenSinkTester {
 		Assert.assertEquals(booking, expectedBooking);
 	}
 
+	@Test
+	public void testTour3DayConfirmed() {
+
+	}
+
+	@Test
+	public void testTour3DayCancelled() {
+
+	}
+
 	// NEGATIVE TEST CASES
 	@Test
 	public void testUnknownQuestions() throws Exception {
