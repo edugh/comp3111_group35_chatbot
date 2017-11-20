@@ -14,23 +14,27 @@ import java.util.ArrayList;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-/*
-Represents the booking status of customers on a particular tour.
+/**
+ * Represents the booking status of customers on a particular tour.
  */
 public class BookingStatus {
-    /*
+    /**
     The particular tour this booking status relates to.
      */
     public final Tour tour;
-    /*
+    /**
     The plan of this tour.
      */
     public final Plan plan;
-    /*
+    /**
     A list of customers who have booked the tour.
      */
     public final ArrayList<Customer> booked;
 
+    /**
+     * Determines whether a tour meets minimum participation quota
+     * @return Whether or not the tour has enough people to be confirmed
+     */
     public boolean isConfirmed() {
         return booked.size() >= tour.minimum;
     }
