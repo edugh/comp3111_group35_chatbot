@@ -428,7 +428,6 @@ public class KitchenSinkController {
     	});
     	ArrayList<Message> messages = new ArrayList<>();
     	String resultMessage = "--Question frequency report--\n";
-    	//messages.add(new TextMessage("--Question frequency report--"));
     	for(Map.Entry<String, Integer> dialogueCount : dialogueTypeList) {
     		resultMessage += String.format("%d - %s", dialogueCount.getValue(), dialogueCount.getKey());
     		resultMessage += "\n";
