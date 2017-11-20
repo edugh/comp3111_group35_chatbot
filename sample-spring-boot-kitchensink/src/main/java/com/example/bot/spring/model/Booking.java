@@ -10,10 +10,11 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Pojo representing a Booking row in the database */
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class Booking {
+public final class Booking {
     public final String customerId;
     public final String planId;
     public final Date tourDate;

@@ -1,11 +1,25 @@
 package com.example.bot.spring;
 
-import com.example.bot.spring.model.Plan;
+import com.example.bot.spring.model.*;
+import com.google.common.collect.Sets;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import javax.validation.constraints.AssertTrue;
+import java.math.BigDecimal;
+import java.sql.*;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.Date;
 
+import static org.bouncycastle.asn1.ua.DSTU4145NamedCurves.params;
+
+/**
+ * Unit tests for methods defined in Utils
+ */
 public class UtilTester {
 
     @Test
@@ -125,5 +139,63 @@ public class UtilTester {
 
         expectedPlans = Arrays.asList(plan3, plan4).iterator();
         assertIteratorEquals(Utils.filterAndSortTourResults(friday, null, pastPlans, plans), expectedPlans);
+    }
+
+    private ResultSet createFakeResultSet(List<Object> objects) throws SQLException {
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        for (int i = 0; i < objects.size(); i++) {
+            if (objects.get(i) instanceof String) {
+                Mockito.when(rs.getString(i + 1)).thenReturn((String) objects.get(i));
+            } else if (objects.get(i) instanceof Integer) {
+                Mockito.when(rs.getInt(i + 1)).thenReturn((Integer) objects.get(i));
+            } else if (objects.get(i) instanceof java.sql.Date) {
+                Mockito.when(rs.getDate(i + 1)).thenReturn((java.sql.Date) objects.get(i));
+            } else if (objects.get(i) instanceof Timestamp) {
+                Mockito.when(rs.getTimestamp(i + 1)).thenReturn((Timestamp) objects.get(i));
+            } else if (objects.get(i) instanceof BigDecimal) {
+                Mockito.when(rs.getBigDecimal(i + 1)).thenReturn((BigDecimal) objects.get(i));
+            }
+        }
+        return rs;
+    }
+
+    @Test
+    public void testModelEquals() throws SQLException {
+        EqualsVerifier.forClass(Booking.class)
+            .withPrefabValues(java.sql.Date.class,
+                java.sql.Date.valueOf(LocalDate.now()),
+                java.sql.Date.valueOf(LocalDate.MIN))
+            .verify();
+        EqualsVerifier.forClass(Customer.class).verify();
+        EqualsVerifier.forClass(Dialogue.class)
+            .withPrefabValues(Timestamp.class,
+                Timestamp.from(Instant.EPOCH),
+                Timestamp.from(Instant.MAX))
+            .verify();
+        EqualsVerifier.forClass(Discount.class)
+            .withPrefabValues(java.sql.Date.class,
+                    java.sql.Date.valueOf(LocalDate.now()),
+                    java.sql.Date.valueOf(LocalDate.MIN))
+            .verify();
+        EqualsVerifier.forClass(DiscountSchedule.class)
+            .withPrefabValues(java.sql.Date.class,
+                    java.sql.Date.valueOf(LocalDate.now()),
+                    java.sql.Date.valueOf(LocalDate.MIN))
+            .withPrefabValues(Timestamp.class,
+                    Timestamp.from(Instant.EPOCH),
+                    Timestamp.from(Instant.MAX))
+            .verify();
+        EqualsVerifier.forClass(FAQ.class).verify();
+        EqualsVerifier.forClass(Plan.class).verify();
+        EqualsVerifier.forClass(Tour.class)
+            .withPrefabValues(java.sql.Date.class,
+                    java.sql.Date.valueOf(LocalDate.now()),
+                    java.sql.Date.valueOf(LocalDate.MIN))
+            .verify();
+        EqualsVerifier.forClass(BookingStatus.class)
+            .withPrefabValues(java.sql.Date.class,
+                    java.sql.Date.valueOf(LocalDate.now()),
+                    java.sql.Date.valueOf(LocalDate.MIN))
+            .verify();
     }
 }

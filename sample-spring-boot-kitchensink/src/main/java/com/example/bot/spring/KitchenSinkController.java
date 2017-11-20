@@ -17,15 +17,15 @@
 package com.example.bot.spring;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Array;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -44,48 +44,31 @@ import com.linecorp.bot.model.event.source.Source;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import com.google.common.io.ByteStreams;
 
 import com.linecorp.bot.client.LineMessagingClient;
-import com.linecorp.bot.client.MessageContentResponse;
 import com.linecorp.bot.model.ReplyMessage;
-import com.linecorp.bot.model.event.BeaconEvent;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.FollowEvent;
-import com.linecorp.bot.model.event.JoinEvent;
 import com.linecorp.bot.model.event.MessageEvent;
-import com.linecorp.bot.model.event.PostbackEvent;
-import com.linecorp.bot.model.event.UnfollowEvent;
-import com.linecorp.bot.model.event.message.AudioMessageContent;
-import com.linecorp.bot.model.event.message.ImageMessageContent;
-import com.linecorp.bot.model.event.message.LocationMessageContent;
-import com.linecorp.bot.model.event.message.StickerMessageContent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
-import com.linecorp.bot.model.message.AudioMessage;
 import com.linecorp.bot.model.message.ImageMessage;
-import com.linecorp.bot.model.message.LocationMessage;
 import com.linecorp.bot.model.message.Message;
-import com.linecorp.bot.model.message.StickerMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.response.BotApiResponse;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 
 import lombok.NonNull;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Contains most business logic for handling what to do given a certain query, interfaces with Database, Utils,
+ * and dialogFlow (through AIApiWrapper)
+ */
 @Slf4j
 @LineMessageHandler
 public class KitchenSinkController {
 
-    @Autowired
-    private LineMessagingClient lineMessagingClient;
-
-    private AIApiWrapper aiApiWrapper;
-    
     private static final String PREVIEW_IMG_URL = "https://i.imgur.com/kQNwgcK.jpg";
 	private static final String FULL_IMG_URL = "https://i.imgur.com/RpIsqnC.jpg";
 
@@ -112,6 +95,24 @@ public class KitchenSinkController {
 
     private static final String CHANNEL_TOKEN = "86G0LghgbbwHzoX8UIIvnaMGMAAJL6/mXQQEWNat4Jlsk0dRMaC91ksPZtG1whpuma/7LJsBO/UVqY7eweieJGNdOHnimA5dW4ElA3QBeVOlBGmqk+c+ypmGrdzuir8nLfpMD4Yc/7Vciz8wbbizTgdB04t89/1O/w1cDnyilFU=";
 
+    @Autowired
+    private LineMessagingClient lineMessagingClient;
+
+    private DatabaseEngine database;
+
+    public KitchenSinkController() {
+        this(DatabaseEngine.connectToProduction());
+    }
+
+    public KitchenSinkController(DatabaseEngine databaseEngine) {
+        this.database = databaseEngine;
+    }
+
+    /**
+     * Entrance for handling user text messages
+     * @param event The event containing the user query
+     * @throws Exception
+     */
     @EventMapping
     public void handleTextMessageEvent(MessageEvent<TextMessageContent> event) throws Exception {
         log.info("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
@@ -121,54 +122,10 @@ public class KitchenSinkController {
         handleTextContent(event.getReplyToken(), event, message);
     }
 
-    @EventMapping
-    public void handleStickerMessageEvent(MessageEvent<StickerMessageContent> event) {
-        handleSticker(event.getReplyToken(), event.getMessage());
-    }
-
-    @EventMapping
-    public void handleLocationMessageEvent(MessageEvent<LocationMessageContent> event) {
-        LocationMessageContent locationMessage = event.getMessage();
-        reply(event.getReplyToken(), new LocationMessage(locationMessage.getTitle(), locationMessage.getAddress(),
-                locationMessage.getLatitude(), locationMessage.getLongitude()));
-    }
-
-    @EventMapping
-    public void handleImageMessageEvent(MessageEvent<ImageMessageContent> event) throws IOException {
-        final MessageContentResponse response;
-        String replyToken = event.getReplyToken();
-        String messageId = event.getMessage().getId();
-        try {
-            response = lineMessagingClient.getMessageContent(messageId).get();
-        } catch (InterruptedException | ExecutionException e) {
-            reply(replyToken, new TextMessage("Cannot get image: " + e.getMessage()));
-            throw new RuntimeException(e);
-        }
-        DownloadedContent jpg = saveContent("jpg", response);
-        reply(((MessageEvent) event).getReplyToken(), new ImageMessage(jpg.getUri(), jpg.getUri()));
-
-    }
-
-    @EventMapping
-    public void handleAudioMessageEvent(MessageEvent<AudioMessageContent> event) throws IOException {
-        final MessageContentResponse response;
-        String replyToken = event.getReplyToken();
-        String messageId = event.getMessage().getId();
-        try {
-            response = lineMessagingClient.getMessageContent(messageId).get();
-        } catch (InterruptedException | ExecutionException e) {
-            reply(replyToken, new TextMessage("Cannot get audio: " + e.getMessage()));
-            throw new RuntimeException(e);
-        }
-        DownloadedContent mp4 = saveContent("mp4", response);
-        reply(event.getReplyToken(), new AudioMessage(mp4.getUri(), 100));
-    }
-
-    @EventMapping
-    public void handleUnfollowEvent(UnfollowEvent event) {
-        log.info("unfollowed this bot: {}", event);
-    }
-
+    /**
+     * The entrance for when a user starts a conversation with the bot
+     * @param event The event containing user info
+     */
     @EventMapping
     public void handleFollowEvent(FollowEvent event) {
         String replyToken = event.getReplyToken();
@@ -183,33 +140,20 @@ public class KitchenSinkController {
         reply(replyToken, msgList);
     }
 
-    @EventMapping
-    public void handleJoinEvent(JoinEvent event) {
-        String replyToken = event.getReplyToken();
-        this.replyText(replyToken, "Joined " + event.getSource());
-    }
-
-    @EventMapping
-    public void handlePostbackEvent(PostbackEvent event) {
-        String replyToken = event.getReplyToken();
-        this.replyText(replyToken, "Got postback " + event.getPostbackContent().getData());
-    }
-
-    @EventMapping
-    public void handleBeaconEvent(BeaconEvent event) {
-        String replyToken = event.getReplyToken();
-        this.replyText(replyToken, "Got beacon message " + event.getBeacon().getHwid());
-    }
-
-    @EventMapping
-    public void handleOtherEvent(Event event) {
-        log.info("Received message(Ignored): {}", event);
-    }
-
+    /**
+     * Send a message back to the user
+     * @param replyToken User to send message to
+     * @param message Message to send
+     */
     private void reply(@NonNull String replyToken, @NonNull Message message) {
         reply(replyToken, Collections.singletonList(message));
     }
 
+    /**
+     * Send a list of message back to the user
+     * @param replyToken User to send messages to
+     * @param messages Messages to send
+     */
     protected void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
         try {
             log.info("Sending messages:");
@@ -225,53 +169,11 @@ public class KitchenSinkController {
         }
     }
 
-    protected void push(@NonNull String userId, @NonNull List<Message> messages) {
-        PushMessage pushMessage = new PushMessage(userId, messages);
-        try {
-            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().pushMessage(pushMessage).execute();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    protected void push(@NonNull Set<String> userId, @NonNull Message message) {
-        Multicast pushMessage = new Multicast(userId, message);
-        try {
-            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().multicast(pushMessage).execute();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    public void pushDiscount(String planId, Date date) {
-        Plan plan = database.getPlan(planId).orElseThrow(() -> new IndexOutOfBoundsException("Can't push discount because plan doesn't exist"));
-        String nlpDate = new SimpleDateFormat("yyyy/MM/dd").format(date);
-        String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
-                        "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
-                plan.name, nlpDate, planId, nlpDate);
-        push(database.getCustomerIdSet(), new TextMessage(message));
-    }
-
-    public String handleDiscount(Result aiResult, Source source) {
-        String customerId = source.getUserId();
-        String numberTickets = aiResult.getStringParameter("number-integer");
-        String planId = aiResult.getStringParameter("any");
-        Date tourDate = new Date(aiResult.getDateParameter("date").getTime());
-
-        boolean discountWorked = database.insertDiscount(customerId, planId, tourDate);
-        return discountWorked? "Discount successfully" : "Sorry discount sold out";
-    }
-
-    @Scheduled(cron = "0 0 * * * ?")
-    private void schedulePushDiscount() {
-        Timestamp now = Timestamp.from(
-                Timestamp.valueOf(LocalDateTime.now()).toInstant().truncatedTo(ChronoUnit.HOURS));
-        List<DiscountSchedule> listDiscountSchedule = database.getDiscountSchedules(now);
-        for (DiscountSchedule ds : listDiscountSchedule) {
-            pushDiscount(ds.planId, ds.tourDate);
-        }
-    }
-
+    /**
+     * Send a message back to the user
+     * @param replyToken User to send message to
+     * @param message Message to send
+     */
     private void replyText(@NonNull String replyToken, @NonNull String message) {
         if (replyToken.isEmpty()) {
             throw new IllegalArgumentException("replyToken must not be empty");
@@ -282,22 +184,104 @@ public class KitchenSinkController {
         this.reply(replyToken, new TextMessage(message));
     }
 
-    private void handleSticker(String replyToken, StickerMessageContent content) {
-        reply(replyToken, new StickerMessage(content.getPackageId(), content.getStickerId()));
+    /**
+     * Push a message to a list of users
+     * @param userIds ids to broadcast to
+     * @param message message to broadcast
+     */
+    protected void push(@NonNull Set<String> userIds, @NonNull Message message) {
+        Multicast pushMessage = new Multicast(userIds, message);
+        try {
+            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().multicast(pushMessage).execute();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
+    /**
+     * Push a message to a list of users
+     * @param userId id to broadcast to
+     * @param message message to broadcast
+     */
+    protected void push(@NonNull String userId, @NonNull Message message) {
+        PushMessage pushMessage = new PushMessage(userId, message);
+        try {
+            LineMessagingServiceBuilder.create(CHANNEL_TOKEN).build().pushMessage(pushMessage).execute();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Push a discount message for 11/11 to users
+     * @param planId Plan to give a discount on
+     * @param date Date to give the discounted rate
+     */
+    public void pushDiscount(String planId, Date date) {
+        Plan plan = database.getPlan(planId).orElseThrow(() -> new IndexOutOfBoundsException("Can't push discount because plan doesn't exist"));
+        String nlpDate = new SimpleDateFormat("yyyy/MM/dd").format(date);
+        String message = String.format("Double 11 Festival discount! First 4 reply will get a 50% discount " +
+                        "in %s on %s. Please reply 'Discount n seats for %s on %s'. The n here is the number of seats you book, 1 or 2.",
+                plan.name, nlpDate, planId, nlpDate);
+        push(database.getCustomerIdSet(), new TextMessage(message));
+    }
+
+    /**
+     * Handle the user trying to get a discount
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
+    public String handleDiscount(Result aiResult, Source source) {
+        String customerId = source.getUserId();
+        int numberTickets = aiResult.getIntParameter("number-integer");
+        String planId = aiResult.getStringParameter("any");
+        Date tourDate = new Date(aiResult.getDateParameter("date").getTime());
+
+        boolean discountWorked = database.insertDiscount(customerId, planId, tourDate, numberTickets);
+        return discountWorked? "Discount successfully" : "Sorry discount sold out";
+    }
+
+    /**
+     * Schedule the discount to be pushed out
+     */
+    @Scheduled(cron = "0 * * * *")
+    private void schedulePushDiscount() {
+        Timestamp now = Timestamp.from(
+                Timestamp.valueOf(LocalDateTime.now()).toInstant().truncatedTo(ChronoUnit.HOURS));
+        List<DiscountSchedule> listDiscountSchedule = database.getDiscountSchedules(now);
+        for (DiscountSchedule ds : listDiscountSchedule) {
+            pushDiscount(ds.planId, ds.tourDate);
+        }
+    }
+
+    /**
+     * Handle the user asking as FAQ
+     * @param aiResult Result from DialogFlow
+     * @return Message to send back to the user
+     */
     private String handleFAQ(Result aiResult) {
         return database.getFAQ(aiResult.getMetadata().getIntentName())
                 .map(faq -> faq.answer)
                 .orElse("I was told to handle this as an FAQ, but it is not one.");
     }
 
+    /**
+     * Handle the user asking how much they owe
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleAmountOwed(Source source) {
         BigDecimal amountOwed = database.getAmountOwed(source.getUserId());
-        String prettyAmount = NumberFormat.getCurrencyInstance().format(amountOwed);
+        String prettyAmount = NumberFormat.getCurrencyInstance(Locale.US).format(amountOwed);
         return String.format("You owe %s", prettyAmount);
     }
 
+    /**
+     * Handle the user asking what tours they are enrolled in
+     * @param source User Source
+     * @return Messages to send back to the user
+     */
     private List<Message> handleEnrolledTours(Source source) {
         ArrayList<Booking> bookings = database.getBookings(source.getUserId());
         if (bookings.size() == 0) {
@@ -312,6 +296,12 @@ public class KitchenSinkController {
         }
     }
 
+    /**
+     * Handle the user giving their naming
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveName(Result aiResult, Source source) {
         String customerId = source.getUserId();
         String givenName = aiResult.getStringParameter("given-name");
@@ -320,6 +310,12 @@ public class KitchenSinkController {
         return "Male or Female please?";
     }
 
+    /**
+     * Handle the user giving their gender
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveGender(Result aiResult, Source source) {
         String customerId = source.getUserId();
         String gender = aiResult.getStringParameter("Gender");
@@ -327,6 +323,12 @@ public class KitchenSinkController {
         return "How old are you please?";
     }
 
+    /**
+     * Handle the user giving their age
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveAge(Result aiResult, Source source) {
         String customerId = source.getUserId();
         int age = aiResult.getIntParameter("number-integer");
@@ -334,13 +336,26 @@ public class KitchenSinkController {
         return "Phone number please?";
     }
 
+    /**
+     * Handle the user givine their phone number
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveNumber(Result aiResult, Source source) {
         String customerId = source.getUserId();
         String phoneNumber = aiResult.getStringParameter("phone-number");
-        database.updateCustomer(customerId, "phoneNumber", Utils.filterString(phoneNumber));
+        database.updateCustomer(customerId, "phoneNumber", phoneNumber);
         return "When are you planing to set out? Please answer in YYYY/MM/DD.";
     }
 
+    /**
+     * Handle the user making a booking request, start the booking process by either asking for a tour
+     * or their user info if not previously given
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleBookingRequest(Result aiResult, Source source) {
         String customerId = source.getUserId();
         Customer customer = database.getCustomer(customerId).get(); //TODO: what if customer not in DB?
@@ -361,6 +376,13 @@ public class KitchenSinkController {
         }
     }
 
+    /**
+     * Handle the user giving their intended departure for a tour. If the tour is not found or full ask
+     * them to try booking another tour
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private List<Message> handleGiveDeparture(Result aiResult, Source source) {
         String customerId = source.getUserId();
         Booking booking = database.getCurrentBooking(customerId);
@@ -369,12 +391,23 @@ public class KitchenSinkController {
         java.util.Date date = aiResult.getDateParameter("date-time");
         Date sqlDate = new java.sql.Date(date.getTime());
         Optional<Tour> tourOptional = database.getTour(planId, sqlDate);
+        Plan plan = database.getPlan(planId).orElseThrow(() -> new RuntimeException("Plan should exist"));
         if (!tourOptional.isPresent()) {
-            return Collections.singletonList(new TextMessage("Could not find a tour on that date"));
+            List<Message> messages = new ArrayList<>();
+            List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
+            Iterator<Plan> plans = Utils.filterAndSortTourResults(date, plan.name + plan.shortDescription, pastPlans, database.getPlans());
+            if (!plans.hasNext()) {
+                return Collections.singletonList(new TextMessage("Could not find a tour on that date, try searching for other tours."));
+            }
+            messages.add(new TextMessage("Could not find a tour on that date. Here are some other trips that may interest you"));
+            plans.forEachRemaining(p -> messages.add(new TextMessage(String.format("%s: %s - %s", p.id, p.name, p.shortDescription))));
+            messages.add(new TextMessage("Are you interested in changing to any of these trips?"));
+            // Since we need to go back to plan stage manually set dialogFlow context
+            AIApiWrapper.setContext(Arrays.asList(new ImmutablePair<>("NeedAdults", 0), new ImmutablePair<>("NeedPlan", 10)), source);
+            return messages;
         }
 
         Tour tour = tourOptional.get();
-        Plan plan = database.getPlan(planId).orElseThrow(() -> new RuntimeException("Plan should exist"));
         if (database.isTourFull(planId, sqlDate)) {
             List<Message> messages = new ArrayList<>();
             List<Plan> pastPlans = database.getPastPlansForUser(source.getUserId());
@@ -395,6 +428,12 @@ public class KitchenSinkController {
         }
     }
 
+    /**
+     * Handle the user saying how many adults will be going on their trip
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveAdults(Result aiResult, Source source) {
         String customerId = source.getUserId();
         Booking booking = database.getCurrentBooking(customerId);
@@ -407,6 +446,12 @@ public class KitchenSinkController {
         return "How many children (Age 4 to 11) are planning to go?";
     }
 
+    /**
+     * Handle the user saying how many children will be going on their trip
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveChildren(Result aiResult, Source source) {
         String customerId = source.getUserId();
         Booking booking = database.getCurrentBooking(customerId);
@@ -419,6 +464,12 @@ public class KitchenSinkController {
         return "How many children (Age 0 to 3) are planning to go?";
     }
 
+    /**
+     * Handle the user saying how many toddlers will be going on their trip
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveToddlers(Result aiResult, Source source) {
         String customerId = source.getUserId();
         Booking booking = database.getCurrentBooking(customerId);
@@ -431,6 +482,11 @@ public class KitchenSinkController {
         return "Confirmed?"; //TODO Optionally: show fee
     }
 
+    /**
+     * Handle the user confirming their tour, commit to database
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleGiveConfirmation(Source source) {
         String customerId = source.getUserId();
         Booking booking = database.getCurrentBooking(customerId);
@@ -460,6 +516,11 @@ public class KitchenSinkController {
         return "Thank you. Please pay the tour fee by ATM to 123-345-432-211 of ABC Bank or by cash in our store. When you complete the ATM payment, please send the bank in slip to us. Our staff will validate it.";
     }
 
+    /**
+     * Handle the user cancelling their current booking, remove from database
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleCancelConfirmation(Source source) {
         String customerId = source.getUserId();
         try {
@@ -472,6 +533,12 @@ public class KitchenSinkController {
         }
     }
 
+    /**
+     * Handle the user searching for tours given some optional parameters, date and place
+     * @param aiResult Result from DialogFlow
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private List<Message> handleTourSearch(Result aiResult, Source source) {
         java.util.Date date = aiResult.getDateParameter("date");
         String keywords = aiResult.getStringParameter("any");
@@ -494,6 +561,106 @@ public class KitchenSinkController {
         }
     }
 
+    /**
+     * Inform the user their tour has been confirmed
+     * @param c custimer
+     * @param bs booking status
+     */
+    private void informConfirmed(Customer c, BookingStatus bs) {
+        ArrayList<Message> messages = new ArrayList<>();
+        messages.add(new TextMessage(String.format(
+            "Your tour '%s' on %s has been confirmed. Your guide will be %s." +
+                    " Please meet them at %s at %s. ",
+            bs.plan.name,
+            bs.tour.tourDate,
+            bs.tour.guideName,
+            bs.plan.departure,
+            "TODO: tour time"
+        )));
+        BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
+        if(owed.equals(BigDecimal.ZERO)) {
+            messages.add(new TextMessage(
+                "Thank you for paying for the tour in full - see you soon!"
+            ));
+        } else {
+            messages.add(new TextMessage(String.format(
+                "Please pay %s before the tour departure.",
+                owed.toPlainString()
+            )));
+        }
+        lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
+    }
+
+    /**
+     * Inform the user their tour has been cancelled
+     * @param c custimer
+     * @param bs booking status
+     */
+    private void informCancelled(Customer c, BookingStatus bs) {
+        ArrayList<Message> messages = new ArrayList<>();
+        messages.add(new TextMessage(String.format(
+            "Unfortunately, your tour '%s' on %s has been cancelled because " +
+                    "the minimum number of participants did not sign up. ",
+            bs.plan.name,
+            bs.tour.tourDate
+        )));
+        BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
+        BigDecimal fee = database.getFee(c.id, bs.tour);
+        if(owed.equals(fee)) {
+            messages.add(new TextMessage(String.format(
+                "You have already paid %s - you can get a refund here: %s",
+                owed.toPlainString(),
+                "https://www.easternparadise.com/refund"
+            )));
+        } else if(!owed.equals(BigDecimal.ZERO)) {
+            messages.add(new TextMessage(
+                "Additionally, though this cancellation was no fault of your " +
+                    "own, because you haven't pain in full and so cannot be " +
+                    "offered a refund."
+            ));
+        }
+        lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
+    }
+
+    /**
+     * Schedule job to decide whether tour is confirmed or cancelled 3 days before tour
+     */
+    @Scheduled(cron = "0 9 * * *")
+    private void decideTourStatus() {
+        Date inThreeDays = Date.valueOf(LocalDate.now().plusDays(3));
+        for(BookingStatus bs : database.getBookingStatus(inThreeDays)) {
+            if(bs.isConfirmed()) {
+                for(Customer c : bs.booked) { informConfirmed(c, bs); };
+            } else {
+                for(Customer c : bs.booked) { informCancelled(c, bs); };
+            }
+        }
+    }
+
+    /**
+     * Schedule job to remind user to pay if they havent already 5 days before tour
+     */
+    @Scheduled(cron = "0 9 * * *")
+    private void informOwed(){
+        Date inFiveDays = Date.valueOf(LocalDate.now().plusDays(5));
+        for(BookingStatus bs : database.getBookingStatus(inFiveDays)) {
+            for(Customer c: bs.booked) {
+                BigDecimal owed = database.getAmountOwed(c.id);
+                if(owed.compareTo(BigDecimal.ZERO)>0){
+                    push(c.id, new TextMessage(String.format("I am sorry to tell you that, " +
+                            "if you don't fully pay for the trip in 2 days, it will be canceled. " +
+                            "The amount you owed is: %s", owed.toString())));
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle unknown queries
+     * @param receivedText Text that was not recognized
+     * @param source User Source
+     * @return Message to send back to the user
+     */
     private String handleUnknowDialogue(String receivedText, Source source) {
         String customerId = source.getUserId();
         Timestamp receiveDateTime = new Timestamp(System.currentTimeMillis());
@@ -501,16 +668,57 @@ public class KitchenSinkController {
         database.insertDialogue(newDialogue);
         return "I don't understand your question, try rephrasing";
     }
-    
+
+    /**
+     * Handle user asking for a report of unanswerable questions
+     * @param source User Source
+     * @return Messages to send back to user
+     */
     private List<Message> handleDialogReport(Source source) {
     	ArrayList<Dialogue> dialogues = database.getAllDialogues();
-    	ArrayList<Message> messages = new ArrayList<>();
+    	ArrayList<Map.Entry<String, Integer>> dialogueTypeList = new ArrayList<>();
     	for(Dialogue dialogue : dialogues) {
-    		messages.add(new TextMessage(String.format("%s", dialogue.content)));
+    		String parsedDialogue = dialogue.content.replaceAll("[^A-Za-z0-9 ]", "");
+    		boolean dialogExist = false;
+    		for(Map.Entry<String, Integer> existingDialog : dialogueTypeList) {
+    			if(Utils.stupidFuzzyMatch(existingDialog.getKey(), parsedDialogue)) {
+    				existingDialog.setValue(existingDialog.getValue() + 1);
+    				dialogExist = true;
+    			}
+    		}
+    		if (!dialogExist) {
+    			dialogueTypeList.add(new AbstractMap.SimpleEntry<>(parsedDialogue, 1));
+    		}
     	}
+    	Collections.sort(dialogueTypeList, (x, y) -> y.getValue() - x.getValue());
+    	ArrayList<Message> messages = new ArrayList<>();
+    	String resultMessage = "--Question frequency report--\n";
+    	for(Map.Entry<String, Integer> dialogueCount : dialogueTypeList) {
+    		resultMessage += String.format("%d - %s", dialogueCount.getValue(), dialogueCount.getKey());
+    		resultMessage += "\n";
+    	}
+    	resultMessage += "--End of Report--";
+    	messages.add(new TextMessage(resultMessage));
     	return messages;
     }
 
+    /**
+     * Handle user asking to push out a message
+     * @param message Message to push out
+     * @return Messages to send back to user
+     */
+    private String handleDemandPush(Message message) {
+        this.push(database.getCustomerIdSet(), message);
+        return "Push demand received.";
+    }
+
+    /**
+     * Given arbitrary text query, decide how to handle it and resond to user
+     * @param replyToken Token to reply back ot the user
+     * @param event Event with user source info
+     * @param content content of the text message
+     * @throws Exception
+     */
     private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
         Source source = event.getSource();
@@ -524,6 +732,10 @@ public class KitchenSinkController {
     		this.reply(replyToken, handleDialogReport(source));
     		return;
     	}
+    	if(text.contains("admin:push")) {
+            this.replyText(replyToken, handleDemandPush(new TextMessage(text.replace("admin:push",""))));
+            return;
+        }
         if (intentName == null) {
         	this.replyText(replyToken, handleUnknowDialogue(text, source));
             return;
@@ -585,65 +797,5 @@ public class KitchenSinkController {
                     this.replyText(replyToken, handleUnknowDialogue(text, source));
                 }
         }
-    }
-
-    static String createUri(String path) {
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path(path).build().toUriString();
-    }
-
-    private void system(String... args) {
-        ProcessBuilder processBuilder = new ProcessBuilder(args);
-        try {
-            Process start = processBuilder.start();
-            int i = start.waitFor();
-            log.info("result: {} =>  {}", Arrays.toString(args), i);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        } catch (InterruptedException e) {
-            log.info("Interrupted", e);
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private static DownloadedContent saveContent(String ext, MessageContentResponse responseBody) {
-        log.info("Got content-type: {}", responseBody);
-
-        DownloadedContent tempFile = createTempFile(ext);
-        try (OutputStream outputStream = Files.newOutputStream(tempFile.path)) {
-            ByteStreams.copy(responseBody.getStream(), outputStream);
-            log.info("Saved {}: {}", ext, tempFile);
-            return tempFile;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private static DownloadedContent createTempFile(String ext) {
-        String fileName = LocalDateTime.now().toString() + '-' + UUID.randomUUID().toString() + '.' + ext;
-        Path tempFile = KitchenSinkApplication.downloadedContentDir.resolve(fileName);
-        tempFile.toFile().deleteOnExit();
-        return new DownloadedContent(tempFile, createUri("/downloaded/" + tempFile.getFileName()));
-    }
-
-    public KitchenSinkController() {
-        this(DatabaseEngine.connectToProduction());
-    }
-
-    public KitchenSinkController(DatabaseEngine databaseEngine) {
-        this.database = databaseEngine;
-        itscLOGIN = System.getenv("ITSC_LOGIN");
-    }
-
-    private DatabaseEngine database;
-    private String itscLOGIN;
-
-
-    //The annontation @Value is from the package lombok.Value
-    //Basically what it does is to generate constructor and getter for the class below
-    //See https://projectlombok.org/features/Value
-    @Value
-    public static class DownloadedContent {
-        Path path;
-        String uri;
     }
 }

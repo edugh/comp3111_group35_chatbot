@@ -12,6 +12,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * Utility to pull our database into an xml file to help with testing
+ */
 public class DatabaseExporter
 {
     public static void main(String[] args) throws Exception

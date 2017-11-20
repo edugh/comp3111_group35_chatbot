@@ -9,17 +9,18 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Pojo representing a Tour row in the database */
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class Tour {
-    public String planId;
-    public Date tourDate;
-    public String guideName;
-    public String guideAccount;
-    public String hotel;
-    public int capacity;
-    public int minimum;
+public final class Tour {
+    public final String planId;
+    public final Date tourDate;
+    public final String guideName;
+    public final String guideAccount;
+    public final String hotel;
+    public final int capacity;
+    public final int minimum;
 
     public static Tour fromResultSet(ResultSet resultSet) throws SQLException {
         return new Tour(

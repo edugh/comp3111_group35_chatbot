@@ -9,10 +9,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+/** Pojo representing a DiscountSchedule row in the database */
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class DiscountSchedule {
+public final class DiscountSchedule {
     public final String planId;
     public final Date tourDate;
     public final Timestamp sendTime;
