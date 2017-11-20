@@ -30,6 +30,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.sql.DataSource;
 import java.io.File;
 import java.math.BigDecimal;
+import java.sql.*;
+import java.sql.Date;
 import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
@@ -316,6 +318,35 @@ public class KitchenSinkTester {
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
 	}
+
+    @Test
+    public void testAmountOwed() throws Exception {
+		databaseEngine.insertBooking("userId1", "Id1", new Date(0), 1, 3, 5, new BigDecimal(100), new BigDecimal(0));
+		databaseEngine.insertBooking("userId1", "Id2", new Date(0), 1, 3, 5, new BigDecimal(100), new BigDecimal(0));
+		databaseEngine.insertBooking("userId2", "Id3", new Date(0), 1, 3, 5, new BigDecimal(100), new BigDecimal(0));
+
+		Assert.assertEquals(databaseEngine.getAmountOwed("userId1").doubleValue(), 200, 1);
+		Assert.assertEquals(databaseEngine.getAmountOwed("userId2").doubleValue(), 100, 1);
+	}
+
+    @Test
+    public void testEnrolledTours() throws Exception {
+		databaseEngine.insertBooking("userId1", "Id1", new Date(0), 2, 4, 6, new BigDecimal(100), new BigDecimal(0));
+		databaseEngine.insertBooking("userId1", "Id2", new Date(0), 1, 3, 5, new BigDecimal(100), new BigDecimal(0));
+		databaseEngine.insertBooking("userId2", "Id3", new Date(0), 0, 2, 4, new BigDecimal(100), new BigDecimal(0));
+
+        ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
+        Assert.assertEquals(bookings.size(), 2);
+        Booking booking = bookings.get(0);
+        Booking expectedBooking = new Booking("userId1", "Id1", booking.tourDate, 2, 4, 6, booking.fee, booking.paid, null);
+        Assert.assertEquals(booking, expectedBooking);
+
+		bookings = databaseEngine.getBookings("userId2");
+		Assert.assertEquals(bookings.size(), 1);
+		booking = bookings.get(0);
+		expectedBooking = new Booking("userId2", "Id3", booking.tourDate, 0, 2, 4, booking.fee, booking.paid, null);
+		Assert.assertEquals(booking, expectedBooking);
+    }
 
 	// NEGATIVE TEST CASES
 	@Test

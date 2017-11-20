@@ -119,6 +119,13 @@ public class DatabaseEngine {
         );
     }
 
+    public void insertBooking(String cid, String pid, Date date, Integer adults, Integer children, Integer toddlers, BigDecimal fee, BigDecimal paid) {
+        executeStatement(
+                "INSERT INTO bookings(customerId, planId, tourDate, adults, children, toddlers, fee, paid) VALUES(?,?,?,?,?,?,?,?)",
+                params(cid, pid, date, adults, children, toddlers, fee, paid)
+        );
+    }
+
     public void updateBookingDate(String cid, String pid, Date date) {
         Date defaultDate = new Date(0); //TODO: Why do we need this?
         executeStatement(
