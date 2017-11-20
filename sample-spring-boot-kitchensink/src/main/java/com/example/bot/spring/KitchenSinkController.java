@@ -107,6 +107,7 @@ public class KitchenSinkController {
     private static final String CANCEL_CONFIRMATION = "CancelConfirmation";
 
     private static final String DISCOUNT = "Discount";
+    private static final String CANCEL_BOOKING = "CancelBooking";
 
     private static final String CHANNEL_TOKEN = "86G0LghgbbwHzoX8UIIvnaMGMAAJL6/mXQQEWNat4Jlsk0dRMaC91ksPZtG1whpuma/7LJsBO/UVqY7eweieJGNdOHnimA5dW4ElA3QBeVOlBGmqk+c+ypmGrdzuir8nLfpMD4Yc/7Vciz8wbbizTgdB04t89/1O/w1cDnyilFU=";
 
@@ -460,9 +461,14 @@ public class KitchenSinkController {
 
     private String handleCancelConfirmation(Source source) {
         String customerId = source.getUserId();
-        Booking booking = database.getCurrentBooking(customerId);
-        database.dropBooking(customerId, booking.planId, booking.tourDate);
-        return "Booking Cancelled";
+        try {
+            Booking booking = database.getCurrentBooking(customerId);
+            database.dropBooking(customerId, booking.planId, booking.tourDate);
+            AIApiWrapper.resetContexts(source);
+            return "Booking Cancelled";
+        } catch (IllegalStateException ex) {
+            return "No booking is currently in progress";
+        }
     }
 
     private List<Message> handleTourSearch(Result aiResult, Source source) {
@@ -574,6 +580,9 @@ public class KitchenSinkController {
                 break;
             case GIVE_CONFIRMATION:
                 this.replyText(replyToken, handleGiveConfirmation(source));
+                break;
+            case CANCEL_BOOKING:
+                this.replyText(replyToken, handleCancelConfirmation(source));
                 break;
             case CANCEL_CONFIRMATION:
                 this.replyText(replyToken, handleCancelConfirmation(source));
