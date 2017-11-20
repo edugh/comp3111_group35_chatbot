@@ -14,4 +14,10 @@
     <tours planid="Id1" tourdate="2017-11-08" guidename="Guide2" guideaccount="Guide2&apos;s Account" hotel="Hotel2" capacity="20" minimum="4"/>
     <tours planid="Id1" tourdate="2017-11-11" guidename="Guide3" guideaccount="Guide3&apos;s Account" hotel="Hotel3" capacity="20" minimum="4"/>
     <tours planid="Id2" tourdate="2017-11-14" guidename="Guide4" guideaccount="Guide4&apos;s Account" hotel="Hotel4" capacity="10"  minimum="1"/>
+    <discounttours planid="Id1" tourdate="2017-11-06" sendtime="2017-11-01 09:00:00+08"/>
+    <discounttours planid="Id1" tourdate="2017-11-11" sendtime="2017-11-01 10:00:00+08"/>
+    <discountbookings customerId="Id1" planId="Id1" tourDate="2017-11-11" seat="1"/>
+    <discountbookings customerId="Id2" planId="Id1" tourDate="2017-11-11" seat="1"/>
+    <discountbookings customerId="Id3" planId="Id1" tourDate="2017-11-11" seat="1"/>
+    <discountbookings customerId="Id4" planId="Id1" tourDate="2017-11-11" seat="1"/>
 </dataset>

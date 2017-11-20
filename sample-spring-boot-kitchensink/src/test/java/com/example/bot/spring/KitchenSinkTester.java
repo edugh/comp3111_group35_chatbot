@@ -478,6 +478,8 @@ public class KitchenSinkTester {
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
 	}
+  
+  @Test
 	public void testCancelPartialBooking() throws Exception {
 		databaseEngine.insertCustomer("userId1", "Jason", 20, "M", "01234567");
 
@@ -499,4 +501,25 @@ public class KitchenSinkTester {
 		ArrayList<Booking> bookings = databaseEngine.getBookings("userId1");
 		Assert.assertEquals(bookings.size(), 0);
 	}
+  
+    @Test
+    public void testDiscountSuccess() throws Exception {
+        String userResponse = "Discount 2 seats for Id1 on 2017/11/06";
+        MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
+        kitchenSinkController.handleTextMessageEvent(messageEvent);
+        log.info("user response: {}", userResponse);
+        List<Message> responses = kitchenSinkController.getLatestMessages();
+        Assert.assertEquals(responses.get(0), new TextMessage("Discount successfully"));
+    }
+
+    @Test
+    public void testDiscountFailure() throws Exception {
+        String userResponse = "Discount 2 seats for Id1 on 2017/11/11";
+        MessageEvent<TextMessageContent> messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", userResponse);
+        kitchenSinkController.handleTextMessageEvent(messageEvent);
+        log.info("user response: {}", userResponse);
+        List<Message> responses = kitchenSinkController.getLatestMessages();
+        Assert.assertEquals(responses.get(0), new TextMessage("Sorry discount sold out"));
+    }
+  
 }
