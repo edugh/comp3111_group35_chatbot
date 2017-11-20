@@ -13,5 +13,5 @@
     <tours planid="Id1" tourdate="2017-11-06" guidename="Guide1" guideaccount="Guide1&apos;s Account" hotel="Hotel1" capacity="0" minimum="4"/>
     <tours planid="Id1" tourdate="2017-11-08" guidename="Guide2" guideaccount="Guide2&apos;s Account" hotel="Hotel2" capacity="20" minimum="4"/>
     <tours planid="Id1" tourdate="2017-11-11" guidename="Guide3" guideaccount="Guide3&apos;s Account" hotel="Hotel3" capacity="20" minimum="4"/>
-    <tours planid="Id2" tourdate="2017-11-14" guidename="Guide4" guideaccount="Guide4&apos;s Account" hotel="Hotel4" capacity="1"  minimum="1"/>
+    <tours planid="Id2" tourdate="2017-11-14" guidename="Guide4" guideaccount="Guide4&apos;s Account" hotel="Hotel4" capacity="10"  minimum="1"/>
 </dataset>

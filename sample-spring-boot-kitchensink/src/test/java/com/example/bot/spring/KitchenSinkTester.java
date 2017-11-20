@@ -374,9 +374,12 @@ public class KitchenSinkTester {
 		Assert.assertFalse(databaseEngine.isTourFull(pid, date));
 
 		databaseEngine.insertCustomer("userId1", "Elliot", 22, "M", "01234567");
-		databaseEngine.insertBooking("userId1", pid, date);
+		databaseEngine.insertBooking("userId1", pid, date, 2, 3, 2, BigDecimal.ZERO, BigDecimal.ZERO);
+        Assert.assertFalse(databaseEngine.isTourFull(pid, date));
 
-		Assert.assertTrue(databaseEngine.isTourFull(pid, date));
+        databaseEngine.insertCustomer("userId2", "Keith", 22, "M", "12345800");
+        databaseEngine.insertBooking("userId2", pid, date, 1, 1, 1, BigDecimal.ZERO, BigDecimal.ZERO);
+        Assert.assertTrue(databaseEngine.isTourFull(pid, date));
 	}
 
 	// NEGATIVE TEST CASES

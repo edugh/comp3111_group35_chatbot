@@ -23,15 +23,15 @@ public class AIApiWrapperTester {
 
     @Test
     public void testNormalQuery() {
-        Result result = AIApiWrapper.getIntent("How much do I owe", source, Collections.EMPTY_LIST);
+        Result result = AIApiWrapper.getIntent("How much do I owe", source, new ArrayList<>());
         Assert.assertEquals(result.getContexts(), Collections.EMPTY_LIST);
         Assert.assertEquals(result.getMetadata().getIntentName(), "AmountOwed");
     }
 
     @Test
     public void testFAQ() {
-        Result result = AIApiWrapper.getIntent("How to apply?", source, Collections.EMPTY_LIST);
-        Assert.assertEquals(result.getContexts(), Collections.EMPTY_LIST);
+        Result result = AIApiWrapper.getIntent("How to apply?", source, new ArrayList<>());
+        Assert.assertEquals(result.getContexts(), new ArrayList<>());
         Assert.assertEquals(result.getMetadata().getIntentName(), "FAQ1");
     }
 
@@ -43,7 +43,7 @@ public class AIApiWrapperTester {
         Set<String> contexts = AIApiWrapper.getOutputContexts(result.getContexts());
         Assert.assertEquals(contexts, Sets.newHashSet("needchildren"));
 
-        result = AIApiWrapper.getIntent("2", source, Collections.EMPTY_LIST);
+        result = AIApiWrapper.getIntent("2", source, new ArrayList<>());
         Assert.assertEquals(result.getMetadata().getIntentName(), "GiveChildren");
         Assert.assertEquals(result.getIntParameter("number-integer"), 2);
         contexts = AIApiWrapper.getOutputContexts(result.getContexts());
