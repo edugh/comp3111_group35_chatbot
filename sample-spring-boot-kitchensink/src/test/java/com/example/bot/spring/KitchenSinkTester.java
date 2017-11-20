@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.sql.DataSource;
 import java.io.File;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
@@ -315,6 +316,30 @@ public class KitchenSinkTester {
 		Assert.assertTrue(closeEnough(booking.paid, 0));
 		Booking expectedBooking = new Booking("userId1", "Id1", Utils.getDateFromText("2017/11/08"), 1, 3, 5, booking.fee, booking.paid, null);
 		Assert.assertEquals(booking, expectedBooking);
+	}
+
+	@Test
+	public void testBookingStatus() throws Exception {
+		databaseEngine.insertCustomer("userId1", "Elliot", 22, "M", "01234567");
+		Map<String, String> elliotResponses = new HashMap<>();
+		Map<String, String> userResponses = new HashMap<>();
+		userResponses.put(null, "Which tours are available?");
+		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
+		userResponses.put("When are you planing to set out? Please answer in YYYY/MM/DD.", "2017/11/08");
+		userResponses.put("How many adults(Age>11) are planning to go?", "1");
+		userResponses.put("How many children (Age 4 to 11) are planning to go?", "3");
+		userResponses.put("How many children (Age 0 to 3) are planning to go?", "5");
+		userResponses.put("Confirmed?", "yes");
+		goThroughDialogflow(userResponses, "yes");
+
+		ArrayList<Customer> expectedBooked = new ArrayList<>();
+		expectedBooked.add(databaseEngine.getCustomer("userId1").get());
+		BookingStatus expectedStatus = new BookingStatus(
+			databaseEngine.getTour("2D001", Date.valueOf("2017-11-08")).get(),
+			databaseEngine.getPlan("Id1").get(),
+			expectedBooked
+		);
+		Assert.assertEquals(expectedBooked, databaseEngine.getBookingStatus(Date.valueOf("2017-11-08")));
 	}
 
 	@Test
