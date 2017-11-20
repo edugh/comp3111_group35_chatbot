@@ -24,8 +24,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import static org.mockito.Mockito.*;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -409,7 +411,6 @@ public class KitchenSinkTester {
 	@Test
 	public void testBookingStatus() throws Exception {
 		databaseEngine.insertCustomer("userId1", "Elliot", 22, "M", "01234567");
-		Map<String, String> elliotResponses = new HashMap<>();
 		Map<String, String> userResponses = new HashMap<>();
 		userResponses.put(null, "Which tours are available?");
 		userResponses.put("Here are some tours that may interest you, please respond which one you would like to book", "Can I book the Shimen National Forest Tour?");
@@ -423,21 +424,24 @@ public class KitchenSinkTester {
 		ArrayList<Customer> expectedBooked = new ArrayList<>();
 		expectedBooked.add(databaseEngine.getCustomer("userId1").get());
 		BookingStatus expectedStatus = new BookingStatus(
-			databaseEngine.getTour("2D001", Date.valueOf("2017-11-08")).get(),
+			databaseEngine.getTour("Id1", Date.valueOf("2017-11-08")).get(),
 			databaseEngine.getPlan("Id1").get(),
 			expectedBooked
 		);
-		Assert.assertEquals(expectedBooked, databaseEngine.getBookingStatus(Date.valueOf("2017-11-08")));
+		Assert.assertEquals(
+			Arrays.asList(expectedStatus),
+			databaseEngine.getBookingStatus(Date.valueOf("2017-11-08"))
+		);
 	}
 
 	@Test
 	public void testTour3DayConfirmed() {
-
+		// TODO: test that confirmation message is sent
 	}
 
 	@Test
 	public void testTour3DayCancelled() {
-
+		// TODO: test that cancellation message is sent
 	}
 
 	// NEGATIVE TEST CASES
