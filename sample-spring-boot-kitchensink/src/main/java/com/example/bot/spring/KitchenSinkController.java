@@ -427,11 +427,14 @@ public class KitchenSinkController {
     		}
     	});
     	ArrayList<Message> messages = new ArrayList<>();
-    	messages.add(new TextMessage("--Question frequency report--"));
+    	String resultMessage = "--Question frequency report--\n";
+    	//messages.add(new TextMessage("--Question frequency report--"));
     	for(Map.Entry<String, Integer> dialogueCount : dialogueTypeList) {
-    		messages.add(new TextMessage(String.format("%d - %s", dialogueCount.getValue(), dialogueCount.getKey())));
+    		resultMessage += String.format("%d - %s", dialogueCount.getValue(), dialogueCount.getKey());
+    		resultMessage += "\n";
     	}
-    	messages.add(new TextMessage("--End of Report--"));
+    	resultMessage += "--End of Report--";
+    	messages.add(new TextMessage(resultMessage));
     	return messages;
     }
 
