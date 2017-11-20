@@ -83,6 +83,22 @@ public class DatabaseEngine {
         return bookings.stream().map(booking -> (booking.fee.subtract(booking.paid))).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public BigDecimal getFee(String customerId, Tour tour) {
+        return tryGetResultForQuery(
+                "SELECT fee FROM bookings where planid = ? and tourdate = ? and customerid = ?;",
+                rs -> rs.getBigDecimal(1),
+                params(tour.planId, tour.tourDate, customerId)
+        );
+    }
+
+    public BigDecimal getAmountOwed(String customerId, Tour tour) {
+        return tryGetResultForQuery(
+            "SELECT (fee - paid) FROM bookings where planid = ? and tourdate = ? and customerid = ?;",
+            rs -> rs.getBigDecimal(1),
+            params(tour.planId, tour.tourDate, customerId)
+        );
+    }
+
     public ArrayList<Plan> getPastPlansForUser(String customerId) {
         return getResultsForQuery(
                 "SELECT Plans.* FROM Plans INNER JOIN Bookings ON (Plans.id = Bookings.planId) WHERE Bookings.customerId=?;",

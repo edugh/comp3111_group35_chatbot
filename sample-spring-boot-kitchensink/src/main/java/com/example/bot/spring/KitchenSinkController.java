@@ -495,10 +495,7 @@ public class KitchenSinkController {
             bs.plan.departure,
             "TODO: tour time"
         )));
-        BigDecimal owed = database.getBookings(c.id).stream()
-            .filter(b -> b.planId == bs.plan.id && b.tourDate == bs.tour.tourDate)
-            .findFirst()
-            .map(b -> b.fee.subtract(b.paid)).get();
+        BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
         if(owed.equals(BigDecimal.ZERO)) {
             messages.add(new TextMessage(
                 "Thank you for paying for the tour in full - see you soon!"
@@ -516,18 +513,26 @@ public class KitchenSinkController {
         ArrayList<Message> messages = new ArrayList<>();
         messages.add(new TextMessage(String.format(
             "Unfortunately, your tour '%s' on %s has been cancelled because " +
-                    "the minimum number of participants did not sign up.",
+                    "the minimum number of participants did not sign up. ",
             bs.plan.name,
             bs.tour.tourDate
         )));
-        BigDecimal owed = database.getAmountOwed(c.id);
-        if(!owed.equals(BigDecimal.ZERO)) {
+        BigDecimal owed = database.getAmountOwed(c.id, bs.tour);
+        BigDecimal fee = database.getFee(c.id, bs.tour);
+        if(owed.equals(fee)) {
             messages.add(new TextMessage(String.format(
                 "You have already paid %s - you can get a refund here: %s",
                 owed.toPlainString(),
                 "https://www.easternparadise.com/refund"
             )));
+        } else if(!owed.equals(BigDecimal.ZERO)) {
+            messages.add(new TextMessage(
+                "Additionally, though this cancellation was no fault of your " +
+                    "own, because you haven't pain in full and so cannot be " +
+                    "offered a refund."
+            ));
         }
+        lineMessagingClient.pushMessage(new PushMessage(c.id, messages));
     }
 
     @Scheduled(cron = "0 9 * * *")
