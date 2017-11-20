@@ -310,7 +310,7 @@ public class DatabaseEngine {
 
     public ArrayList<DiscountSchedule> getDiscountSchedules(Timestamp timestamp) {
         return getResultsForQuery(
-                "SELECT * FROM DiscountTours",
+                "SELECT * FROM DiscountTours WHERE sendTime = ?",
                 DiscountSchedule::fromResultSet,
                 params(timestamp)
         );
