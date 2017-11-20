@@ -37,6 +37,7 @@ import com.example.bot.spring.model.Booking;
 import com.example.bot.spring.model.Plan;
 import com.linecorp.bot.client.LineMessagingServiceBuilder;
 import com.linecorp.bot.model.Multicast;
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.event.source.Source;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
