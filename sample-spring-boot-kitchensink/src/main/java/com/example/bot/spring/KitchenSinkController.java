@@ -505,6 +505,13 @@ public class KitchenSinkController {
     	return messages;
     }
 
+    private List<Message> handleDemandPush(Message message, Source source) {
+        ArrayList<Message> feedback = new ArrayList<>();
+        this.push(database.getCustomerIdSet(), message);
+        feedback.add(new TextMessage("Push demand received."));
+        return feedback;
+    }
+
     private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
         String text = content.getText();
         Source source = event.getSource();
