@@ -38,6 +38,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.text.ParseException;
 import java.util.*;
 
 import static org.h2.engine.Constants.UTF8;
@@ -600,26 +601,32 @@ public class KitchenSinkTester {
     }
 
 	@Test
-	public void testInformPaymentRequired() {
+	public void testInformPaymentRequired() throws ParseException {
+		databaseEngine.insertCustomer("userId1", "Jason", 20, "M", "01234567");
+		databaseEngine.insertBooking("userId1", "Id1", Date.valueOf("2017-11-11"), 2, 3, 2, new BigDecimal(100), BigDecimal.ZERO);
+
 		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
-		//when(mockKitchenSinkController.getNowDate()).thenReturn();
-		kitchenSinkController.informOwed();
-		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
+		when(mockKitchenSinkController.getNowDate()).thenReturn(LocalDate.parse("2017-11-06"));
+		mockKitchenSinkController.informOwed();
+		verify(mockKitchenSinkController).push("userId1", new TextMessage("I am sorry to tell you that, if you don't fully pay for the trip in 2 days, it will be canceled. The amount you owed is: 100.0"));
 	}
 
 	@Test
-	public void testInformConfirmed() {
-		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
-		//when(mockKitchenSinkController.getNowDate()).thenReturn();
-		kitchenSinkController.decideTourStatus();
-		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
-	}
+	public void testInformConfirmedAndCancelled() {
+		databaseEngine.insertCustomer("userId1", "Jason", 20, "M", "01234567");
+		databaseEngine.insertCustomer("userId2", "Jason", 20, "M", "01234567");
+		databaseEngine.insertBooking("userId1", "Id1", Date.valueOf("2017-11-11"), 1, 1, 1, new BigDecimal(100), BigDecimal.ZERO);
+		databaseEngine.insertBooking("userId2", "Id2", Date.valueOf("2017-11-14"), 1, 1, 1, new BigDecimal(100), BigDecimal.ZERO);
 
-	@Test
-	public void testInformCancelled() {
 		KitchenSinkController mockKitchenSinkController = spy(kitchenSinkController);
-		//when(mockKitchenSinkController.getNowDate()).thenReturn();
-		kitchenSinkController.decideTourStatus();
-		//verify(mockKitchenSinkController).push(anySet(), eq(new TextMessage("this is my test message")));
+		when(mockKitchenSinkController.getNowDate()).thenReturn(LocalDate.parse("2017-11-08"));
+		mockKitchenSinkController.decideTourStatus();
+		verify(mockKitchenSinkController).push("userId1", new TextMessage("Unfortunately, your tour 'Shimen National Forest Tour' on 2017-11-11 has been cancelled because the minimum number of participants did not sign up."));
+		verify(mockKitchenSinkController).push("userId1", new TextMessage("You have already paid 0.0 - you can get a refund here: https://www.easternparadise.com/refund"));
+
+		when(mockKitchenSinkController.getNowDate()).thenReturn(LocalDate.parse("2017-11-11"));
+		mockKitchenSinkController.decideTourStatus();
+		verify(mockKitchenSinkController).push("userId2", new TextMessage("Your tour 'Yangshan Hot Spring Tour' on 2017-11-14 has been confirmed. Your guide will be Guide4. Please meet them at Mon, Tue at TODO: tour time."));
+		verify(mockKitchenSinkController).push("userId2", new TextMessage("Please pay 100.0 before the tour departure."));
 	}
 }
