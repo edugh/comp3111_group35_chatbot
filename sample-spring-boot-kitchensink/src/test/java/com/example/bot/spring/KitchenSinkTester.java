@@ -574,5 +574,4 @@ public class KitchenSinkTester {
         List<Message> responses = kitchenSinkController.getLatestMessages();
         Assert.assertEquals(responses.get(0), new TextMessage("Sorry discount sold out"));
     }
-  
 }
