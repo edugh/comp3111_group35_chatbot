@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Represents the booking status of customers on a particular tour.
  */
-public class BookingStatus {
+public final class BookingStatus {
     /**
     The particular tour this booking status relates to.
      */

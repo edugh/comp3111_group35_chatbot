@@ -12,7 +12,7 @@ import java.sql.SQLException;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class Plan {
+public final class Plan {
     public final String id;
     public final String name;
     public final String shortDescription;

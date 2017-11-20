@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class Dialogue {
+public final class Dialogue {
     public final String customerId;
     public final Timestamp sendTime;
     public final String content;

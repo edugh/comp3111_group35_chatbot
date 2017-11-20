@@ -13,7 +13,7 @@ import java.sql.SQLException;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class Booking {
+public final class Booking {
     public final String customerId;
     public final String planId;
     public final Date tourDate;
