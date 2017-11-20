@@ -224,6 +224,32 @@ public class KitchenSinkTester {
 		Assert.assertEquals(dialogueRecordAfter.get(0).customerId, "userId1");
 		Assert.assertEquals(dialogueRecordAfter.get(0).content, "Elephants fly inward from the sky");
 	}
+	
+	@Test
+	public void testUnhandledUserTextReport() throws Exception {
+		MessageEvent<TextMessageContent> messageEvent;
+
+		FollowEvent followEvent = createFollowEvent("replyToken1", "userId1");
+		kitchenSinkController.handleFollowEvent(followEvent);
+		kitchenSinkController.clearMessages();
+
+		ArrayList<Dialogue> dialogueRecord = databaseEngine.getDialogues("userId1");
+		Assert.assertTrue(dialogueRecord.isEmpty());
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId2", "Elephants fly inward from the sky");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId3", "Allllllll not is watch");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		kitchenSinkController.clearMessages();
+
+		messageEvent = createMessageEvent("replyToken2", "userId1", "messageId4", "admin:question_report");
+		kitchenSinkController.handleTextMessageEvent(messageEvent);
+		
+		List<Message> responses = kitchenSinkController.getLatestMessages();
+		Assert.assertEquals(responses.size(), 2);
+		Assert.assertEquals(responses.get(0), new TextMessage("Elephants fly inward from the sky"));
+		Assert.assertEquals(responses.get(1), new TextMessage("Allllllll not is watch"));
+	}
 
 	/*
 	Since we arent really using postresql we need to do some weird comparison stuff between floats and bigdecimals
